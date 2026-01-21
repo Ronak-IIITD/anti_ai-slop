@@ -1,0 +1,76 @@
+{
+  "manifest_version": 3,
+  "name": "Anti-Slop",
+  "version": "1.0.0",
+  "description": "Block low-quality, addictive content and AI-generated slop across YouTube, Instagram, Twitter, TikTok, and news sites. Reclaim your focus.",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.instagram.com/*",
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "*://*.tiktok.com/*",
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/youtube.js"],
+      "css": ["content-scripts/youtube.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
+      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/twitter.js"],
+      "css": ["content-scripts/twitter.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/instagram.js"],
+      "css": ["content-scripts/instagram.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.tiktok.com/*"],
+      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/tiktok.js"],
+      "css": ["content-scripts/tiktok.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*/*"],
+      "js": ["utils/storage.js", "utils/ai-patterns.js", "content-scripts/common.js", "content-scripts/ai-detector.js"],
+      "css": ["content-scripts/ai-detector.css"],
+      "run_at": "document_idle",
+      "exclude_matches": [
+        "*://*.youtube.com/*",
+        "*://*.instagram.com/*",
+        "*://*.twitter.com/*",
+        "*://*.x.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.google.com/*",
+        "*://*.github.com/*",
+        "*://*.stackoverflow.com/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

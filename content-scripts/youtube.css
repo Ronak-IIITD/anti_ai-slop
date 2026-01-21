@@ -1,0 +1,58 @@
+/* YouTube Shorts Hiding Styles */
+
+/* Ensure hidden elements are truly invisible */
+.anti-slop-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Additional targeting for stubborn elements */
+ytd-reel-shelf-renderer[data-anti-slop] {
+  display: none !important;
+}
+
+ytd-reel-item-renderer[data-anti-slop] {
+  display: none !important;
+}
+
+/* Hide Shorts button in navigation */
+ytd-guide-entry-renderer[data-anti-slop],
+ytd-mini-guide-entry-renderer[data-anti-slop] {
+  display: none !important;
+}
+
+/* Smooth transitions for cleaner UX */
+ytd-rich-item-renderer,
+ytd-video-renderer,
+ytd-grid-video-renderer {
+  transition: opacity 0.2s ease-out;
+}
+
+/* Notification animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}

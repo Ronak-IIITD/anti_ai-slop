@@ -1,0 +1,20 @@
+/* Twitter/X Filtering Styles */
+
+.anti-slop-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide tweet containers smoothly */
+article[data-anti-slop] {
+  display: none !important;
+}
+
+/* Smooth fade for better UX */
+article[data-testid="tweet"] {
+  transition: opacity 0.2s ease-out;
+}

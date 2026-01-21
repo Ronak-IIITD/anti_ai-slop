@@ -1,0 +1,12 @@
+/* Instagram Reels Hiding Styles */
+
+.anti-slop-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+article[data-anti-slop],
+div[role="button"][data-anti-slop] {
+  display: none !important;
+}

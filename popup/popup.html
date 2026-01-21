@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anti-Slop Settings</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <h1>Anti-Slop</h1>
+      </div>
+      <p class="tagline">Reclaim your focus</p>
+    </header>
+
+    <!-- Statistics Dashboard -->
+    <section class="stats-section">
+      <h2 class="section-title">Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-card stat-primary">
+          <div class="stat-value" id="totalBlocked">0</div>
+          <div class="stat-label">Total Blocked</div>
+        </div>
+        <div class="stat-card stat-secondary">
+          <div class="stat-value" id="timeSaved">0h 0m</div>
+          <div class="stat-label">Time Saved</div>
+        </div>
+      </div>
+      
+      <div class="platform-stats">
+        <div class="platform-stat">
+          <span class="platform-name">YouTube Shorts</span>
+          <span class="platform-count" id="youtubeCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">Twitter Posts</span>
+          <span class="platform-count" id="twitterCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">Instagram Reels</span>
+          <span class="platform-count" id="instagramCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">TikTok Videos</span>
+          <span class="platform-count" id="tiktokCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">AI Articles</span>
+          <span class="platform-count" id="aiArticlesCount">0</span>
+        </div>
+      </div>
+      
+      <button class="btn btn-secondary btn-sm" id="resetStats">Reset Statistics</button>
+    </section>
+
+    <!-- Platform Controls -->
+    <section class="controls-section">
+      <h2 class="section-title">Platform Controls</h2>
+      
+      <!-- YouTube -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">📺</span>
+          <span class="control-name">YouTube Shorts</span>
+          <label class="toggle">
+            <input type="checkbox" id="youtubeToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- Twitter -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">🐦</span>
+          <span class="control-name">Twitter/X</span>
+          <label class="toggle">
+            <input type="checkbox" id="twitterToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Minimum characters: <span id="minCharsValue">100</span>
+            <input type="range" id="minChars" min="50" max="280" value="100" step="10">
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="blockClickbait" checked>
+            <span>Block clickbait posts</span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- Instagram -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">📷</span>
+          <span class="control-name">Instagram Reels</span>
+          <label class="toggle">
+            <input type="checkbox" id="instagramToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- TikTok -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">🎵</span>
+          <span class="control-name">TikTok</span>
+          <label class="toggle">
+            <input type="checkbox" id="tiktokToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="checkbox-label">
+            <input type="checkbox" id="blockTiktokFeed" checked>
+            <span>Block entire feed</span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- AI Detector -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">🤖</span>
+          <span class="control-name">AI Content Detector</span>
+          <label class="toggle">
+            <input type="checkbox" id="aiDetectorToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Sensitivity: <span id="sensitivityValue">Medium</span>
+            <select id="sensitivity">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer-text">Made with focus by Anti-Slop Team</p>
+      <div class="footer-links">
+        <a href="https://github.com/yourusername/anti-slop" target="_blank">GitHub</a>
+        <span>•</span>
+        <a href="#" id="reportIssue">Report Issue</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
