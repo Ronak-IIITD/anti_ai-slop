@@ -1,4 +1,4 @@
-/* YouTube Shorts Hiding Styles */
+/* YouTube Content Filter Styles */
 
 /* Ensure hidden elements are truly invisible */
 .anti-slop-hidden {
@@ -12,25 +12,16 @@
   overflow: hidden !important;
 }
 
-/* Additional targeting for stubborn elements */
-ytd-reel-shelf-renderer[data-anti-slop] {
-  display: none !important;
-}
-
-ytd-reel-item-renderer[data-anti-slop] {
-  display: none !important;
-}
-
-/* Hide Shorts button in navigation */
-ytd-guide-entry-renderer[data-anti-slop],
-ytd-mini-guide-entry-renderer[data-anti-slop] {
+/* Elements marked with data-anti-slop attribute */
+[data-anti-slop] {
   display: none !important;
 }
 
 /* Smooth transitions for cleaner UX */
 ytd-rich-item-renderer,
 ytd-video-renderer,
-ytd-grid-video-renderer {
+ytd-grid-video-renderer,
+ytd-reel-item-renderer {
   transition: opacity 0.2s ease-out;
 }
 

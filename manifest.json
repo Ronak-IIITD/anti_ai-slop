@@ -21,25 +21,25 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/youtube.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/youtube.js"],
       "css": ["content-scripts/youtube.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
-      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/twitter.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/twitter.js"],
       "css": ["content-scripts/twitter.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.instagram.com/*"],
-      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/instagram.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/instagram.js"],
       "css": ["content-scripts/instagram.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.tiktok.com/*"],
-      "js": ["utils/storage.js", "content-scripts/common.js", "content-scripts/tiktok.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/tiktok.js"],
       "css": ["content-scripts/tiktok.css"],
       "run_at": "document_start"
     },

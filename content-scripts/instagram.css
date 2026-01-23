@@ -1,4 +1,4 @@
-/* Instagram Reels Hiding Styles */
+/* Instagram Content Filter Styles */
 
 .anti-slop-hidden {
   display: none !important;
@@ -8,5 +8,9 @@
 
 article[data-anti-slop],
 div[role="button"][data-anti-slop] {
+  display: none !important;
+}
+
+[data-anti-slop] {
   display: none !important;
 }

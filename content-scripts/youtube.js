@@ -1,45 +1,32 @@
-// YouTube Shorts Blocker
-// Hides YouTube Shorts from homepage, subscriptions, search, and navigation
+// YouTube Brainrot Content Filter
+// Analyzes and filters low-quality AI-generated/brainrot content from YouTube
+// Only blocks slop content, not all Shorts/videos
 
 (async function() {
   'use strict';
 
   const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
+  const detector = window.brainrotDetector;
   
   const PLATFORM = 'YouTube';
   let blockedCount = 0;
   let isEnabled = false;
+  let sensitivity = 'medium';
 
-  // YouTube Shorts selectors (as of 2026 - may need updates)
+  // YouTube video/shorts selectors
   const SELECTORS = {
-    // Shorts shelf on homepage
-    shortsShelf: 'ytd-reel-shelf-renderer',
-    
-    // Individual short videos in feeds
-    shortsVideo: [
-      'ytd-reel-item-renderer',
-      'ytd-video-renderer[is-shorts]',
-      'ytd-grid-video-renderer[is-shorts]',
-      'ytd-rich-item-renderer:has([overlay-style="SHORTS"])',
-      'a[href*="/shorts/"]'
-    ],
-    
-    // Shorts button in navigation
-    shortsButton: [
-      'ytd-guide-entry-renderer:has(a[href="/shorts"])',
-      'ytd-mini-guide-entry-renderer:has(a[href="/shorts"])',
-      '[title="Shorts"]',
-      'a[href="/shorts"]'
-    ],
-    
-    // Shorts in search results
-    searchShorts: 'ytd-video-renderer:has(a[href*="/shorts/"])',
-    
-    // Shorts tab on channel pages
-    shortsTab: 'yt-tab-shape:has([tab-title="Shorts"])'
+    // All video types (regular videos, shorts, feed items)
+    allVideos: [
+      'ytd-video-renderer',
+      'ytd-grid-video-renderer',
+      'ytd-rich-item-renderer',
+      'ytd-compact-video-renderer',
+      'ytd-reel-item-renderer', // Shorts
+      'ytd-playlist-video-renderer'
+    ]
   };
 
-  // Initialize blocker
+  // Initialize filter
   async function init() {
     isEnabled = await isPlatformEnabled('youtube');
     
@@ -48,160 +35,118 @@
       return;
     }
 
-    log(PLATFORM, 'Initializing...');
+    // Get sensitivity setting
+    const settings = await storageManager.getSettings();
+    sensitivity = settings.youtube?.sensitivity || 'medium';
+
+    log(PLATFORM, `Initializing content filter (sensitivity: ${sensitivity})...`);
     
     // Initial sweep
-    blockShorts();
+    filterContent();
     
     // Watch for dynamic content
     startObserver();
     
-    log(PLATFORM, 'Initialized successfully');
+    log(PLATFORM, 'Content filter initialized successfully');
   }
 
-  // Main blocking function
-  function blockShorts() {
+  // Main filtering function
+  function filterContent() {
     try {
-      // Block Shorts shelf
-      blockShortsShelf();
-      
-      // Block individual Shorts videos
-      blockShortsVideos();
-      
-      // Block Shorts navigation button
-      blockShortsButton();
-      
-      // Block Shorts in search
-      blockSearchShorts();
-      
-      // Block Shorts tab on channels
-      blockShortsTab();
-      
-      if (blockedCount > 0) {
-        log(PLATFORM, `Blocked ${blockedCount} Shorts`);
-      }
-    } catch (error) {
-      logError(PLATFORM, 'Error in blockShorts', error);
-    }
-  }
-
-  // Block Shorts shelf on homepage
-  function blockShortsShelf() {
-    const shelves = document.querySelectorAll(SELECTORS.shortsShelf);
-    
-    shelves.forEach(shelf => {
-      if (!isProcessed(shelf)) {
-        hideElement(shelf, 'shorts-shelf');
-        markProcessed(shelf);
-        blockedCount++;
-        incrementBlockCounter('youtube', 1);
-      }
-    });
-  }
-
-  // Block individual Shorts videos in feeds
-  function blockShortsVideos() {
-    SELECTORS.shortsVideo.forEach(selector => {
-      try {
+      SELECTORS.allVideos.forEach(selector => {
         const videos = document.querySelectorAll(selector);
         
         videos.forEach(video => {
           if (!isProcessed(video)) {
-            // Find the parent container for cleaner removal
-            const container = findVideoContainer(video);
-            hideElement(container || video, 'shorts-video');
-            markProcessed(video);
-            blockedCount++;
-            incrementBlockCounter('youtube', 1);
+            analyzeAndFilterVideo(video);
           }
         });
-      } catch (e) {
-        // Selector might not be valid on this page
+      });
+      
+      if (blockedCount > 0) {
+        log(PLATFORM, `Filtered ${blockedCount} low-quality videos`);
       }
-    });
+    } catch (error) {
+      logError(PLATFORM, 'Error in filterContent', error);
+    }
   }
 
-  // Block Shorts button in sidebar
-  function blockShortsButton() {
-    SELECTORS.shortsButton.forEach(selector => {
-      try {
-        const buttons = document.querySelectorAll(selector);
+  // Analyze individual video and filter if it's slop
+  function analyzeAndFilterVideo(videoElement) {
+    try {
+      // Extract metadata from video element
+      const metadata = extractVideoMetadata(videoElement);
+      
+      if (!metadata.title) {
+        // Can't analyze without title, skip
+        markProcessed(videoElement);
+        return;
+      }
+      
+      // Analyze content quality
+      const slopScore = detector.analyzeSlopScore(metadata);
+      const threshold = detector.getSensitivityThreshold(sensitivity);
+      
+      // Log for debugging
+      if (slopScore > 30) {
+        log(PLATFORM, `Video "${metadata.title.substring(0, 50)}..." - Score: ${slopScore}/${threshold}`);
+      }
+      
+      // Block if it exceeds threshold
+      if (detector.shouldBlock(slopScore, threshold)) {
+        hideElement(videoElement, 'brainrot-content');
+        markProcessed(videoElement);
+        blockedCount++;
+        incrementBlockCounter('youtube', 1);
         
-        buttons.forEach(button => {
-          if (!isProcessed(button)) {
-            hideElement(button, 'shorts-button');
-            markProcessed(button);
-          }
-        });
-      } catch (e) {
-        // Selector might not be valid
+        log(PLATFORM, `🚫 Blocked: "${metadata.title.substring(0, 60)}..." (Score: ${slopScore})`);
+      } else {
+        // Mark as processed but don't hide
+        markProcessed(videoElement);
       }
-    });
-  }
-
-  // Block Shorts in search results
-  function blockSearchShorts() {
-    try {
-      const searchShorts = document.querySelectorAll(SELECTORS.searchShorts);
-      
-      searchShorts.forEach(short => {
-        if (!isProcessed(short)) {
-          hideElement(short, 'search-short');
-          markProcessed(short);
-          blockedCount++;
-          incrementBlockCounter('youtube', 1);
-        }
-      });
-    } catch (e) {
-      // Not on search page
+    } catch (error) {
+      // On error, just mark as processed and don't block
+      markProcessed(videoElement);
+      logError(PLATFORM, 'Error analyzing video', error);
     }
   }
 
-  // Block Shorts tab on channel pages
-  function blockShortsTab() {
-    try {
-      const tabs = document.querySelectorAll(SELECTORS.shortsTab);
-      
-      tabs.forEach(tab => {
-        if (!isProcessed(tab)) {
-          hideElement(tab, 'shorts-tab');
-          markProcessed(tab);
-        }
-      });
-    } catch (e) {
-      // Not on channel page
-    }
-  }
-
-  // Find appropriate container to hide
-  function findVideoContainer(element) {
-    let current = element;
-    const maxDepth = 5;
-    let depth = 0;
+  // Extract video metadata from DOM element
+  function extractVideoMetadata(element) {
+    const metadata = {
+      title: '',
+      description: '',
+      channelName: ''
+    };
     
-    while (current && depth < maxDepth) {
-      // Look for common container types
-      if (
-        current.tagName === 'YTD-RICH-ITEM-RENDERER' ||
-        current.tagName === 'YTD-GRID-VIDEO-RENDERER' ||
-        current.tagName === 'YTD-VIDEO-RENDERER' ||
-        current.tagName === 'YTD-COMPACT-VIDEO-RENDERER'
-      ) {
-        return current;
-      }
-      
-      current = current.parentElement;
-      depth++;
+    // Extract title
+    const titleElement = element.querySelector('#video-title, h3, a#video-title-link, [id*="title"]');
+    if (titleElement) {
+      metadata.title = titleElement.textContent?.trim() || 
+                      titleElement.getAttribute('title') || 
+                      titleElement.getAttribute('aria-label') || '';
     }
     
-    return element;
+    // Extract description/snippet (if available)
+    const descElement = element.querySelector('#description-text, .metadata-snippet-text, [id*="description"]');
+    if (descElement) {
+      metadata.description = descElement.textContent?.trim() || '';
+    }
+    
+    // Extract channel name
+    const channelElement = element.querySelector('#channel-name, ytd-channel-name, [class*="channel"]');
+    if (channelElement) {
+      metadata.channelName = channelElement.textContent?.trim() || '';
+    }
+    
+    return metadata;
   }
 
   // Start mutation observer
   function startObserver() {
     const observer = createDebouncedObserver(() => {
       blockedCount = 0; // Reset for this batch
-      blockShorts();
+      filterContent();
     }, 300);
 
     observer.observe(document.body, {
@@ -220,22 +165,26 @@
       lastUrl = currentUrl;
       log(PLATFORM, 'URL changed, re-scanning...');
       blockedCount = 0;
-      setTimeout(blockShorts, 500); // Small delay for content to load
+      setTimeout(filterContent, 500); // Small delay for content to load
     }
   }).observe(document.body, { childList: true, subtree: true });
 
   // Listen for settings changes
-  chrome.storage.onChanged.addListener((changes, namespace) => {
+  chrome.storage.onChanged.addListener(async (changes, namespace) => {
     if (namespace === 'sync' && changes.antiSlop_settings) {
       const newSettings = changes.antiSlop_settings.newValue;
       const wasEnabled = isEnabled;
       isEnabled = newSettings?.youtube?.enabled ?? false;
+      sensitivity = newSettings?.youtube?.sensitivity || 'medium';
       
       if (wasEnabled !== isEnabled) {
         log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);
         if (isEnabled) {
-          location.reload(); // Reload to apply blocking
+          location.reload(); // Reload to apply filtering
         }
+      } else if (isEnabled) {
+        log(PLATFORM, `Sensitivity changed to: ${sensitivity}`);
+        location.reload(); // Reload to re-analyze with new threshold
       }
     }
   });

@@ -21,11 +21,11 @@ async function initializeDefaults() {
   const DEFAULT_SETTINGS = {
     youtube: {
       enabled: true,
-      hideShorts: true
+      sensitivity: 'medium'
     },
     instagram: {
       enabled: true,
-      hideReels: true
+      sensitivity: 'medium'
     },
     twitter: {
       enabled: true,
