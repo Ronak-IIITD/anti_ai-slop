@@ -161,6 +161,13 @@
 
   // Start mutation observer
   function startObserver() {
+    // Make sure document.body exists
+    if (!document.body) {
+      log(PLATFORM, 'document.body not ready, waiting...');
+      setTimeout(startObserver, 100);
+      return;
+    }
+
     const observer = createDebouncedObserver(() => {
       blockedCount = 0;
       filterContent();
@@ -176,15 +183,24 @@
 
   // Handle URL changes (Instagram is SPA)
   let lastUrl = location.href;
-  new MutationObserver(() => {
-    const currentUrl = location.href;
-    if (currentUrl !== lastUrl) {
-      lastUrl = currentUrl;
-      log(PLATFORM, 'URL changed, re-scanning...');
-      blockedCount = 0;
-      setTimeout(filterContent, 500);
+  function setupUrlChangeObserver() {
+    // Make sure document.body exists
+    if (!document.body) {
+      setTimeout(setupUrlChangeObserver, 100);
+      return;
     }
-  }).observe(document.body, { childList: true, subtree: true });
+
+    new MutationObserver(() => {
+      const currentUrl = location.href;
+      if (currentUrl !== lastUrl) {
+        lastUrl = currentUrl;
+        log(PLATFORM, 'URL changed, re-scanning...');
+        blockedCount = 0;
+        setTimeout(filterContent, 500);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  setupUrlChangeObserver();
 
   // Listen for settings changes
   chrome.storage.onChanged.addListener(async (changes, namespace) => {
