@@ -110,10 +110,23 @@ function updateTabIconStatus(tabId, status) {
     error: '#6c757d'       // Grey - error occurred
   };
 
+  const badges = {
+    clean: '',           // No badge text for clean pages
+    warned: '!',         // Warning indicator
+    blocked: 'X',        // Blocked indicator
+    whitelisted: '',     // No badge for whitelisted
+    disabled: '',        // No badge for disabled
+    error: ''            // No badge for errors
+  };
+
   const color = colors[status] || '#FF4444';
+  const text = badges[status] || '';
   
   try {
     chrome.action.setBadgeBackgroundColor({ color, tabId });
+    if (text) {
+      chrome.action.setBadgeText({ text, tabId });
+    }
   } catch (err) {
     // Tab may have closed
   }
