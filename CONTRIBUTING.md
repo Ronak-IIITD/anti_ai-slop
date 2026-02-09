@@ -7,6 +7,7 @@ Thank you for your interest in contributing to Anti-Slop! This document provides
 ### 1. Report Bugs
 
 Found a bug? Please open an issue with:
+
 - Clear description of the problem
 - Steps to reproduce
 - Expected vs actual behavior
@@ -14,6 +15,7 @@ Found a bug? Please open an issue with:
 - Screenshots if applicable
 
 **Template:**
+
 ```
 **Bug Description:**
 Shorts are still showing on YouTube homepage
@@ -35,6 +37,7 @@ Shorts are still showing on YouTube homepage
 ### 2. Suggest Features
 
 Have an idea? Open a feature request:
+
 - Describe the feature clearly
 - Explain the use case
 - Consider implementation complexity
@@ -44,11 +47,13 @@ Have an idea? Open a feature request:
 Social media platforms change frequently. Help keep selectors updated:
 
 **When to update:**
+
 - Blocking stops working on a platform
 - New UI elements appear
 - Platform redesign
 
 **How to update:**
+
 1. Inspect the page with Chrome DevTools
 2. Find new selectors for target elements
 3. Update the appropriate content script
@@ -56,20 +61,22 @@ Social media platforms change frequently. Help keep selectors updated:
 5. Submit a PR with version comment
 
 Example:
+
 ```javascript
 // Updated selectors as of 2026-01-21
 const SELECTORS = {
-  shortsShelf: 'ytd-reel-shelf-renderer', // Still working
+  shortsShelf: "ytd-reel-shelf-renderer", // Still working
   shortsVideo: [
-    'ytd-reel-item-renderer',
-    'ytd-shorts-container' // NEW: Added for redesign
-  ]
+    "ytd-reel-item-renderer",
+    "ytd-shorts-container", // NEW: Added for redesign
+  ],
 };
 ```
 
 ### 4. TikTok Testing
 
 We need international contributors to test TikTok blocking:
+
 - Validate selectors work
 - Report what's blocked/not blocked
 - Suggest improvements
@@ -77,6 +84,7 @@ We need international contributors to test TikTok blocking:
 ### 5. AI Pattern Detection
 
 Improve AI detection accuracy:
+
 - Add new AI-generated phrases
 - Identify clickbait patterns
 - Refine scoring algorithm
@@ -84,10 +92,11 @@ Improve AI detection accuracy:
 
 **How to add patterns:**
 Edit `utils/ai-patterns.js`:
+
 ```javascript
 const AI_PHRASES = [
-  'delve into',
-  'your new phrase here',
+  "delve into",
+  "your new phrase here",
   // ...
 ];
 ```
@@ -98,16 +107,19 @@ const AI_PHRASES = [
 
 1. Fork the repository
 2. Clone your fork:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/anti-slop.git
    cd anti-slop
    ```
+
 3. Load in Chrome (see QUICKSTART.md)
 4. Make changes and test
 
 #### Coding Standards
 
 **JavaScript:**
+
 - Use modern ES6+ syntax
 - Use `const` and `let` (never `var`)
 - Async/await over callbacks
@@ -115,32 +127,39 @@ const AI_PHRASES = [
 - Comments for complex logic
 
 **Good:**
+
 ```javascript
 async function blockShorts() {
   const shelves = document.querySelectorAll(SELECTORS.shortsShelf);
-  shelves.forEach(shelf => hideElement(shelf));
+  shelves.forEach((shelf) => hideElement(shelf));
 }
 ```
 
 **Avoid:**
+
 ```javascript
 function bs() {
-  var x = document.querySelectorAll('ytd-reel-shelf-renderer');
-  for(var i=0; i<x.length; i++) { x[i].style.display='none'; }
+  var x = document.querySelectorAll("ytd-reel-shelf-renderer");
+  for (var i = 0; i < x.length; i++) {
+    x[i].style.display = "none";
+  }
 }
 ```
 
 **CSS:**
+
 - Use BEM-style naming when adding classes
 - Leverage CSS variables for theming
 - Ensure responsive design
 
 **Performance:**
+
 - Debounce mutation observers (300ms)
 - Avoid expensive operations in loops
 - Use efficient selectors
 
 **Testing:**
+
 - Test on actual platforms
 - Verify all settings work
 - Check statistics tracking
@@ -149,6 +168,7 @@ function bs() {
 #### Pull Request Process
 
 1. **Create a branch:**
+
    ```bash
    git checkout -b feature/my-feature
    ```
@@ -164,6 +184,7 @@ function bs() {
    - Check for console errors
 
 4. **Commit with clear messages:**
+
    ```bash
    git commit -m "feat: add Reddit blocking support"
    ```
@@ -178,6 +199,7 @@ function bs() {
    - `chore:` maintenance
 
 5. **Push to your fork:**
+
    ```bash
    git push origin feature/my-feature
    ```
@@ -188,32 +210,39 @@ function bs() {
    - Add screenshots/videos if UI changes
 
 **PR Template:**
+
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Documentation update
 - [ ] Platform selector update
 
 ## Testing
+
 - [ ] Tested on Chrome latest
 - [ ] Tested on target platform
 - [ ] Settings persist correctly
 - [ ] Statistics update correctly
 
 ## Screenshots
+
 (if applicable)
 
 ## Related Issues
+
 Closes #123
 ```
 
 ### 7. Documentation
 
 Help improve documentation:
+
 - Fix typos
 - Clarify instructions
 - Add examples
@@ -237,6 +266,7 @@ Help improve documentation:
 ### Review Process
 
 Pull requests will be reviewed for:
+
 1. Code quality and standards
 2. Functionality and testing
 3. Documentation completeness
@@ -247,6 +277,7 @@ Expect feedback within 1-3 days. Maintainers may request changes.
 ## Recognition
 
 Contributors will be:
+
 - Listed in README acknowledgments
 - Credited in release notes
 - Given GitHub contributor badge
