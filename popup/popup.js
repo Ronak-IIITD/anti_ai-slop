@@ -419,28 +419,13 @@ function showToast(message, type = 'success') {
   document.querySelectorAll('.toast').forEach(t => t.remove());
   
   const toast = document.createElement('div');
-  toast.className = 'toast';
+  toast.className = `toast ${type === 'error' ? 'error' : ''}`;
   toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: ${type === 'error' ? '#dc3545' : '#28a745'};
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 1000;
-    animation: slideUp 0.3s ease-out;
-    white-space: nowrap;
-  `;
   
   document.body.appendChild(toast);
   
   setTimeout(() => {
-    toast.style.animation = 'slideDown 0.3s ease-out';
+    toast.style.animation = 'slideDown 0.3s ease-out forwards';
     setTimeout(() => toast.remove(), 300);
   }, 2000);
 }
@@ -525,32 +510,4 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   }
 });
 
-// ============================================================
-// ANIMATIONS
-// ============================================================
 
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideUp {
-    from {
-      transform: translateX(-50%) translateY(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes slideDown {
-    from {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateX(-50%) translateY(20px);
-      opacity: 0;
-    }
-  }
-`;
-document.head.appendChild(style);
