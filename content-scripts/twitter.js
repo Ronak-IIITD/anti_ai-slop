@@ -198,15 +198,23 @@
 
   // Handle URL changes (Twitter is SPA)
   let lastUrl = location.href;
-  new MutationObserver(() => {
-    const currentUrl = location.href;
-    if (currentUrl !== lastUrl) {
-      lastUrl = currentUrl;
-      log(PLATFORM, 'URL changed, re-scanning...');
-      blockedCount = 0;
-      setTimeout(filterTweets, 500);
+  function setupUrlChangeObserver() {
+    if (!document.body) {
+      setTimeout(setupUrlChangeObserver, 100);
+      return;
     }
-  }).observe(document.body, { childList: true, subtree: true });
+
+    new MutationObserver(() => {
+      const currentUrl = location.href;
+      if (currentUrl !== lastUrl) {
+        lastUrl = currentUrl;
+        log(PLATFORM, 'URL changed, re-scanning...');
+        blockedCount = 0;
+        setTimeout(filterTweets, 500);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  setupUrlChangeObserver();
 
   // Listen for settings changes
   chrome.storage.onChanged.addListener((changes, namespace) => {

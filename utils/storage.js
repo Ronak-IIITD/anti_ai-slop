@@ -155,7 +155,7 @@ const DEFAULT_SETTINGS = {
   },
   aiDetector: {
     enabled: true,
-    threshold: 60,
+    threshold: 65,
     sensitivity: 'medium', // low=80, medium=60, high=40
     mode: 'warn' // 'warn' = show banner, 'block' = hide content, 'off' = disabled
   }

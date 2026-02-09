@@ -23,6 +23,14 @@ files=(
   "content-scripts/ai-detector.js"
   "utils/storage.js"
   "utils/ai-patterns.js"
+  "utils/brainrot-patterns.js"
+  "content-scripts/common.js"
+  "content-scripts/ai-detector.css"
+  "content-scripts/youtube.css"
+  "content-scripts/twitter.css"
+  "content-scripts/instagram.css"
+  "content-scripts/tiktok.css"
+  "PRIVACY_POLICY.md"
 )
 
 all_good=true
