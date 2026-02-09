@@ -1,20 +1,300 @@
-/* AI Content Detector Styles */
+/* AI Content Detector Styles v2 */
+/* Supports warn mode (banner) and block mode (overlay) */
+
+/* ============================================================
+   COMMON
+   ============================================================ */
 
 .anti-slop-hidden {
   display: none !important;
   visibility: hidden !important;
 }
 
-.anti-slop-ai-blocked-message {
+/* Ensure blocked content stays hidden */
+[data-anti-slop*="ai-slop"] {
+  display: none !important;
+}
+
+/* ============================================================
+   WARNING BANNER (warn mode)
+   Dismissible bar at top of page
+   ============================================================ */
+
+.anti-slop-warning-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2147483647;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  animation: anti-slop-slide-down 0.3s ease-out;
+}
+
+.anti-slop-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.anti-slop-banner-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.anti-slop-banner-text {
+  flex: 1;
+  min-width: 200px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.anti-slop-banner-text strong {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.anti-slop-banner-details {
+  display: block;
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.anti-slop-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.anti-slop-banner-btn {
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.anti-slop-banner-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.anti-slop-banner-btn:active {
+  transform: translateY(0);
+}
+
+.anti-slop-btn-dismiss {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.anti-slop-btn-whitelist {
+  background: #fff;
+  color: #f57c00;
+}
+
+/* ============================================================
+   BLOCK OVERLAY (block mode)
+   Full-page overlay with centered card
+   ============================================================ */
+
+.anti-slop-block-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 999999;
+  z-index: 2147483647;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: anti-slop-fade-in 0.4s ease-out;
 }
 
-/* Ensure blocked content stays hidden */
-[data-anti-slop*="ai-slop"] {
-  display: none !important;
+.anti-slop-block-card {
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+}
+
+.anti-slop-block-shield {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.anti-slop-block-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  line-height: 1.2;
+}
+
+.anti-slop-block-subtitle {
+  font-size: 17px;
+  line-height: 1.5;
+  opacity: 0.95;
+  margin: 0 0 24px;
+}
+
+.anti-slop-block-score-box {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 28px;
+  backdrop-filter: blur(8px);
+}
+
+.anti-slop-block-score {
+  font-size: 16px;
+  margin: 0;
+}
+
+.anti-slop-block-meta {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 8px 0 0;
+}
+
+.anti-slop-block-reasons {
+  font-size: 12px;
+  opacity: 0.75;
+  margin: 8px 0 0;
+  font-style: italic;
+}
+
+.anti-slop-block-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.anti-slop-block-btn {
+  border: none;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.anti-slop-block-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.anti-slop-block-btn:active {
+  transform: scale(1);
+}
+
+.anti-slop-block-btn-primary {
+  background: #fff;
+  color: #667eea;
+}
+
+.anti-slop-block-btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+.anti-slop-block-btn-tertiary {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+.anti-slop-block-hint {
+  font-size: 13px;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* ============================================================
+   TOAST NOTIFICATION
+   Quick feedback after whitelisting
+   ============================================================ */
+
+.anti-slop-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2e7d32;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2147483647;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  animation: anti-slop-slide-up 0.3s ease-out;
+}
+
+.anti-slop-toast-hide {
+  animation: anti-slop-slide-down-out 0.3s ease-out forwards;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes anti-slop-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes anti-slop-slide-up {
+  from {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes anti-slop-slide-down-out {
+  from {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+}
+
+@keyframes anti-slop-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

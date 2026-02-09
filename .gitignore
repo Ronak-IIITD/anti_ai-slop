@@ -1,6 +1,10 @@
 # Agent configuration files (local development only)
 AGENTS.md
 
+# Development-only files
+PROJECT_SUMMARY.md
+install-check.sh
+
 # OS generated files
 .DS_Store
 .DS_Store?

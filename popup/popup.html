@@ -11,11 +11,25 @@
     <!-- Header -->
     <header class="header">
       <div class="logo">
-        <span class="logo-icon">🛡️</span>
+        <span class="logo-icon">&#x1F6E1;</span>
         <h1>Anti-Slop</h1>
       </div>
       <p class="tagline">Reclaim your focus</p>
     </header>
+
+    <!-- Current Site Status -->
+    <section class="site-status-section" id="siteStatusSection">
+      <div class="site-status-bar">
+        <div class="site-status-info">
+          <span class="site-status-dot" id="siteStatusDot"></span>
+          <span class="site-status-domain" id="siteStatusDomain">Loading...</span>
+        </div>
+        <span class="site-status-label" id="siteStatusLabel">Checking...</span>
+      </div>
+      <button class="btn btn-sm btn-whitelist-toggle" id="siteWhitelistToggle" style="display:none;">
+        Add to whitelist
+      </button>
+    </section>
 
     <!-- Statistics Dashboard -->
     <section class="stats-section">
@@ -64,7 +78,7 @@
       <!-- YouTube -->
       <div class="control-item">
         <div class="control-header">
-          <span class="control-icon">📺</span>
+          <span class="control-icon">&#x1F4FA;</span>
           <span class="control-name">YouTube Shorts</span>
           <label class="toggle">
             <input type="checkbox" id="youtubeToggle" checked>
@@ -76,7 +90,7 @@
       <!-- Twitter -->
       <div class="control-item">
         <div class="control-header">
-          <span class="control-icon">🐦</span>
+          <span class="control-icon">&#x1F426;</span>
           <span class="control-name">Twitter/X</span>
           <label class="toggle">
             <input type="checkbox" id="twitterToggle" checked>
@@ -98,7 +112,7 @@
       <!-- Instagram -->
       <div class="control-item">
         <div class="control-header">
-          <span class="control-icon">📷</span>
+          <span class="control-icon">&#x1F4F7;</span>
           <span class="control-name">Instagram Reels</span>
           <label class="toggle">
             <input type="checkbox" id="instagramToggle" checked>
@@ -110,7 +124,7 @@
       <!-- TikTok -->
       <div class="control-item">
         <div class="control-header">
-          <span class="control-icon">🎵</span>
+          <span class="control-icon">&#x1F3B5;</span>
           <span class="control-name">TikTok</span>
           <label class="toggle">
             <input type="checkbox" id="tiktokToggle" checked>
@@ -128,7 +142,7 @@
       <!-- AI Detector -->
       <div class="control-item">
         <div class="control-header">
-          <span class="control-icon">🤖</span>
+          <span class="control-icon">&#x1F916;</span>
           <span class="control-name">AI Content Detector</span>
           <label class="toggle">
             <input type="checkbox" id="aiDetectorToggle" checked>
@@ -137,14 +151,43 @@
         </div>
         <div class="control-details">
           <label class="input-label">
+            Mode:
+            <select id="aiDetectorMode">
+              <option value="warn">Warn (show banner)</option>
+              <option value="block">Block (hide content)</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+          <label class="input-label">
             Sensitivity: <span id="sensitivityValue">Medium</span>
             <select id="sensitivity">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
+              <option value="low">Low (only obvious AI)</option>
+              <option value="medium" selected>Medium (balanced)</option>
+              <option value="high">High (aggressive)</option>
             </select>
           </label>
         </div>
+      </div>
+    </section>
+
+    <!-- Whitelist Management -->
+    <section class="whitelist-section">
+      <h2 class="section-title">Whitelisted Sites</h2>
+      <p class="section-desc">Sites that are never scanned by the AI detector.</p>
+      <div class="whitelist-add">
+        <input type="text" id="whitelistInput" placeholder="example.com" class="whitelist-input">
+        <button class="btn btn-primary btn-sm" id="whitelistAddBtn">Add</button>
+      </div>
+      <div class="whitelist-list" id="whitelistList">
+        <p class="whitelist-empty">Loading...</p>
+      </div>
+    </section>
+
+    <!-- Recent Blocks -->
+    <section class="recent-blocks-section">
+      <h2 class="section-title">Recent Detections</h2>
+      <div class="recent-blocks-list" id="recentBlocksList">
+        <p class="recent-blocks-empty">No recent detections</p>
       </div>
     </section>
 
@@ -152,8 +195,8 @@
     <footer class="footer">
       <p class="footer-text">Made with focus by Anti-Slop Team</p>
       <div class="footer-links">
-        <a href="https://github.com/yourusername/anti-slop" target="_blank">GitHub</a>
-        <span>•</span>
+        <a href="https://github.com/Ronak-IIITD/anti_ai-slop" target="_blank">GitHub</a>
+        <span>&bull;</span>
         <a href="#" id="reportIssue">Report Issue</a>
       </div>
     </footer>

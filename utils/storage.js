@@ -1,10 +1,138 @@
 // Storage utility for Anti-Slop extension
-// Manages user settings and statistics
+// Manages user settings, statistics, and whitelist
 
 const STORAGE_KEYS = {
   SETTINGS: 'antiSlop_settings',
-  STATS: 'antiSlop_stats'
+  STATS: 'antiSlop_stats',
+  WHITELIST: 'antiSlop_whitelist',
+  RECENT_BLOCKS: 'antiSlop_recentBlocks'
 };
+
+// Default whitelist - sites that should NEVER be analyzed by AI detector
+// These are legitimate tools, productivity apps, and trusted sources
+const DEFAULT_WHITELIST = [
+  // AI Tools (legitimate usage - NOT slop)
+  'claude.ai',
+  'chat.openai.com',
+  'chatgpt.com',
+  'gemini.google.com',
+  'copilot.microsoft.com',
+  'perplexity.ai',
+  'anthropic.com',
+  'huggingface.co',
+  'replicate.com',
+  'midjourney.com',
+  'poe.com',
+
+  // Search Engines
+  'google.com',
+  'google.co.in',
+  'duckduckgo.com',
+  'bing.com',
+  'search.brave.com',
+
+  // Development & Coding
+  'github.com',
+  'gitlab.com',
+  'bitbucket.org',
+  'stackoverflow.com',
+  'stackexchange.com',
+  'npmjs.com',
+  'pypi.org',
+  'crates.io',
+  'developer.mozilla.org',
+  'w3schools.com',
+  'codepen.io',
+  'replit.com',
+  'codesandbox.io',
+  'vercel.com',
+  'netlify.com',
+  'heroku.com',
+  'render.com',
+
+  // Documentation
+  'docs.github.com',
+  'docs.google.com',
+  'developer.chrome.com',
+  'reactjs.org',
+  'vuejs.org',
+  'angular.io',
+  'nextjs.org',
+  'nodejs.org',
+
+  // Education & Research
+  'wikipedia.org',
+  'wikimedia.org',
+  'arxiv.org',
+  'scholar.google.com',
+  'khanacademy.org',
+  'coursera.org',
+  'udemy.com',
+  'edx.org',
+  'mit.edu',
+  'stanford.edu',
+
+  // Trusted News Sources
+  'reuters.com',
+  'apnews.com',
+  'bbc.com',
+  'bbc.co.uk',
+  'npr.org',
+  'nytimes.com',
+  'theguardian.com',
+  'washingtonpost.com',
+
+  // Productivity & Work
+  'notion.so',
+  'figma.com',
+  'linear.app',
+  'slack.com',
+  'discord.com',
+  'trello.com',
+  'asana.com',
+  'jira.atlassian.com',
+
+  // E-commerce
+  'amazon.com',
+  'amazon.in',
+  'flipkart.com',
+  'ebay.com',
+
+  // Social (handled by their own content scripts)
+  'reddit.com',
+  'quora.com',
+
+  // Entertainment
+  'netflix.com',
+  'spotify.com',
+  'primevideo.com',
+  'hotstar.com',
+
+  // Communication
+  'gmail.com',
+  'mail.google.com',
+  'outlook.com',
+  'web.whatsapp.com',
+  'telegram.org',
+
+  // Google Services
+  'drive.google.com',
+  'maps.google.com',
+  'calendar.google.com',
+  'photos.google.com',
+  'meet.google.com',
+
+  // Competitive Programming
+  'leetcode.com',
+  'hackerrank.com',
+  'codeforces.com',
+  'codechef.com',
+  'geeksforgeeks.org',
+
+  // Localhost / Development
+  'localhost',
+  '127.0.0.1'
+];
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -27,9 +155,9 @@ const DEFAULT_SETTINGS = {
   },
   aiDetector: {
     enabled: true,
-    threshold: 60, // Block if score >= 60
+    threshold: 60,
     sensitivity: 'medium', // low=80, medium=60, high=40
-    whitelist: []
+    mode: 'warn' // 'warn' = show banner, 'block' = hide content, 'off' = disabled
   }
 };
 
@@ -51,7 +179,8 @@ class StorageManager {
   constructor() {
     this.cache = {
       settings: null,
-      stats: null
+      stats: null,
+      whitelist: null
     };
   }
 
@@ -64,6 +193,10 @@ class StorageManager {
     return new Promise((resolve) => {
       chrome.storage.sync.get([STORAGE_KEYS.SETTINGS], (result) => {
         const settings = result[STORAGE_KEYS.SETTINGS] || DEFAULT_SETTINGS;
+        // Ensure new fields exist (migration for existing users)
+        if (!settings.aiDetector.mode) {
+          settings.aiDetector.mode = 'warn';
+        }
         this.cache.settings = settings;
         resolve(settings);
       });
@@ -81,6 +214,100 @@ class StorageManager {
         const stats = result[STORAGE_KEYS.STATS] || DEFAULT_STATS;
         this.cache.stats = stats;
         resolve(stats);
+      });
+    });
+  }
+
+  // Get whitelist (default + user-added)
+  async getWhitelist() {
+    if (this.cache.whitelist) {
+      return this.cache.whitelist;
+    }
+
+    return new Promise((resolve) => {
+      chrome.storage.sync.get([STORAGE_KEYS.WHITELIST], (result) => {
+        const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
+        // Merge default + user whitelist, deduplicate
+        const combined = [...new Set([...DEFAULT_WHITELIST, ...userWhitelist])];
+        this.cache.whitelist = combined;
+        resolve(combined);
+      });
+    });
+  }
+
+  // Add domain to user whitelist
+  async addToWhitelist(domain) {
+    const cleaned = domain.replace(/^www\./, '').toLowerCase();
+    return new Promise((resolve) => {
+      chrome.storage.sync.get([STORAGE_KEYS.WHITELIST], (result) => {
+        const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
+        if (!userWhitelist.includes(cleaned)) {
+          userWhitelist.push(cleaned);
+          chrome.storage.sync.set({ [STORAGE_KEYS.WHITELIST]: userWhitelist }, () => {
+            this.cache.whitelist = null; // Invalidate cache
+            resolve(true);
+          });
+        } else {
+          resolve(false); // Already exists
+        }
+      });
+    });
+  }
+
+  // Remove domain from user whitelist
+  async removeFromWhitelist(domain) {
+    const cleaned = domain.replace(/^www\./, '').toLowerCase();
+    // Cannot remove default whitelist entries
+    if (DEFAULT_WHITELIST.includes(cleaned)) {
+      return false;
+    }
+    return new Promise((resolve) => {
+      chrome.storage.sync.get([STORAGE_KEYS.WHITELIST], (result) => {
+        const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
+        const filtered = userWhitelist.filter(d => d !== cleaned);
+        chrome.storage.sync.set({ [STORAGE_KEYS.WHITELIST]: filtered }, () => {
+          this.cache.whitelist = null;
+          resolve(true);
+        });
+      });
+    });
+  }
+
+  // Check if domain is whitelisted
+  async isDomainWhitelisted(domain) {
+    const whitelist = await this.getWhitelist();
+    const cleaned = domain.replace(/^www\./, '').toLowerCase();
+    return whitelist.some(entry =>
+      cleaned === entry ||
+      cleaned.endsWith('.' + entry)
+    );
+  }
+
+  // Save recent block for history
+  async addRecentBlock(entry) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get([STORAGE_KEYS.RECENT_BLOCKS], (result) => {
+        const blocks = result[STORAGE_KEYS.RECENT_BLOCKS] || [];
+        blocks.unshift({
+          url: entry.url,
+          title: entry.title,
+          score: entry.score,
+          timestamp: new Date().toISOString()
+        });
+        // Keep only last 20 blocks
+        const trimmed = blocks.slice(0, 20);
+        chrome.storage.local.set({ [STORAGE_KEYS.RECENT_BLOCKS]: trimmed }, () => {
+          resolve(trimmed);
+        });
+      });
+    });
+  }
+
+  // Get recent blocks
+  async getRecentBlocks() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get([STORAGE_KEYS.RECENT_BLOCKS], (result) => {
+        resolve(result[STORAGE_KEYS.RECENT_BLOCKS] || []);
       });
     });
   }
@@ -108,13 +335,13 @@ class StorageManager {
   // Increment blocked counter for a platform
   async incrementBlocked(platform, count = 1) {
     const stats = await this.getStats();
-    
+
     stats.totalBlocked += count;
-    
+
     if (stats.blockedByPlatform[platform] !== undefined) {
       stats.blockedByPlatform[platform] += count;
     }
-    
+
     // Estimate time saved (rough approximation)
     // Shorts/Reels: ~1 min each, Posts: ~30 sec, Articles: ~3 min
     let timeSaved = 0;
@@ -135,14 +362,14 @@ class StorageManager {
         timeSaved = count * 3; // 3 min per article
         break;
     }
-    
+
     stats.estimatedTimeSaved += timeSaved;
-    
+
     await this.saveStats(stats);
-    
+
     // Update badge
     this.updateBadge(stats.totalBlocked);
-    
+
     return stats;
   }
 
@@ -190,6 +417,7 @@ class StorageManager {
   clearCache() {
     this.cache.settings = null;
     this.cache.stats = null;
+    this.cache.whitelist = null;
   }
 }
 

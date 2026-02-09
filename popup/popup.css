@@ -1,4 +1,4 @@
-/* Anti-Slop Popup Styles */
+/* Anti-Slop Popup Styles v2 */
 
 * {
   margin: 0;
@@ -51,7 +51,97 @@ body {
   font-weight: 400;
 }
 
-/* Statistics Section */
+/* ============================================================
+   Current Site Status Bar
+   ============================================================ */
+
+.site-status-section {
+  padding: 12px 20px;
+  background: #f0f3ff;
+  border-bottom: 1px solid #dde3f7;
+}
+
+.site-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-status-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.site-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-active {
+  background: #667eea;
+}
+
+.status-scanning {
+  background: #28a745;
+  animation: pulse-dot 2s infinite;
+}
+
+.status-whitelisted {
+  background: #6c757d;
+}
+
+.status-disabled {
+  background: #ccc;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.site-status-domain {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-status-label {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.btn-whitelist-toggle {
+  margin-top: 8px;
+  width: 100%;
+  background: white;
+  color: #667eea;
+  border: 1px solid #667eea;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-whitelist-toggle:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* ============================================================
+   Statistics Section
+   ============================================================ */
+
 .stats-section {
   padding: 20px;
   background: #f8f9fa;
@@ -63,6 +153,13 @@ body {
   font-weight: 600;
   margin-bottom: 15px;
   color: #495057;
+}
+
+.section-desc {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: -10px;
+  margin-bottom: 12px;
 }
 
 .stats-grid {
@@ -137,7 +234,10 @@ body {
   border-radius: 12px;
 }
 
-/* Controls Section */
+/* ============================================================
+   Controls Section
+   ============================================================ */
+
 .controls-section {
   padding: 20px;
 }
@@ -265,7 +365,139 @@ body {
   accent-color: #667eea;
 }
 
-/* Buttons */
+/* ============================================================
+   Whitelist Section
+   ============================================================ */
+
+.whitelist-section {
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.whitelist-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.whitelist-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.whitelist-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+}
+
+.whitelist-list {
+  max-height: 160px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.whitelist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+}
+
+.whitelist-item:last-child {
+  border-bottom: none;
+}
+
+.whitelist-domain {
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whitelist-remove {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.whitelist-remove:hover {
+  opacity: 1;
+}
+
+.whitelist-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* ============================================================
+   Recent Blocks Section
+   ============================================================ */
+
+.recent-blocks-section {
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.recent-blocks-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.recent-block-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.recent-block-item:last-child {
+  border-bottom: none;
+}
+
+.recent-block-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recent-block-title {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.recent-block-meta {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.recent-blocks-empty {
+  font-size: 12px;
+  color: #6c757d;
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
 .btn {
   border: none;
   padding: 10px 20px;
@@ -302,7 +534,15 @@ body {
   width: 100%;
 }
 
-/* Footer */
+.whitelist-add .btn-sm {
+  width: auto;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
 .footer {
   padding: 20px;
   text-align: center;
@@ -333,9 +573,12 @@ body {
   text-decoration: underline;
 }
 
-/* Scrollbar */
+/* ============================================================
+   Scrollbar
+   ============================================================ */
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -344,7 +587,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: #667eea;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
