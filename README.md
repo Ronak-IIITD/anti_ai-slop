@@ -365,6 +365,6 @@ MIT License. See [`LICENSE`](LICENSE) for details.
 
 **[⬆ Back to Top](#anti-slop)**
 
-Made with focus by [@Ronak-IIITD](https://github.com/Ronak-IIITD) and contributors.
+Made with focus by [@Ronak-IIITD](https://github.com/Ronak-IIITD)
 
 </div>
