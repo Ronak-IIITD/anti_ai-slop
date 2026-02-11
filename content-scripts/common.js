@@ -29,10 +29,74 @@ function throttle(func, limit) {
 // Hide element with anti-slop styling
 function hideElement(element, reason = 'slop') {
   if (!element || element.classList.contains('anti-slop-hidden')) return;
-  
-  element.classList.add('anti-slop-hidden');
-  element.setAttribute('data-anti-slop', reason);
-  element.style.display = 'none';
+
+  const isTikTokBlock = reason === 'feed-blocked' || reason === 'video-blocked';
+  const shouldShowPlaceholder = !isTikTokBlock;
+
+  const finalizeHide = () => {
+    element.classList.add('anti-slop-hidden');
+    element.setAttribute('data-anti-slop', reason);
+    element.style.display = 'none';
+  };
+
+  if (!shouldShowPlaceholder) {
+    finalizeHide();
+    return;
+  }
+
+  try {
+    if (!chrome?.storage?.sync?.get) {
+      finalizeHide();
+      return;
+    }
+
+    chrome.storage.sync.get(['antiSlop_settings'], (result) => {
+      const settings = result.antiSlop_settings || {};
+      const showPlaceholders = settings.ui?.showPlaceholders ?? true;
+
+      if (!showPlaceholders) {
+        finalizeHide();
+        return;
+      }
+
+      const placeholder = document.createElement('div');
+      placeholder.className = 'anti-slop-blocked-placeholder';
+      const safeReason = reason.replace(/[<>&"']/g, (char) => {
+        const map = {
+          '<': '&lt;',
+          '>': '&gt;',
+          '&': '&amp;',
+          '"': '&quot;',
+          "'": '&#39;'
+        };
+        return map[char];
+      });
+      placeholder.innerHTML = `
+        <div class="anti-slop-reason">Blocked: ${safeReason}</div>
+        <button class="anti-slop-show-btn" type="button">Show Content</button>
+      `;
+
+      const parent = element.parentNode;
+      if (parent) {
+        parent.insertBefore(placeholder, element);
+      }
+
+      finalizeHide();
+
+      const button = placeholder.querySelector('.anti-slop-show-btn');
+      if (button) {
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          element.style.display = '';
+          element.classList.remove('anti-slop-hidden');
+          element.classList.add('anti-slop-revealed');
+          placeholder.remove();
+        });
+      }
+    });
+  } catch (error) {
+    finalizeHide();
+  }
 }
 
 // Show element (for toggling)

@@ -1,6 +1,6 @@
 // Brainrot Content Detection Patterns v2
 // Smarter detection: tiered keywords, requires multiple signals, reduces false positives
-// Updated as of 2026-02-09
+// Updated as of 2026-02-11
 
 // ============================================================
 // BRAINROT KEYWORDS (Tiered)
@@ -8,6 +8,7 @@
 
 // Tier 1: Strong brainrot indicators - a single match adds significant weight
 const BRAINROT_STRONG = [
+  // Updated as of 2026-02-11
   'skibidi',
   'gyatt',
   'rizz',
@@ -24,11 +25,44 @@ const BRAINROT_STRONG = [
   'delulu',
   'ai generated',
   'text to speech',
-  'auto generated'
+  'auto generated',
+  'mewing',
+  'looksmaxxing',
+  'heightmaxxing',
+  'chad',
+  'beta male',
+  'alpha grindset',
+  'goon cave',
+  'edging',
+  'just put the fries in the bag',
+  'hawk tuah',
+  'ohio',
+  'baby gronk',
+  'livvy dunne',
+  'lil bro',
+  'maidenless',
+  'touch grass',
+  'caught in 4k ultra hd',
+  'main character syndrome',
+  'sigma rules',
+  'tate speech',
+  'hustlers university',
+  'cobratate',
+  'w rizz',
+  'l rizz',
+  'negative canthal tilt',
+  'forward growth',
+  'bonesmashing',
+  'softmaxxing',
+  'hardmaxxing',
+  'percent body fat',
+  'bf%',
+  'body fat percentage'
 ];
 
 // Tier 2: Moderate indicators - need 2+ to matter
 const BRAINROT_MODERATE = [
+  // Updated as of 2026-02-11
   'wait for it',
   'wait until',
   'watch till the end',
@@ -46,7 +80,24 @@ const BRAINROT_MODERATE = [
   'caught in 4k',
   'npc behavior',
   'main character energy',
-  'rent free'
+  'rent free',
+  'this is crazy',
+  'insane clip',
+  'unbelievable moment',
+  'wait for the end',
+  'part 2 in bio',
+  'link in bio',
+  'full video on',
+  'follow for more',
+  'like for part 2',
+  'comment if',
+  'share if you agree',
+  'this you?',
+  'pov you',
+  'that one friend who',
+  'nobody:',
+  'absolutely nobody:',
+  'meme compilation'
 ];
 
 // Tier 3: Weak indicators - only count if strong/moderate also present
@@ -62,7 +113,11 @@ const BRAINROT_WEAK = [
   'based',
   'mid',
   'pov:',
-  'real'
+  'real',
+  'ong',
+  'fr',
+  'bro',
+  'bruh'
 ];
 
 // NOT included anymore (too many false positives):

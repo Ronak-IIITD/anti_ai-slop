@@ -32,10 +32,21 @@ async function loadSettings() {
     document.getElementById('aiDetectorToggle').checked = settings.aiDetector?.enabled ?? true;
     
     // Twitter settings
-    const minChars = settings.twitter?.minChars || 100;
-    document.getElementById('minChars').value = minChars;
-    document.getElementById('minCharsValue').textContent = minChars;
-    document.getElementById('blockClickbait').checked = settings.twitter?.blockClickbait ?? true;
+    const twitterSensitivity = settings.twitter?.sensitivity || 'medium';
+    const twitterSensitivitySelect = document.getElementById('twitterSensitivity');
+    if (twitterSensitivitySelect) {
+      twitterSensitivitySelect.value = twitterSensitivity;
+    }
+
+    const blockBrainrotToggle = document.getElementById('blockBrainrot');
+    if (blockBrainrotToggle) {
+      blockBrainrotToggle.checked = settings.twitter?.blockBrainrot ?? true;
+    }
+
+    const blockClickbaitToggle = document.getElementById('blockClickbait');
+    if (blockClickbaitToggle) {
+      blockClickbaitToggle.checked = settings.twitter?.blockClickbait ?? true;
+    }
     
     // TikTok settings
     document.getElementById('blockTiktokFeed').checked = settings.tiktok?.blockFeed ?? true;
@@ -48,6 +59,12 @@ async function loadSettings() {
     
     const aiMode = settings.aiDetector?.mode || 'warn';
     document.getElementById('aiDetectorMode').value = aiMode;
+
+    const showPlaceholders = settings.ui?.showPlaceholders ?? true;
+    const showPlaceholdersToggle = document.getElementById('showPlaceholders');
+    if (showPlaceholdersToggle) {
+      showPlaceholdersToggle.checked = showPlaceholders;
+    }
     
     console.log('[Anti-Slop Popup] Settings loaded');
   } catch (error) {
@@ -288,17 +305,37 @@ function setupEventListeners() {
   document.getElementById('aiDetectorToggle').addEventListener('change', (e) => {
     updateSetting('aiDetector', 'enabled', e.target.checked);
   });
+
+
+  // UI settings
+  const showPlaceholdersToggle = document.getElementById('showPlaceholders');
+  if (showPlaceholdersToggle) {
+    showPlaceholdersToggle.addEventListener('change', (e) => {
+      updateSetting('ui', 'showPlaceholders', e.target.checked);
+    });
+  }
   
   // Twitter settings
-  document.getElementById('minChars').addEventListener('input', (e) => {
-    const value = parseInt(e.target.value);
-    document.getElementById('minCharsValue').textContent = value;
-    updateSetting('twitter', 'minChars', value);
-  });
-  
-  document.getElementById('blockClickbait').addEventListener('change', (e) => {
-    updateSetting('twitter', 'blockClickbait', e.target.checked);
-  });
+  const twitterSensitivitySelect = document.getElementById('twitterSensitivity');
+  if (twitterSensitivitySelect) {
+    twitterSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('twitter', 'sensitivity', e.target.value);
+    });
+  }
+
+  const blockBrainrotToggle = document.getElementById('blockBrainrot');
+  if (blockBrainrotToggle) {
+    blockBrainrotToggle.addEventListener('change', (e) => {
+      updateSetting('twitter', 'blockBrainrot', e.target.checked);
+    });
+  }
+
+  const blockClickbaitToggle = document.getElementById('blockClickbait');
+  if (blockClickbaitToggle) {
+    blockClickbaitToggle.addEventListener('change', (e) => {
+      updateSetting('twitter', 'blockClickbait', e.target.checked);
+    });
+  }
   
   // TikTok settings
   document.getElementById('blockTiktokFeed').addEventListener('change', (e) => {
@@ -468,9 +505,10 @@ function getDefaultSettings() {
   return {
     youtube: { enabled: true, sensitivity: 'medium' },
     instagram: { enabled: true, sensitivity: 'medium' },
-    twitter: { enabled: true, minChars: 100, blockClickbait: true },
+    twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
     tiktok: { enabled: true, blockFeed: true },
-    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' }
+    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
+    ui: { showPlaceholders: true }
   };
 }
 
@@ -509,5 +547,3 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
   }
 });
-
-

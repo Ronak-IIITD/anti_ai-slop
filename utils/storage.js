@@ -146,7 +146,8 @@ const DEFAULT_SETTINGS = {
   },
   twitter: {
     enabled: true,
-    minChars: 100,
+    sensitivity: 'medium',
+    blockBrainrot: true,
     blockClickbait: true
   },
   tiktok: {
@@ -158,6 +159,9 @@ const DEFAULT_SETTINGS = {
     threshold: 65,
     sensitivity: 'medium', // low=80, medium=60, high=40
     mode: 'warn' // 'warn' = show banner, 'block' = hide content, 'off' = disabled
+  },
+  ui: {
+    showPlaceholders: true
   }
 };
 
@@ -194,8 +198,28 @@ class StorageManager {
       chrome.storage.sync.get([STORAGE_KEYS.SETTINGS], (result) => {
         const settings = result[STORAGE_KEYS.SETTINGS] || DEFAULT_SETTINGS;
         // Ensure new fields exist (migration for existing users)
-        if (!settings.aiDetector.mode) {
+        if (!settings.aiDetector?.mode) {
+          settings.aiDetector = settings.aiDetector || {};
           settings.aiDetector.mode = 'warn';
+        }
+        if (!settings.ui) {
+          settings.ui = { showPlaceholders: true };
+        } else if (typeof settings.ui.showPlaceholders !== 'boolean') {
+          settings.ui.showPlaceholders = true;
+        }
+        if (settings.twitter) {
+          if (!settings.twitter.sensitivity) {
+            settings.twitter.sensitivity = 'medium';
+          }
+          if (typeof settings.twitter.blockBrainrot !== 'boolean') {
+            settings.twitter.blockBrainrot = true;
+          }
+          if (typeof settings.twitter.blockClickbait !== 'boolean') {
+            settings.twitter.blockClickbait = true;
+          }
+          if (typeof settings.twitter.minChars !== 'undefined') {
+            delete settings.twitter.minChars;
+          }
         }
         this.cache.settings = settings;
         resolve(settings);

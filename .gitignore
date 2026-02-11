@@ -4,6 +4,7 @@ AGENTS.md
 # Development-only files
 PROJECT_SUMMARY.md
 install-check.sh
+.opencode/plans/
 
 # OS generated files
 .DS_Store

@@ -99,12 +99,20 @@
         </div>
         <div class="control-details">
           <label class="input-label">
-            Minimum characters: <span id="minCharsValue">100</span>
-            <input type="range" id="minChars" min="50" max="280" value="100" step="10">
+            Brainrot sensitivity:
+            <select id="twitterSensitivity">
+              <option value="low">Low (only obvious slop)</option>
+              <option value="medium" selected>Medium (balanced)</option>
+              <option value="high">High (aggressive)</option>
+            </select>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="blockBrainrot" checked>
+            <span>Block brainrot content</span>
           </label>
           <label class="checkbox-label">
             <input type="checkbox" id="blockClickbait" checked>
-            <span>Block clickbait posts</span>
+            <span>Also block clickbait posts</span>
           </label>
         </div>
       </div>
@@ -166,6 +174,21 @@
               <option value="high">High (aggressive)</option>
             </select>
           </label>
+        </div>
+      </div>
+
+      <!-- UI Controls -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F441;&#xFE0F;</span>
+          <span class="control-name">Show Blocked Placeholders</span>
+          <label class="toggle">
+            <input type="checkbox" id="showPlaceholders" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <p class="help-text">Show a "Show Content" button instead of hiding completely</p>
         </div>
       </div>
     </section>

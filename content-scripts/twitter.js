@@ -1,18 +1,22 @@
-// Twitter/X Short Post Filter
-// Filters out low-quality short posts and clickbait content
+// Twitter/X Brainrot Content Filter
+// Filters out brainrot and clickbait content
 
 (async function() {
   'use strict';
 
   const { log, logError, hideElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
+  const detector = window.brainrotDetector;
   
   const PLATFORM = 'Twitter';
   let blockedCount = 0;
   let isEnabled = false;
-  let minChars = 100;
+  let sensitivity = 'medium';
+  let blockBrainrot = true;
   let blockClickbait = true;
+  const hasDetector = !!detector;
 
   // Twitter/X selectors (both old Twitter and new X.com)
+  // Updated selectors as of 2026-02-11
   const SELECTORS = {
     // Tweet/post containers
     tweet: [
@@ -52,10 +56,11 @@
 
     // Load settings
     const settings = await storageManager.getSettings();
-    minChars = settings.twitter?.minChars || 100;
+    sensitivity = settings.twitter?.sensitivity || 'medium';
+    blockBrainrot = settings.twitter?.blockBrainrot ?? true;
     blockClickbait = settings.twitter?.blockClickbait ?? true;
 
-    log(PLATFORM, `Initializing... (minChars: ${minChars}, blockClickbait: ${blockClickbait})`);
+    log(PLATFORM, `Initializing... (sensitivity: ${sensitivity}, brainrot: ${blockBrainrot}, clickbait: ${blockClickbait})`);
     
     // Initial sweep
     filterTweets();
@@ -121,16 +126,23 @@
         return { block: false };
       }
 
-      // Check character count
-      const charCount = tweetText.length;
-      
-      if (charCount < minChars) {
-        return {
-          block: true,
-          reason: `short-post-${charCount}chars`
+      if (blockBrainrot && hasDetector) {
+        const metadata = {
+          title: '',
+          description: tweetText,
+          channelName: extractTweetAuthor(tweet)
         };
-      }
+        const slopScore = detector.analyzeSlopScore(metadata);
+        const threshold = detector.getSensitivityThreshold(sensitivity);
 
+        if (detector.shouldBlock(slopScore, threshold)) {
+          return {
+            block: true,
+            reason: `brainrot-${slopScore}`
+          };
+        }
+      }
+      
       // Check for clickbait if enabled
       if (blockClickbait && isClickbait(tweetText)) {
         return {
@@ -164,6 +176,31 @@
     
     // Fallback: get all text from article
     return getTextContent(tweet);
+  }
+
+  // Extract author/username from tweet
+  function extractTweetAuthor(tweet) {
+    const authorSelectors = [
+      '[data-testid="User-Name"]',
+      '[data-testid="User-Names"]',
+      'a[role="link"][href^="/"]'
+    ];
+
+    for (const selector of authorSelectors) {
+      try {
+        const authorEl = tweet.querySelector(selector);
+        if (authorEl) {
+          const text = getTextContent(authorEl);
+          if (text && text.length > 0 && text.length < 80) {
+            return text;
+          }
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return '';
   }
 
   // Check if tweet is clickbait
@@ -222,7 +259,8 @@
       const newSettings = changes.antiSlop_settings.newValue;
       const wasEnabled = isEnabled;
       isEnabled = newSettings?.twitter?.enabled ?? false;
-      minChars = newSettings?.twitter?.minChars || 100;
+      sensitivity = newSettings?.twitter?.sensitivity || 'medium';
+      blockBrainrot = newSettings?.twitter?.blockBrainrot ?? true;
       blockClickbait = newSettings?.twitter?.blockClickbait ?? true;
       
       if (wasEnabled !== isEnabled) {
@@ -231,7 +269,7 @@
           location.reload();
         }
       } else if (isEnabled) {
-        log(PLATFORM, `Settings updated (minChars: ${minChars})`);
+        log(PLATFORM, `Settings updated (sensitivity: ${sensitivity})`);
         // Re-scan with new settings
         document.querySelectorAll('[data-anti-slop-processed]').forEach(el => {
           el.removeAttribute('data-anti-slop-processed');

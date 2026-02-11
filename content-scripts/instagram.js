@@ -14,12 +14,18 @@
   let sensitivity = 'medium';
 
   // Instagram content selectors
+  // Updated selectors as of 2026-02-11
   const SELECTORS = {
     // Posts and Reels in feed
     posts: [
       'article',
       'div[role="button"]',
-      '[class*="x1lliihq"]' // Instagram uses obfuscated class names
+      '[class*="x1lliihq"]', // Instagram uses obfuscated class names
+      '[class*="_aagw"]',
+      '[class*="_ab6k"]',
+      '[role="dialog"] article',
+      'section main article',
+      '[class*="_aa56"]'
     ]
   };
 
@@ -50,12 +56,11 @@
   // Main filtering function
   function filterContent() {
     try {
-      // Find all posts/reels
-      const articles = document.querySelectorAll('article');
-      
-      articles.forEach(article => {
-        if (!isProcessed(article)) {
-          analyzeAndFilterPost(article);
+      const posts = findAllPosts();
+
+      posts.forEach(post => {
+        if (!isProcessed(post)) {
+          analyzeAndFilterPost(post);
         }
       });
       
@@ -65,6 +70,22 @@
     } catch (error) {
       logError(PLATFORM, 'Error in filterContent', error);
     }
+  }
+
+  // Find all post elements
+  function findAllPosts() {
+    const posts = [];
+
+    SELECTORS.posts.forEach(selector => {
+      try {
+        const found = document.querySelectorAll(selector);
+        found.forEach(post => posts.push(post));
+      } catch (e) {
+        // Selector might not work on this version
+      }
+    });
+
+    return Array.from(new Set(posts));
   }
 
   // Analyze individual post/reel and filter if it's slop
@@ -79,6 +100,11 @@
         return;
       }
       
+      if (!detector) {
+        markProcessed(postElement);
+        return;
+      }
+
       // Analyze content quality
       const slopScore = detector.analyzeSlopScore(metadata);
       const threshold = detector.getSensitivityThreshold(sensitivity);

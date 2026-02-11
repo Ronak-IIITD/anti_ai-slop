@@ -14,6 +14,7 @@
   let sensitivity = 'medium';
 
   // YouTube video/shorts selectors
+  // Updated selectors as of 2026-02-11
   const SELECTORS = {
     // All video types (regular videos, shorts, feed items)
     allVideos: [
@@ -22,7 +23,13 @@
       'ytd-rich-item-renderer',
       'ytd-compact-video-renderer',
       'ytd-reel-item-renderer', // Shorts
-      'ytd-playlist-video-renderer'
+      'ytd-playlist-video-renderer',
+      'ytd-reel-shelf-renderer',
+      'ytd-short-shelf-renderer',
+      '[is-short]',
+      'ytd-video-renderer[is-short]',
+      'ytm-compact-video-renderer',
+      'ytm-rich-item-renderer'
     ]
   };
 
@@ -53,14 +60,12 @@
   // Main filtering function
   function filterContent() {
     try {
-      SELECTORS.allVideos.forEach(selector => {
-        const videos = document.querySelectorAll(selector);
-        
-        videos.forEach(video => {
-          if (!isProcessed(video)) {
-            analyzeAndFilterVideo(video);
-          }
-        });
+      const videos = findAllVideos();
+
+      videos.forEach(video => {
+        if (!isProcessed(video)) {
+          analyzeAndFilterVideo(video);
+        }
       });
       
       if (blockedCount > 0) {
@@ -69,6 +74,22 @@
     } catch (error) {
       logError(PLATFORM, 'Error in filterContent', error);
     }
+  }
+
+  // Find all video elements
+  function findAllVideos() {
+    const videos = [];
+
+    SELECTORS.allVideos.forEach(selector => {
+      try {
+        const found = document.querySelectorAll(selector);
+        found.forEach(video => videos.push(video));
+      } catch (e) {
+        // Selector might not work on this version
+      }
+    });
+
+    return Array.from(new Set(videos));
   }
 
   // Analyze individual video and filter if it's slop
@@ -84,8 +105,13 @@
       }
       
       // Analyze content quality
-      const slopScore = detector.analyzeSlopScore(metadata);
-      const threshold = detector.getSensitivityThreshold(sensitivity);
+        if (!detector) {
+          markProcessed(videoElement);
+          return;
+        }
+
+        const slopScore = detector.analyzeSlopScore(metadata);
+        const threshold = detector.getSensitivityThreshold(sensitivity);
       
       // Log for debugging
       if (slopScore > 30) {

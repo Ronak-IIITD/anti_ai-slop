@@ -22,9 +22,10 @@ async function initializeDefaults() {
   const DEFAULT_SETTINGS = {
     youtube: { enabled: true, sensitivity: 'medium' },
     instagram: { enabled: true, sensitivity: 'medium' },
-    twitter: { enabled: true, minChars: 100, blockClickbait: true },
+    twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
     tiktok: { enabled: true, blockFeed: true },
-    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' }
+    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
+    ui: { showPlaceholders: true }
   };
 
   const DEFAULT_STATS = {
@@ -65,9 +66,37 @@ async function migrateSettings() {
     let changed = false;
 
     // Add mode field if missing (v1.0 -> v1.1)
-    if (settings.aiDetector && !settings.aiDetector.mode) {
+    if (!settings.aiDetector?.mode) {
+      settings.aiDetector = settings.aiDetector || {};
       settings.aiDetector.mode = 'warn';
       changed = true;
+    }
+
+    if (!settings.ui) {
+      settings.ui = { showPlaceholders: true };
+      changed = true;
+    } else if (typeof settings.ui.showPlaceholders !== 'boolean') {
+      settings.ui.showPlaceholders = true;
+      changed = true;
+    }
+
+    if (settings.twitter) {
+      if (!settings.twitter.sensitivity) {
+        settings.twitter.sensitivity = 'medium';
+        changed = true;
+      }
+      if (typeof settings.twitter.blockBrainrot !== 'boolean') {
+        settings.twitter.blockBrainrot = true;
+        changed = true;
+      }
+      if (typeof settings.twitter.blockClickbait !== 'boolean') {
+        settings.twitter.blockClickbait = true;
+        changed = true;
+      }
+      if (typeof settings.twitter.minChars !== 'undefined') {
+        delete settings.twitter.minChars;
+        changed = true;
+      }
     }
 
     // Update default threshold from 60 to 65
