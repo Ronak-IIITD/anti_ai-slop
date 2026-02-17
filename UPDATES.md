@@ -16,6 +16,7 @@
 | YouTube | Active | Shorts, brainrot keywords, clickbait |
 | Instagram | Active | Reels, low-quality posts |
 | Twitter/X | Active | Brainrot tweets, short posts, clickbait |
+| Reddit | Active | Brainrot posts, upvote bait, low-effort content |
 | TikTok | Untested | Full feed blocking (India ban) |
 | News Sites | Active | AI-generated article detection |
 
@@ -53,6 +54,12 @@
 - **update**: Added fade CSS styles to twitter.css
 - **update**: Added isReplyTweet detection logic to twitter.js
 - **update**: analyzeTweet now returns score for hover indicator
+- **feat**: Added Reddit support
+  - New content script for reddit.com
+  - Detects brainrot posts (upvote bait, "who else", "unpopular opinion", etc.)
+  - Detects low-effort posts (recommendation requests, "best X under Y")
+  - Uses fade mode for comments (similar to Twitter)
+  - Added to manifest.json, storage.js, and background.js
 
 ### 2026-02-11
 - **update**: Brainrot patterns updated with new keywords

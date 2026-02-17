@@ -1,0 +1,103 @@
+/* Reddit Filtering Styles */
+
+.anti-slop-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Post containers */
+shreddit-post[data-anti-slop],
+.Post[data-anti-slop] {
+  display: none !important;
+}
+
+/* Smooth transitions */
+.anti-slop-blocked-placeholder {
+  border: 2px dashed #ff6b6b;
+  background: rgba(255, 107, 107, 0.06);
+  padding: 14px 16px;
+  margin: 8px 0;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.anti-slop-blocked-placeholder:hover {
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.anti-slop-blocked-placeholder .anti-slop-reason {
+  font-size: 12px;
+  color: #b64040;
+  margin-bottom: 6px;
+}
+
+.anti-slop-blocked-placeholder .anti-slop-show-btn {
+  background: #ff6b6b;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Fade mode for comments */
+.anti-slop-faded {
+  opacity: 0.4 !important;
+  filter: grayscale(80%) !important;
+  transition: opacity 0.3s ease, filter 0.3s ease !important;
+  pointer-events: auto !important;
+}
+
+.anti-slop-faded:hover {
+  opacity: 0.7 !important;
+  filter: grayscale(40%) !important;
+}
+
+/* Revealed posts */
+.anti-slop-revealed {
+  outline: 2px solid #f7c948;
+  outline-offset: 4px;
+  opacity: 0.85;
+}
+
+/* Hover indicator badge */
+.anti-slop-hover-badge {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 107, 107, 0.95);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.2s ease;
+}
+
+.anti-slop-hover-badge .anti-slop-badge-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.anti-slop-hover-badge .anti-slop-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -23,6 +23,7 @@ async function initializeDefaults() {
     youtube: { enabled: true, sensitivity: 'medium' },
     instagram: { enabled: true, sensitivity: 'medium' },
     twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
+    reddit: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     ui: { showPlaceholders: true }
@@ -34,6 +35,7 @@ async function initializeDefaults() {
     blockedByPlatform: {
       youtube: 0,
       twitter: 0,
+      reddit: 0,
       instagram: 0,
       tiktok: 0,
       aiArticles: 0
@@ -219,6 +221,7 @@ async function handleStatsUpdate(data) {
       blockedByPlatform: {
         youtube: 0,
         twitter: 0,
+        reddit: 0,
         instagram: 0,
         tiktok: 0,
         aiArticles: 0
@@ -249,6 +252,7 @@ function calculateTimeSaved(platform, count) {
     youtube: 1,
     instagram: 1,
     twitter: 0.5,
+    reddit: 0.5,
     tiktok: 1,
     aiArticles: 3
   };

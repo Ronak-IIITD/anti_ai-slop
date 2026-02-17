@@ -150,6 +150,10 @@ const DEFAULT_SETTINGS = {
     blockBrainrot: true,
     blockClickbait: true
   },
+  reddit: {
+    enabled: true,
+    sensitivity: 'medium'
+  },
   tiktok: {
     enabled: true,
     blockFeed: true
@@ -172,6 +176,7 @@ const DEFAULT_STATS = {
   blockedByPlatform: {
     youtube: 0,
     twitter: 0,
+    reddit: 0,
     instagram: 0,
     tiktok: 0,
     aiArticles: 0
@@ -377,6 +382,9 @@ class StorageManager {
         timeSaved = count * 1; // 1 min per reel
         break;
       case 'twitter':
+        timeSaved = count * 0.5; // 30 sec per post
+        break;
+      case 'reddit':
         timeSaved = count * 0.5; // 30 sec per post
         break;
       case 'tiktok':

@@ -17,6 +17,7 @@
     "*://*.twitter.com/*",
     "*://*.x.com/*",
     "*://*.tiktok.com/*",
+    "*://*.reddit.com/*",
     "*://*/*"
   ],
   "background": {
@@ -33,6 +34,12 @@
       "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
       "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/twitter.js"],
       "css": ["content-scripts/twitter.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.reddit.com/*"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/reddit.js"],
+      "css": ["content-scripts/reddit.css"],
       "run_at": "document_start"
     },
     {
@@ -79,7 +86,6 @@
         "*://*.linear.app/*",
         "*://*.slack.com/*",
         "*://*.discord.com/*",
-        "*://*.reddit.com/*",
         "*://*.arxiv.org/*",
         "*://*.scholar.google.com/*",
         "*://*.netflix.com/*",
