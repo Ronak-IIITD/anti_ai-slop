@@ -1,0 +1,123 @@
+/* Anti-Slop Google Search Styles */
+/* Updated as of 2026-02-17 */
+
+/* AI Overview collapsed state */
+.anti-slop-ai-overview-collapsed {
+  margin: 8px 0 16px 0;
+  padding: 12px 16px;
+  background: #fef3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.anti-slop-ai-overview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.anti-slop-ai-overview-icon {
+  font-size: 16px;
+}
+
+.anti-slop-ai-overview-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #856404;
+}
+
+.anti-slop-ai-overview-toggle {
+  background: #fff;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #856404;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.anti-slop-ai-overview-toggle:hover {
+  background: #fff3cd;
+}
+
+/* Search result badge */
+.anti-slop-search-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  margin-bottom: 6px;
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 11px;
+}
+
+.anti-slop-search-badge-icon {
+  font-size: 12px;
+  color: #ff9800;
+}
+
+.anti-slop-search-badge-text {
+  color: #e65100;
+  font-weight: 500;
+}
+
+.anti-slop-search-badge-score {
+  margin-left: auto;
+  color: #9e9e9e;
+  font-size: 10px;
+}
+
+/* Faded search result */
+.anti-slop-faded {
+  opacity: 0.4 !important;
+  filter: grayscale(80%) !important;
+  transition: opacity 0.3s ease, filter 0.3s ease !important;
+}
+
+.anti-slop-faded:hover {
+  opacity: 0.7 !important;
+  filter: grayscale(40%) !important;
+}
+
+/* Hidden search result */
+.anti-slop-hidden {
+  display: none !important;
+}
+
+/* Dark mode support for Google */
+@media (prefers-color-scheme: dark) {
+  .anti-slop-ai-overview-collapsed {
+    background: #332b00;
+    border-color: #665500;
+  }
+
+  .anti-slop-ai-overview-label {
+    color: #ffc107;
+  }
+
+  .anti-slop-ai-overview-toggle {
+    background: #1a1a1a;
+    border-color: #665500;
+    color: #ffc107;
+  }
+
+  .anti-slop-ai-overview-toggle:hover {
+    background: #332b00;
+  }
+
+  .anti-slop-search-badge {
+    background: rgba(255, 152, 0, 0.05);
+    border-color: rgba(255, 152, 0, 0.2);
+  }
+
+  .anti-slop-search-badge-text {
+    color: #ffb74d;
+  }
+}

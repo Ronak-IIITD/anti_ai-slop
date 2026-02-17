@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.1.0
+> Version: 1.2.0
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
@@ -17,6 +17,8 @@
 | Instagram | Active | Reels, low-quality posts |
 | Twitter/X | Active | Brainrot tweets, short posts, clickbait |
 | Reddit | Active | Brainrot posts, upvote bait, low-effort content |
+| Google Search | Active | AI Overviews, SEO spam, content farms |
+| LinkedIn | Active | Motivational spam, AI posts, engagement bait |
 | TikTok | Untested | Full feed blocking (India ban) |
 | News Sites | Active | AI-generated article detection |
 
@@ -24,10 +26,56 @@
 - **Brainrot Detector**: 60+ tiered keywords (Strong/Moderate/Weak)
 - **AI Content Detector**: Phrase density + structural heuristics
 - **Clickbait Detector**: Pattern matching for engagement bait
+- **Utility Scorer**: Protects useful AI content (code, data, citations)
+- **Analysis Cache**: Avoids re-analyzing same content for performance
 
 ---
 
 ## Changelog
+
+### 2026-02-17 (v1.2.0 Release)
+- **feat**: Added Google Search filtering support
+  - Hides/collapses AI Overviews (SGE) with toggle to show
+  - Filters SEO spam results using pattern detection
+  - Content farm domain detection (30+ known domains)
+  - Score-based filtering with fade/hide/warn actions
+  - Sensitivity control (Low/Medium/High)
+  - Dark mode support for Google
+- **feat**: Added LinkedIn brainrot filtering support
+  - Detects motivational spam posts (30+ strong patterns)
+  - Detects AI-generated LinkedIn posts (structural + phrase analysis)
+  - Engagement bait format detection ("LinkedIn poets")
+  - Hashtag spam detection
+  - Fade mode for AI-generated comments
+  - Warning badge with quick hide button
+  - Sensitivity control (Low/Medium/High)
+- **feat**: Added Utility Scoring Algorithm (`utils/utility-scorer.js`)
+  - Detects useful AI content that should NOT be blocked
+  - Positive signals: code snippets (+20), actionable steps (+15), data/statistics (+15), citations (+15), authenticity markers (+10)
+  - Negative signals: generic advice (-10), engagement bait (-20), filler content (-10)
+  - DOM-based analysis: code blocks, data tables, diagrams, math formulas
+  - `isUsefulContent()` quick check for content protection
+  - `adjustBlockingScore()` to modify blocking scores based on utility
+- **feat**: Added Analysis Cache (`AnalysisCache` class in utility-scorer.js)
+  - LRU cache with 200 entry capacity
+  - 5-minute TTL for cache entries
+  - Prevents re-analyzing same content on page mutations
+  - Fast key generation from content prefix + length
+- **update**: Updated popup UI with Reddit, Google, and LinkedIn controls
+  - Added platform toggles for all new platforms
+  - Added sensitivity controls for Reddit, Google, LinkedIn
+  - Added Google-specific options (Hide AI Overviews, Filter Content Farms)
+  - Added stat counters for Reddit, Google, LinkedIn
+- **update**: Updated manifest.json
+  - Bumped version to 1.2.0
+  - Added Google Search content script entry
+  - Added LinkedIn content script entry
+  - Added utility-scorer.js to Google and LinkedIn script bundles
+  - Added LinkedIn to AI detector exclude_matches
+  - Added Google and LinkedIn host permissions
+- **update**: Updated storage.js with Google and LinkedIn default settings and stats
+- **update**: Updated background.js with Google and LinkedIn platform support
+- **update**: Updated description to include all 7 supported platforms
 
 ### 2026-02-17
 - **docs**: Created UPDATES.md for project changelog and documentation
@@ -153,17 +201,17 @@ Implemented to balance blocking brainrot while preserving useful content:
 
 ### Phase 1: Content-Aware Blocking (Current)
 - [x] Different thresholds per content type
-- [ ] Fade mode for replies (Twitter/X)
+- [x] Fade mode for replies (Twitter/X)
 - [ ] Warn-only mode for articles
 
 ### Phase 2: Platform Expansion
-- [ ] Reddit support (subreddit feeds, upvote bait)
-- [ ] Google Search filtering (AI Overviews, SEO spam)
-- [ ] LinkedIn brainrot filtering (motivational spam)
+- [x] Reddit support (subreddit feeds, upvote bait)
+- [x] Google Search filtering (AI Overviews, SEO spam)
+- [x] LinkedIn brainrot filtering (motivational spam)
 
 ### Phase 3: Advanced Detection
-- [ ] Utility scoring algorithm
-- [ ] Content farm domain detection
+- [x] Utility scoring algorithm
+- [x] Content farm domain detection
 - [ ] Channel reputation scoring
 
 ### Phase 4: User Customization
@@ -173,7 +221,7 @@ Implemented to balance blocking brainrot while preserving useful content:
 
 ### Phase 5: Performance
 - [ ] Web Workers for heavy text processing
-- [ ] Result caching (don't re-analyze)
+- [x] Result caching (don't re-analyze)
 - [ ] Idle-time analysis with requestIdleCallback
 
 ---

@@ -154,6 +154,16 @@ const DEFAULT_SETTINGS = {
     enabled: true,
     sensitivity: 'medium'
   },
+  google: {
+    enabled: true,
+    sensitivity: 'medium',
+    hideAIOverview: true,
+    filterContentFarms: true
+  },
+  linkedin: {
+    enabled: true,
+    sensitivity: 'medium'
+  },
   tiktok: {
     enabled: true,
     blockFeed: true
@@ -177,6 +187,8 @@ const DEFAULT_STATS = {
     youtube: 0,
     twitter: 0,
     reddit: 0,
+    google: 0,
+    linkedin: 0,
     instagram: 0,
     tiktok: 0,
     aiArticles: 0
@@ -385,6 +397,12 @@ class StorageManager {
         timeSaved = count * 0.5; // 30 sec per post
         break;
       case 'reddit':
+        timeSaved = count * 0.5; // 30 sec per post
+        break;
+      case 'google':
+        timeSaved = count * 0.3; // 20 sec per filtered result
+        break;
+      case 'linkedin':
         timeSaved = count * 0.5; // 30 sec per post
         break;
       case 'tiktok':

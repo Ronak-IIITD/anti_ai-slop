@@ -24,6 +24,8 @@ async function initializeDefaults() {
     instagram: { enabled: true, sensitivity: 'medium' },
     twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
     reddit: { enabled: true, sensitivity: 'medium' },
+    google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
+    linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     ui: { showPlaceholders: true }
@@ -36,6 +38,8 @@ async function initializeDefaults() {
       youtube: 0,
       twitter: 0,
       reddit: 0,
+      google: 0,
+      linkedin: 0,
       instagram: 0,
       tiktok: 0,
       aiArticles: 0
@@ -222,6 +226,8 @@ async function handleStatsUpdate(data) {
         youtube: 0,
         twitter: 0,
         reddit: 0,
+        google: 0,
+        linkedin: 0,
         instagram: 0,
         tiktok: 0,
         aiArticles: 0
@@ -253,6 +259,8 @@ function calculateTimeSaved(platform, count) {
     instagram: 1,
     twitter: 0.5,
     reddit: 0.5,
+    google: 0.3,
+    linkedin: 0.5,
     tiktok: 1,
     aiArticles: 3
   };

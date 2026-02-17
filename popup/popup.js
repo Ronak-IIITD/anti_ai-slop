@@ -27,6 +27,9 @@ async function loadSettings() {
     // Platform toggles
     document.getElementById('youtubeToggle').checked = settings.youtube?.enabled ?? true;
     document.getElementById('twitterToggle').checked = settings.twitter?.enabled ?? true;
+    document.getElementById('redditToggle').checked = settings.reddit?.enabled ?? true;
+    document.getElementById('googleToggle').checked = settings.google?.enabled ?? true;
+    document.getElementById('linkedinToggle').checked = settings.linkedin?.enabled ?? true;
     document.getElementById('instagramToggle').checked = settings.instagram?.enabled ?? true;
     document.getElementById('tiktokToggle').checked = settings.tiktok?.enabled ?? true;
     document.getElementById('aiDetectorToggle').checked = settings.aiDetector?.enabled ?? true;
@@ -50,6 +53,37 @@ async function loadSettings() {
     
     // TikTok settings
     document.getElementById('blockTiktokFeed').checked = settings.tiktok?.blockFeed ?? true;
+
+    // Reddit settings
+    const redditSensitivity = settings.reddit?.sensitivity || 'medium';
+    const redditSensitivitySelect = document.getElementById('redditSensitivity');
+    if (redditSensitivitySelect) {
+      redditSensitivitySelect.value = redditSensitivity;
+    }
+
+    // Google settings
+    const googleSensitivity = settings.google?.sensitivity || 'medium';
+    const googleSensitivitySelect = document.getElementById('googleSensitivity');
+    if (googleSensitivitySelect) {
+      googleSensitivitySelect.value = googleSensitivity;
+    }
+
+    const hideAIOverview = document.getElementById('hideAIOverview');
+    if (hideAIOverview) {
+      hideAIOverview.checked = settings.google?.hideAIOverview ?? true;
+    }
+
+    const filterContentFarms = document.getElementById('filterContentFarms');
+    if (filterContentFarms) {
+      filterContentFarms.checked = settings.google?.filterContentFarms ?? true;
+    }
+
+    // LinkedIn settings
+    const linkedinSensitivity = settings.linkedin?.sensitivity || 'medium';
+    const linkedinSensitivitySelect = document.getElementById('linkedinSensitivity');
+    if (linkedinSensitivitySelect) {
+      linkedinSensitivitySelect.value = linkedinSensitivity;
+    }
     
     // AI Detector settings
     const sensitivity = settings.aiDetector?.sensitivity || 'medium';
@@ -91,6 +125,9 @@ async function loadStatistics() {
     const platforms = stats.blockedByPlatform || {};
     document.getElementById('youtubeCount').textContent = formatNumber(platforms.youtube || 0);
     document.getElementById('twitterCount').textContent = formatNumber(platforms.twitter || 0);
+    document.getElementById('redditCount').textContent = formatNumber(platforms.reddit || 0);
+    document.getElementById('googleCount').textContent = formatNumber(platforms.google || 0);
+    document.getElementById('linkedinCount').textContent = formatNumber(platforms.linkedin || 0);
     document.getElementById('instagramCount').textContent = formatNumber(platforms.instagram || 0);
     document.getElementById('tiktokCount').textContent = formatNumber(platforms.tiktok || 0);
     document.getElementById('aiArticlesCount').textContent = formatNumber(platforms.aiArticles || 0);
@@ -140,7 +177,7 @@ async function loadCurrentSiteStatus() {
     );
     
     // Check if it's a social media platform handled by dedicated scripts
-    const socialPlatforms = ['youtube.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com'];
+    const socialPlatforms = ['youtube.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com', 'reddit.com', 'linkedin.com', 'google.com'];
     const isSocial = socialPlatforms.some(p => domain.includes(p));
 
     const dot = document.getElementById('siteStatusDot');
@@ -297,6 +334,56 @@ function setupEventListeners() {
   document.getElementById('instagramToggle').addEventListener('change', (e) => {
     updateSetting('instagram', 'enabled', e.target.checked);
   });
+
+  // Reddit
+  document.getElementById('redditToggle').addEventListener('change', (e) => {
+    updateSetting('reddit', 'enabled', e.target.checked);
+  });
+
+  const redditSensitivitySelect = document.getElementById('redditSensitivity');
+  if (redditSensitivitySelect) {
+    redditSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('reddit', 'sensitivity', e.target.value);
+    });
+  }
+
+  // Google
+  document.getElementById('googleToggle').addEventListener('change', (e) => {
+    updateSetting('google', 'enabled', e.target.checked);
+  });
+
+  const googleSensitivitySelect = document.getElementById('googleSensitivity');
+  if (googleSensitivitySelect) {
+    googleSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('google', 'sensitivity', e.target.value);
+    });
+  }
+
+  const hideAIOverviewToggle = document.getElementById('hideAIOverview');
+  if (hideAIOverviewToggle) {
+    hideAIOverviewToggle.addEventListener('change', (e) => {
+      updateSetting('google', 'hideAIOverview', e.target.checked);
+    });
+  }
+
+  const filterContentFarmsToggle = document.getElementById('filterContentFarms');
+  if (filterContentFarmsToggle) {
+    filterContentFarmsToggle.addEventListener('change', (e) => {
+      updateSetting('google', 'filterContentFarms', e.target.checked);
+    });
+  }
+
+  // LinkedIn
+  document.getElementById('linkedinToggle').addEventListener('change', (e) => {
+    updateSetting('linkedin', 'enabled', e.target.checked);
+  });
+
+  const linkedinSensitivitySelect = document.getElementById('linkedinSensitivity');
+  if (linkedinSensitivitySelect) {
+    linkedinSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('linkedin', 'sensitivity', e.target.value);
+    });
+  }
   
   document.getElementById('tiktokToggle').addEventListener('change', (e) => {
     updateSetting('tiktok', 'enabled', e.target.checked);
@@ -506,6 +593,9 @@ function getDefaultSettings() {
     youtube: { enabled: true, sensitivity: 'medium' },
     instagram: { enabled: true, sensitivity: 'medium' },
     twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
+    reddit: { enabled: true, sensitivity: 'medium' },
+    google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
+    linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     ui: { showPlaceholders: true }
@@ -519,6 +609,9 @@ function getDefaultStats() {
     blockedByPlatform: {
       youtube: 0,
       twitter: 0,
+      reddit: 0,
+      google: 0,
+      linkedin: 0,
       instagram: 0,
       tiktok: 0,
       aiArticles: 0

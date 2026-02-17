@@ -1,0 +1,94 @@
+/* Anti-Slop LinkedIn Styles */
+/* Updated as of 2026-02-17 */
+
+/* LinkedIn post badge */
+.anti-slop-linkedin-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 152, 0, 0.08);
+  border: 1px solid rgba(255, 152, 0, 0.25);
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  z-index: 10;
+}
+
+.anti-slop-linkedin-badge-icon {
+  font-size: 14px;
+  color: #ff9800;
+}
+
+.anti-slop-linkedin-badge-text {
+  flex: 1;
+  color: #e65100;
+  font-weight: 500;
+}
+
+.anti-slop-linkedin-badge-hide {
+  background: transparent;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e65100;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.anti-slop-linkedin-badge-hide:hover {
+  background: rgba(255, 152, 0, 0.15);
+}
+
+/* Faded LinkedIn elements */
+.anti-slop-faded {
+  opacity: 0.4 !important;
+  filter: grayscale(80%) !important;
+  transition: opacity 0.3s ease, filter 0.3s ease !important;
+}
+
+.anti-slop-faded:hover {
+  opacity: 0.7 !important;
+  filter: grayscale(40%) !important;
+}
+
+/* Hidden elements */
+.anti-slop-hidden {
+  display: none !important;
+}
+
+/* Blocked placeholder */
+.anti-slop-blocked-placeholder {
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.anti-slop-reason {
+  font-size: 12px;
+  color: #757575;
+  margin-bottom: 8px;
+}
+
+.anti-slop-show-btn {
+  background: #0a66c2;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.anti-slop-show-btn:hover {
+  background: #004182;
+}

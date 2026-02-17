@@ -63,6 +63,18 @@
           <span class="platform-count" id="tiktokCount">0</span>
         </div>
         <div class="platform-stat">
+          <span class="platform-name">Reddit Posts</span>
+          <span class="platform-count" id="redditCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">Google Results</span>
+          <span class="platform-count" id="googleCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">LinkedIn Posts</span>
+          <span class="platform-count" id="linkedinCount">0</span>
+        </div>
+        <div class="platform-stat">
           <span class="platform-name">AI Articles</span>
           <span class="platform-count" id="aiArticlesCount">0</span>
         </div>
@@ -117,6 +129,80 @@
         </div>
       </div>
       
+      <!-- Reddit -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F4E2;</span>
+          <span class="control-name">Reddit</span>
+          <label class="toggle">
+            <input type="checkbox" id="redditToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Sensitivity:
+            <select id="redditSensitivity">
+              <option value="low">Low (only obvious slop)</option>
+              <option value="medium" selected>Medium (balanced)</option>
+              <option value="high">High (aggressive)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Google Search -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F50D;</span>
+          <span class="control-name">Google Search</span>
+          <label class="toggle">
+            <input type="checkbox" id="googleToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="checkbox-label">
+            <input type="checkbox" id="hideAIOverview" checked>
+            <span>Hide AI Overviews</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="filterContentFarms" checked>
+            <span>Filter content farm results</span>
+          </label>
+          <label class="input-label">
+            Sensitivity:
+            <select id="googleSensitivity">
+              <option value="low">Low (only obvious spam)</option>
+              <option value="medium" selected>Medium (balanced)</option>
+              <option value="high">High (aggressive)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- LinkedIn -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F4BC;</span>
+          <span class="control-name">LinkedIn</span>
+          <label class="toggle">
+            <input type="checkbox" id="linkedinToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Sensitivity:
+            <select id="linkedinSensitivity">
+              <option value="low">Low (only obvious spam)</option>
+              <option value="medium" selected>Medium (balanced)</option>
+              <option value="high">High (aggressive)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       <!-- Instagram -->
       <div class="control-item">
         <div class="control-header">
