@@ -57,3 +57,71 @@ article[data-testid="tweet"] {
   outline-offset: 4px;
   opacity: 0.85;
 }
+
+/* Fade mode for replies - 90% AI but 15% useful */
+.anti-slop-faded {
+  opacity: 0.4 !important;
+  filter: grayscale(80%) !important;
+  transition: opacity 0.3s ease, filter 0.3s ease !important;
+  pointer-events: auto !important;
+}
+
+.anti-slop-faded:hover {
+  opacity: 0.7 !important;
+  filter: grayscale(40%) !important;
+}
+
+/* AI indicator badge for faded elements */
+.anti-slop-ai-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(100, 100, 100, 0.8);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 100;
+}
+
+/* Hover indicator badge for AI-detected tweets */
+.anti-slop-hover-badge {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 107, 107, 0.95);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.2s ease;
+}
+
+.anti-slop-hover-badge .anti-slop-badge-icon {
+  font-size: 12px;
+}
+
+.anti-slop-hover-badge .anti-slop-badge-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.anti-slop-hover-badge .anti-slop-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
