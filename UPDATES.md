@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.2.0
+> Version: 1.2.2
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
