@@ -52,7 +52,10 @@ const CONTENT_FARM_DOMAINS = [
   'thecoldwire.com',
   'distractify.com',
   'looper.com',
-
+  'moviepilot.com',
+  'comicbook.com',
+  'popculture.com',
+  
   // SEO spam / AI content mills
   'sportskeeda.com',
   'dexerto.com',
@@ -64,20 +67,39 @@ const CONTENT_FARM_DOMAINS = [
   'thegamer.com',
   'attackofthefanboy.com',
   'twinfinite.net',
-
+  'gamingbolt.com',
+  'pushsquare.com',
+  'purexbox.com',
+  'nintendolife.com',
+  'pcgamer.com',
+  'rockpapershotgun.com',
+  
+  // AI-generated content
+  'medium.com',       // Lots of AI spam
+  'vocal.media',
+  'newsbreak.com',
+  'barchart.com',
+  
   // Listicle / clickbait farms
   'boredpanda.com',
   'ranker.com',
   'list25.com',
   'brightside.me',
-
-  // AI-generated recipe/how-to spam
-  'allrecipes.com',  // Not always bad but heavily SEO-optimized
-
+  'cracked.com',
+  'oddee.com',
+  
+  // SEO spam domains
+  'howtodogeek.com',
+  'techugee.com',
+  'itechhacks.com',
+  'techviral.net',
+  'techworm.net',
+  
   // Generic low-quality aggregators
   'msn.com',
-  'yahoo.com/news',
-  'aol.com'
+  'yahoo.com',
+  'aol.com',
+  'news.yahoo.com'
 ];
 
 // ============================================================
@@ -86,15 +108,23 @@ const CONTENT_FARM_DOMAINS = [
 // ============================================================
 
 const SEO_SPAM_PATTERNS = [
-  /\b\d+ best .+ in \d{4}\b/i,           // "10 Best Laptops in 2026"
-  /\b(top|best) \d+ .+ (you need|to buy|to try|worth|for)\b/i,
+  /\b\d+ best .+ in \d{4}\b/i,
+  /\b(top|best) \d+ .+ (you need|to buy|to try|worth|for|of)\b/i,
   /\beverything you need to know about\b/i,
-  /\b(ultimate|complete|definitive) guide to\b/i,
+  /\b(ultimate|complete|definitive|comprehensive) guide to\b/i,
   /\bhere'?s what (you need|we know)\b/i,
-  /\bexplained:?\s/i,                      // "X Explained: ..."
+  /\bexplained:?\s/i,
   /\b(vs|versus)\.?\s.+which (is|one) (better|best)\b/i,
   /\bis it worth (it|buying|the money)\b/i,
-  /\bwhat is .+ and (why|how) (does|should|is)\b/i
+  /\bwhat is .+ and (why|how) (does|should|is)\b/i,
+  /\b\d+ (things|tips|tricks|secrets|facts) (you|about|to)\b/i,
+  /\bhow to .+ (step by step|in \d+|easy|simple)\b/i,
+  /\b(why|how) .+ (will change|is changing|matters)\b/i,
+  /\bthe (complete|ultimate|best) .+ (guide|list|review)\b/i,
+  /\b(don'?t|do not) (buy|use|do) .+ (until|before|read)\b/i,
+  /\b(stop|never) (doing|using|buying|eating) .+ (now|immediately|today)\b/i,
+  /\b(secret|secrets|hidden) .+ (revealed|that|to)\b/i,
+  /\b(truth|reality) about .+ (revealed|you need|nobody)\b/i
 ];
 
 // ============================================================
@@ -272,15 +302,18 @@ function analyzeSearchResult(result) {
   // 1. Content farm domain check (strong signal)
   const domain = _extractDomain(url);
   if (_isContentFarmDomain(domain)) {
-    score += 30;
+    score += 40;  // Increased from 30
     reasons.push('content-farm');
   }
 
   // 2. SEO spam title patterns
   const seoMatches = SEO_SPAM_PATTERNS.filter(p => p.test(title));
-  if (seoMatches.length >= 2) {
-    score += 25;
+  if (seoMatches.length >= 3) {
+    score += 35;  // Increased
     reasons.push('seo-spam-title');
+  } else if (seoMatches.length >= 2) {
+    score += 20;
+    reasons.push('seo-spam');
   } else if (seoMatches.length >= 1) {
     score += 10;
     reasons.push('seo-pattern');
@@ -362,10 +395,10 @@ function _addSearchResultBadge(result, analysis) {
 
 function _getGoogleThreshold(sensitivity) {
   switch (sensitivity) {
-    case 'low': return 60;
-    case 'medium': return 40;
-    case 'high': return 25;
-    default: return 40;
+    case 'low': return 45;
+    case 'medium': return 30;
+    case 'high': return 18;
+    default: return 30;
   }
 }
 

@@ -1,14 +1,14 @@
-// Brainrot Content Detection Patterns v2
-// Smarter detection: tiered keywords, requires multiple signals, reduces false positives
-// Updated as of 2026-02-11
+// Brainrot Content Detection Patterns v3
+// Stronger detection: more patterns, lower thresholds, catches more AI slop
+// Updated as of 2026-02-17
 
 // ============================================================
 // BRAINROT KEYWORDS (Tiered)
 // ============================================================
 
-// Tier 1: Strong brainrot indicators - a single match adds significant weight
+// Tier 1: Strong brainrot indicators - INSTANT FLAG
 const BRAINROT_STRONG = [
-  // Updated as of 2026-02-11
+  // Gen Alpha/Brainrot slang (2024-2026)
   'skibidi',
   'gyatt',
   'rizz',
@@ -23,27 +23,22 @@ const BRAINROT_STRONG = [
   'alpha male',
   'slay queen',
   'delulu',
-  'ai generated',
-  'text to speech',
-  'auto generated',
   'mewing',
   'looksmaxxing',
   'heightmaxxing',
+  'bonesmashing',
+  'softmaxxing',
+  'hardmaxxing',
   'chad',
   'beta male',
   'alpha grindset',
   'goon cave',
   'edging',
-  'just put the fries in the bag',
   'hawk tuah',
-  'ohio',
   'baby gronk',
   'livvy dunne',
   'lil bro',
   'maidenless',
-  'touch grass',
-  'caught in 4k ultra hd',
-  'main character syndrome',
   'sigma rules',
   'tate speech',
   'hustlers university',
@@ -52,17 +47,41 @@ const BRAINROT_STRONG = [
   'l rizz',
   'negative canthal tilt',
   'forward growth',
-  'bonesmashing',
-  'softmaxxing',
-  'hardmaxxing',
-  'percent body fat',
-  'bf%',
-  'body fat percentage'
+  
+  // AI/Generated content markers
+  'ai generated',
+  'text to speech',
+  'auto generated',
+  'tts voice',
+  'automated content',
+  'synthetic voice',
+  
+  // Engagement farming patterns
+  'just put the fries in the bag',
+  'caught in 4k ultra hd',
+  'touch grass',
+  'main character syndrome',
+  
+  // Red pill/manosphere indicators
+  'red pill',
+  'black pill',
+  'pill mindset',
+  'female nature',
+  'hypergamy',
+  'body count',
+  'high value male',
+  'sexual marketplace',
+  
+  // Obvious clickbait markers
+  'you won\'t believe',
+  'this will blow your mind',
+  'doctors hate him',
+  'one weird trick'
 ];
 
-// Tier 2: Moderate indicators - need 2+ to matter
+// Tier 2: Moderate indicators - needs 1-2 to flag
 const BRAINROT_MODERATE = [
-  // Updated as of 2026-02-11
+  // Engagement farming
   'wait for it',
   'wait until',
   'watch till the end',
@@ -75,6 +94,16 @@ const BRAINROT_MODERATE = [
   'smash that like',
   'smash that subscribe',
   'hit the bell',
+  'part 2 in bio',
+  'link in bio',
+  'full video on',
+  'follow for more',
+  'like for part 2',
+  'comment if',
+  'share if you agree',
+  'this you?',
+  
+  // Low effort content markers
   'no cap fr',
   'literally me when',
   'caught in 4k',
@@ -84,29 +113,28 @@ const BRAINROT_MODERATE = [
   'this is crazy',
   'insane clip',
   'unbelievable moment',
-  'wait for the end',
-  'part 2 in bio',
-  'link in bio',
-  'full video on',
-  'follow for more',
-  'like for part 2',
-  'comment if',
-  'share if you agree',
-  'this you?',
+  'meme compilation',
   'pov you',
   'that one friend who',
   'nobody:',
   'absolutely nobody:',
-  'meme compilation'
-];
-
-// Tier 3: Weak indicators - only count if strong/moderate also present
-// These are common in normal content, so alone they mean nothing
-const BRAINROT_WEAK = [
+  
+  // Reaction content
   'reaction to',
   'reacting to',
   'my reaction',
   'react to',
+  
+  // Algorithm manipulation
+  'check pinned',
+  'check comments',
+  'read description',
+  'turn on notifications',
+  'notification squad'
+];
+
+// Tier 3: Weak indicators - only count with others
+const BRAINROT_WEAK = [
   'tts',
   'no cap',
   'sigma',
@@ -117,24 +145,68 @@ const BRAINROT_WEAK = [
   'ong',
   'fr',
   'bro',
-  'bruh'
+  'bruh',
+  'got him',
+  'it\'s giving',
+  'understood the assignment',
+  'living rent free',
+  'taking an l',
+  'taking the l',
+  'ratioed',
+  'cooked',
+  'let him cook'
 ];
 
-// NOT included anymore (too many false positives):
-// 'part 1/2/3' - legitimate series content
-// 'day 1/2/3' - legitimate vlogs, challenges
-// 'episode 1/2' - legitimate series
-// 'when you' - extremely common in normal memes
-// 'literally me' - too common
+// ============================================================
+// AI CONTENT PATTERNS (NEW - Stronger Detection)
+// ============================================================
+
+const AI_CONTENT_PATTERNS = [
+  // AI video intros
+  'in today\'s video',
+  'in this video',
+  'today we\'re going to',
+  'today we are going to',
+  'let\'s dive in',
+  'let\'s get into it',
+  
+  // AI article phrases
+  'delve into',
+  'dive deep into',
+  'explore the',
+  'navigate the landscape',
+  'in today\'s digital age',
+  'ever-evolving landscape',
+  'paradigm shift',
+  'game-changing',
+  'revolutionize',
+  'unlock the power',
+  
+  // Generic AI conclusions
+  'in conclusion',
+  'to sum up',
+  'to summarize',
+  'the bottom line is',
+  'at the end of the day',
+  'key takeaways',
+  
+  // AI listicle markers
+  'comprehensive guide',
+  'ultimate guide',
+  'everything you need to know',
+  'all you need to know',
+  'step by step guide',
+  'complete guide to'
+];
 
 // ============================================================
-// CLICKBAIT PATTERNS
+// CLICKBAIT PATTERNS (Expanded)
 // ============================================================
 
 const VIDEO_CLICKBAIT_PATTERNS = [
   /\b(you won'?t believe|unbelievable)\b/i,
-  /\b(gone wrong|goes wrong)\b/i,
-  /\b(exposed|exposing)\b(?!\s*(to|at|in))/i, // avoid "exposed to sunlight"
+  /\b(gone wrong|goes wrong|went wrong)\b/i,
+  /\b(exposed|exposing)\b(?!\s*(to|at|in|for))/i,
   /\bmust (watch|see)\b/i,
   /\bwait for it\b/i,
   /\bwatch (till|until) (the )?end\b/i,
@@ -142,52 +214,31 @@ const VIDEO_CLICKBAIT_PATTERNS = [
   /\bwhat happens (next|when)\b/i,
   /\bmind ?blown\b/i,
   /\b(best|worst) (ever|of all time)\b/i,
-  /\b(life|mind) (changing|blowing|altering)\b/i
+  /\b(life|mind) (changing|blowing|altering)\b/i,
+  /\b(shocked|shocking)\b/i,
+  /\b(crazy|insane|wild)\s+(thing|moment|reveal)\b/i,
+  /\b(before (it'?s too late|it gets deleted))\b/i,
+  /\b(deleted soon|won'?t last)\b/i,
+  /\b(number \d+ (will |shock|surprise|amaze))\b/i,
+  /\b(only (1|one) (percent|%|thing))\b/i,
+  /\b(secret|secrets) (to|that|revealed)\b/i,
+  /\b(stop (doing|using|buying))\b/i,
+  /\b(never (do|buy|use|eat))\b/i
 ];
-
-// Removed overly broad patterns:
-// /shocking|shocked/ - common in legitimate news
-// /crazy|insane|wild/ - extremely common colloquial words
-// /secret|secrets/ - common in educational content
-// /this is why/ - common in explanatory content
-// /\d+ reasons/ - common in legitimate lists
-// /100%/ - very common
-// /final part|episode/ - legitimate series
 
 // ============================================================
 // SPAM INDICATORS
 // ============================================================
 
 const SPAM_INDICATORS = {
-  maxEmojis: 5,              // Raised from 3 - many legit creators use emojis
-  maxCapsPercentage: 0.6,    // Raised from 0.5 - some legit titles use caps for emphasis
-  repeatedPunctuation: /([!?.])\1{2,}/
+  maxEmojis: 4,
+  maxCapsPercentage: 0.5,
+  repeatedPunctuation: /([!?.])\1{2,}/,
+  emojiSpam: /[\u{1F300}-\u{1F9FF}]{3,}/u
 };
 
 // ============================================================
-// AI VIDEO PHRASES
-// ============================================================
-
-const AI_VIDEO_PHRASES = [
-  'discover the secrets',
-  'unlock the power',
-  'revolutionize your',
-  'game-changing',
-  'you need to know',
-  'dive deep into',
-  'comprehensive guide',
-  'ultimate guide',
-  'everything you need'
-];
-
-// Removed:
-// 'life hack' - common legitimate genre
-// 'in today\'s video' - extremely common normal intro
-// 'today we\'re going to' - standard video intro
-// 'don\'t forget to subscribe' - standard outro (not brainrot)
-
-// ============================================================
-// DETECTOR CLASS
+// DETECTOR CLASS (v3 - Stronger Scoring)
 // ============================================================
 
 class BrainrotDetector {
@@ -195,16 +246,14 @@ class BrainrotDetector {
     this.strongKeywords = BRAINROT_STRONG;
     this.moderateKeywords = BRAINROT_MODERATE;
     this.weakKeywords = BRAINROT_WEAK;
+    this.aiPatterns = AI_CONTENT_PATTERNS;
     this.clickbaitPatterns = VIDEO_CLICKBAIT_PATTERNS;
-    this.aiPhrases = AI_VIDEO_PHRASES;
     this.spamIndicators = SPAM_INDICATORS;
   }
 
   /**
    * Analyze content and return slop score (0-100)
    * Higher score = more likely to be brainrot/low-quality
-   * @param {Object} content - { title, description, channelName }
-   * @returns {number} Score from 0-100
    */
   analyzeSlopScore(content) {
     let score = 0;
@@ -214,75 +263,73 @@ class BrainrotDetector {
     const descLower = description.toLowerCase();
     const combined = titleLower + ' ' + descLower;
     
-    // 1. Strong brainrot keywords (max 35 points)
+    // 1. Strong brainrot keywords (max 40 points - INCREASED)
     const strongCount = this._countMatches(combined, this.strongKeywords);
-    if (strongCount >= 3) score += 35;
-    else if (strongCount >= 2) score += 25;
-    else if (strongCount >= 1) score += 15;
+    if (strongCount >= 3) score += 40;
+    else if (strongCount >= 2) score += 30;
+    else if (strongCount >= 1) score += 20;
     
-    // 2. Moderate brainrot keywords (max 20 points)
+    // 2. Moderate brainrot keywords (max 25 points - INCREASED)
     const moderateCount = this._countMatches(combined, this.moderateKeywords);
-    if (moderateCount >= 3) score += 20;
-    else if (moderateCount >= 2) score += 12;
-    else if (moderateCount >= 1) score += 6;
+    if (moderateCount >= 3) score += 25;
+    else if (moderateCount >= 2) score += 15;
+    else if (moderateCount >= 1) score += 8;
     
-    // 3. Weak keywords - ONLY count if strong or moderate also present
-    if (strongCount >= 1 || moderateCount >= 2) {
+    // 3. Weak keywords (max 10 points)
+    if (strongCount >= 1 || moderateCount >= 1) {
       const weakCount = this._countMatches(combined, this.weakKeywords);
       if (weakCount >= 3) score += 10;
       else if (weakCount >= 2) score += 5;
     }
     
-    // 4. Clickbait Patterns in TITLE only (max 20 points)
+    // 4. AI content patterns (max 20 points - NEW)
+    const aiCount = this._countMatches(combined, this.aiPatterns);
+    if (aiCount >= 3) score += 20;
+    else if (aiCount >= 2) score += 12;
+    else if (aiCount >= 1) score += 6;
+    
+    // 5. Clickbait patterns (max 20 points)
     const clickbaitCount = this._countClickbait(titleLower);
     if (clickbaitCount >= 3) score += 20;
     else if (clickbaitCount >= 2) score += 12;
     else if (clickbaitCount >= 1) score += 6;
     
-    // 5. AI-generated phrases (max 15 points)
-    const aiPhraseCount = this._countMatches(combined, this.aiPhrases);
-    if (aiPhraseCount >= 3) score += 15;
-    else if (aiPhraseCount >= 2) score += 10;
-    else if (aiPhraseCount >= 1) score += 5;
-    
     // 6. Spam indicators (max 10 points)
     score += this._analyzeSpamIndicators(title);
+    
+    // 7. Channel name red flags (max 10 points)
+    if (channelName) {
+      const channelLower = channelName.toLowerCase();
+      if (/official|real|the\s+\w+|daily|viral|best|top|facts/i.test(channelLower)) {
+        if (/shorts|clips|viral|trends|news|facts|daily/i.test(channelLower)) {
+          score += 10;
+        }
+      }
+    }
     
     return Math.min(score, 100);
   }
 
-  /**
-   * Count keyword matches
-   * @private
-   */
   _countMatches(text, keywords) {
     return keywords.filter(keyword => text.includes(keyword)).length;
   }
 
-  /**
-   * Count clickbait pattern matches
-   * @private
-   */
   _countClickbait(text) {
     return this.clickbaitPatterns.filter(pattern => pattern.test(text)).length;
   }
 
-  /**
-   * Analyze spam indicators (emojis, caps, punctuation)
-   * @private
-   */
   _analyzeSpamIndicators(title) {
     let spamScore = 0;
     
-    // Count emojis
+    // Emoji spam
     const emojiCount = (title.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
     if (emojiCount > this.spamIndicators.maxEmojis) {
-      spamScore += 4;
+      spamScore += 5;
     }
     
-    // Check caps percentage (only for titles with enough letters)
+    // Caps spam
     const letters = (title.match(/[A-Za-z]/g) || []);
-    if (letters.length >= 10) {
+    if (letters.length >= 8) {
       const capsCount = letters.filter(c => c === c.toUpperCase() && c !== c.toLowerCase()).length;
       const capsPercentage = capsCount / letters.length;
       if (capsPercentage > this.spamIndicators.maxCapsPercentage) {
@@ -290,7 +337,7 @@ class BrainrotDetector {
       }
     }
     
-    // Check repeated punctuation
+    // Repeated punctuation
     if (this.spamIndicators.repeatedPunctuation.test(title)) {
       spamScore += 3;
     }
@@ -299,64 +346,38 @@ class BrainrotDetector {
   }
 
   /**
-   * Check if content should be blocked based on threshold
-   */
-  shouldBlock(score, threshold) {
-    return score >= threshold;
-  }
-
-  /**
-   * Get sensitivity threshold
+   * Get sensitivity threshold - LOWERED for stronger detection
    */
   getSensitivityThreshold(sensitivity) {
     switch (sensitivity) {
       case 'low':
-        return 70;  // Only block very obvious brainrot
+        return 55;    // Was 70
       case 'medium':
-        return 50;  // Balanced approach
+        return 35;    // Was 50
       case 'high':
-        return 35;  // Aggressive blocking
+        return 20;    // Was 35
       default:
-        return 50;
+        return 35;
     }
   }
 
-  /**
-   * Extract video metadata from DOM element
-   * Works for YouTube, Instagram, TikTok
-   */
+  shouldBlock(score, threshold) {
+    return score >= threshold;
+  }
+
   extractVideoMetadata(element) {
-    const metadata = {
-      title: '',
-      description: '',
-      channelName: ''
-    };
+    const metadata = { title: '', description: '', channelName: '' };
     
-    const titleSelectors = [
-      'h3', 'h2', 'h1',
-      '[id*="title"]',
-      '[class*="title"]',
-      '[aria-label]',
-      'a[title]'
-    ];
-    
+    const titleSelectors = ['h3', 'h2', 'h1', '[id*="title"]', '[class*="title"]', '[aria-label]', 'a[title]'];
     for (const selector of titleSelectors) {
       const titleEl = element.querySelector(selector);
       if (titleEl) {
-        metadata.title = titleEl.textContent?.trim() ||
-                        titleEl.getAttribute('aria-label') ||
-                        titleEl.getAttribute('title') || '';
+        metadata.title = titleEl.textContent?.trim() || titleEl.getAttribute('aria-label') || titleEl.getAttribute('title') || '';
         if (metadata.title) break;
       }
     }
     
-    const descSelectors = [
-      '[id*="description"]',
-      '[class*="description"]',
-      '[class*="snippet"]',
-      'p'
-    ];
-    
+    const descSelectors = ['[id*="description"]', '[class*="description"]', '[class*="snippet"]', 'p'];
     for (const selector of descSelectors) {
       const descEl = element.querySelector(selector);
       if (descEl) {
@@ -365,15 +386,7 @@ class BrainrotDetector {
       }
     }
     
-    const channelSelectors = [
-      '[class*="channel"]',
-      '[class*="author"]',
-      '[class*="username"]',
-      'a[href*="/@"]',
-      'a[href*="/user/"]',
-      'a[href*="/c/"]'
-    ];
-    
+    const channelSelectors = ['[class*="channel"]', '[class*="author"]', '[class*="username"]', 'a[href*="/@"]', 'a[href*="/user/"]', 'a[href*="/c/"]'];
     for (const selector of channelSelectors) {
       const channelEl = element.querySelector(selector);
       if (channelEl) {
@@ -386,10 +399,8 @@ class BrainrotDetector {
   }
 }
 
-// Create singleton instance
 const brainrotDetector = new BrainrotDetector();
 
-// Export for use in content scripts
 if (typeof window !== 'undefined') {
   window.brainrotDetector = brainrotDetector;
 }

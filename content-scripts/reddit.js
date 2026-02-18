@@ -198,10 +198,10 @@
       }
 
       const isComment = isCommentPost(post);
-      const threshold = hasDetector ? detector.getSensitivityThreshold(sensitivity) : 50;
+      const threshold = hasDetector ? detector.getSensitivityThreshold(sensitivity) : 35;
       
-      // Use higher threshold for comments
-      const commentThreshold = 70;
+      // Use slightly higher threshold for comments (but still lower than before)
+      const commentThreshold = 45;
 
       if (hasDetector) {
         const metadata = {

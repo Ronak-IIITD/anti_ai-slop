@@ -361,10 +361,10 @@ function _addLinkedInBadge(post, analysis) {
 
 function _getLinkedInThreshold(sensitivity) {
   switch (sensitivity) {
-    case 'low': return 55;
-    case 'medium': return 35;
-    case 'high': return 20;
-    default: return 35;
+    case 'low': return 40;
+    case 'medium': return 25;
+    case 'high': return 15;
+    default: return 25;
   }
 }
 
