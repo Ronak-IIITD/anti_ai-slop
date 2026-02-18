@@ -454,6 +454,32 @@ select {
   cursor: pointer;
 }
 
+.custom-rules-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-keyword-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  resize: vertical;
+  min-height: 64px;
+  font-size: 12px;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.custom-keyword-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
 /* ============================================================
    Whitelist
    ============================================================ */

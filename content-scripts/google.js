@@ -344,6 +344,17 @@ function analyzeSearchResult(result) {
       score += 15;
       reasons.push('brainrot-content');
     }
+
+    const customSignal = brainrotDetector.evaluateCustomRules(combined);
+    if (customSignal.scoreDelta !== 0) {
+      score += customSignal.scoreDelta;
+      if (customSignal.blockMatches.length > 0) {
+        reasons.push('custom-block-keyword');
+      }
+      if (customSignal.allowMatches.length > 0) {
+        reasons.push('custom-allow-keyword');
+      }
+    }
   }
 
   // 5. Low-quality indicators
@@ -368,7 +379,7 @@ function analyzeSearchResult(result) {
     action = 'warn';
   }
 
-  return { shouldFilter, action, reason: reasons.join(', '), score };
+  return { shouldFilter, action, reason: reasons.join(', '), score: Math.max(0, Math.min(score, 100)) };
 }
 
 /**

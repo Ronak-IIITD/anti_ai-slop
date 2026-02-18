@@ -174,6 +174,11 @@ const DEFAULT_SETTINGS = {
     sensitivity: 'medium', // low=80, medium=60, high=40
     mode: 'warn' // 'warn' = show banner, 'block' = hide content, 'off' = disabled
   },
+  customRules: {
+    enabled: true,
+    blockKeywords: [],
+    allowKeywords: []
+  },
   ui: {
     showPlaceholders: true
   }
@@ -219,6 +224,30 @@ class StorageManager {
           settings.aiDetector = settings.aiDetector || {};
           settings.aiDetector.mode = 'warn';
         }
+        if (!settings.customRules) {
+          settings.customRules = {
+            enabled: true,
+            blockKeywords: [],
+            allowKeywords: []
+          };
+        }
+        if (typeof settings.customRules.enabled !== 'boolean') {
+          settings.customRules.enabled = true;
+        }
+        if (!Array.isArray(settings.customRules.blockKeywords)) {
+          settings.customRules.blockKeywords = [];
+        }
+        if (!Array.isArray(settings.customRules.allowKeywords)) {
+          settings.customRules.allowKeywords = [];
+        }
+        settings.customRules.blockKeywords = settings.customRules.blockKeywords
+          .map(k => String(k).trim().toLowerCase())
+          .filter(k => k.length >= 3)
+          .slice(0, 100);
+        settings.customRules.allowKeywords = settings.customRules.allowKeywords
+          .map(k => String(k).trim().toLowerCase())
+          .filter(k => k.length >= 3)
+          .slice(0, 100);
         if (!settings.ui) {
           settings.ui = { showPlaceholders: true };
         } else if (typeof settings.ui.showPlaceholders !== 'boolean') {

@@ -249,6 +249,14 @@ class BrainrotDetector {
     this.aiPatterns = AI_CONTENT_PATTERNS;
     this.clickbaitPatterns = VIDEO_CLICKBAIT_PATTERNS;
     this.spamIndicators = SPAM_INDICATORS;
+    this.customRules = {
+      enabled: true,
+      blockKeywords: [],
+      allowKeywords: []
+    };
+
+    this._loadCustomRules();
+    this._bindSettingsListener();
   }
 
   /**
@@ -306,8 +314,105 @@ class BrainrotDetector {
         }
       }
     }
+
+    // 8. User custom keywords (global override)
+    const customSignal = this.evaluateCustomRules(combined);
+    score += customSignal.scoreDelta;
     
-    return Math.min(score, 100);
+    return Math.max(0, Math.min(score, 100));
+  }
+
+  /**
+   * Evaluate user custom block/allow keywords on text
+   * @param {string} text
+   * @returns {{scoreDelta:number, blockMatches:string[], allowMatches:string[]}}
+   */
+  evaluateCustomRules(text) {
+    if (!this.customRules?.enabled || !text) {
+      return { scoreDelta: 0, blockMatches: [], allowMatches: [] };
+    }
+
+    const normalizedText = String(text).toLowerCase();
+    const blockMatches = this.customRules.blockKeywords.filter(keyword =>
+      normalizedText.includes(keyword)
+    );
+    const allowMatches = this.customRules.allowKeywords.filter(keyword =>
+      normalizedText.includes(keyword)
+    );
+
+    let scoreDelta = 0;
+
+    if (blockMatches.length > 0) {
+      scoreDelta += 20 + Math.min((blockMatches.length - 1) * 10, 25);
+    }
+
+    if (allowMatches.length > 0) {
+      scoreDelta -= 25 + Math.min((allowMatches.length - 1) * 10, 25);
+    }
+
+    return {
+      scoreDelta,
+      blockMatches,
+      allowMatches
+    };
+  }
+
+  _loadCustomRules(settingsPayload) {
+    const extracted = this._extractCustomRules(settingsPayload || {});
+    this.customRules = extracted;
+
+    if (settingsPayload && settingsPayload.customRules) {
+      return;
+    }
+
+    if (!chrome?.storage?.sync?.get) {
+      return;
+    }
+
+    chrome.storage.sync.get(['antiSlop_settings'], (result) => {
+      const settings = result?.antiSlop_settings || {};
+      this.customRules = this._extractCustomRules(settings);
+    });
+  }
+
+  _bindSettingsListener() {
+    if (!chrome?.storage?.onChanged?.addListener) {
+      return;
+    }
+
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace !== 'sync' || !changes.antiSlop_settings?.newValue) {
+        return;
+      }
+
+      this.customRules = this._extractCustomRules(changes.antiSlop_settings.newValue);
+    });
+  }
+
+  _extractCustomRules(settings) {
+    const rawRules = settings.customRules || {};
+    const blockKeywords = this._normalizeCustomKeywordList(rawRules.blockKeywords);
+    const allowKeywords = this._normalizeCustomKeywordList(rawRules.allowKeywords);
+
+    return {
+      enabled: rawRules.enabled !== false,
+      blockKeywords,
+      allowKeywords
+    };
+  }
+
+  _normalizeCustomKeywordList(list) {
+    if (!Array.isArray(list)) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(
+        list
+          .map(item => String(item).trim().toLowerCase())
+          .filter(item => item.length >= 3)
+      )
+    ).slice(0, 100);
   }
 
   _countMatches(text, keywords) {

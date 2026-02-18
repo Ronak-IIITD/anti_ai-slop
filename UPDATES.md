@@ -33,6 +33,19 @@
 
 ## Changelog
 
+### 2026-02-18
+- **feat**: Added global custom keyword rules (block/allow) in popup settings
+  - New **Custom Keyword Rules** section with toggle, block list, and allow list
+  - Supports comma/newline keyword input with validation and deduplication
+  - Saves to synced settings under `customRules`
+- **feat**: Integrated custom rules into core detection engines
+  - `brainrotDetector` now applies custom keyword score adjustments globally
+  - Google and LinkedIn scorers now honor custom block/allow keyword matches
+  - AI article detector now adjusts score using the same custom rule logic
+- **update**: Added safe keyword normalization and migration guards
+  - Existing users auto-migrate to default custom rule settings
+  - Keywords are normalized (lowercase/trimmed), min length enforced, max list size capped
+
 ### 2026-02-17 (v1.2.0 Release) - Stronger Detection Update
 - **feat**: Significantly stronger detection across all platforms
   - **Thresholds lowered**: Medium now 35 (was 50), High now 20 (was 35)

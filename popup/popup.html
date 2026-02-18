@@ -277,6 +277,30 @@
           <p class="help-text">Show a "Show Content" button instead of hiding completely</p>
         </div>
       </div>
+
+      <!-- Global Custom Keyword Rules -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x2699;&#xFE0F;</span>
+          <span class="control-name">Custom Keyword Rules</span>
+          <label class="toggle">
+            <input type="checkbox" id="customRulesEnabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details custom-rules-fields">
+          <label class="input-label">
+            Always block when text contains (comma or new line):
+            <textarea id="customBlockKeywords" class="custom-keyword-input" rows="3" placeholder="e.g. prank gone wrong, fake giveaway"></textarea>
+          </label>
+          <label class="input-label">
+            Always allow when text contains (comma or new line):
+            <textarea id="customAllowKeywords" class="custom-keyword-input" rows="3" placeholder="e.g. tutorial, case study, source code"></textarea>
+          </label>
+          <button class="btn btn-primary btn-sm" id="saveCustomRules">Save Custom Rules</button>
+          <p class="help-text">Works globally across platform filters and AI detection (minimum 3 characters per keyword).</p>
+        </div>
+      </div>
     </section>
 
     <!-- Whitelist Management -->

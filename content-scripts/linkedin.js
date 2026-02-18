@@ -283,6 +283,20 @@ function analyzeLinkedInPost(post) {
     reasons.push('hashtag-spam');
   }
 
+  // 7. Custom keyword rules (global user overrides)
+  if (typeof brainrotDetector !== 'undefined') {
+    const customSignal = brainrotDetector.evaluateCustomRules(textLower);
+    if (customSignal.scoreDelta !== 0) {
+      score += customSignal.scoreDelta;
+      if (customSignal.blockMatches.length > 0) {
+        reasons.push('custom-block-keyword');
+      }
+      if (customSignal.allowMatches.length > 0) {
+        reasons.push('custom-allow-keyword');
+      }
+    }
+  }
+
   // Determine action
   let shouldFilter = false;
   let action = 'none';
@@ -296,7 +310,7 @@ function analyzeLinkedInPost(post) {
     }
   }
 
-  return { shouldFilter, action, reason: reasons.join(', '), score };
+  return { shouldFilter, action, reason: reasons.join(', '), score: Math.max(0, Math.min(score, 100)) };
 }
 
 /**
@@ -326,7 +340,12 @@ function _scoreLinkedInComment(text) {
   if (/\b(delve|navigate|landscape|holistic)\b/i.test(text)) score += 15;
   if (/\b(it'?s (important|crucial) to)\b/i.test(text)) score += 10;
 
-  return Math.min(score, 100);
+  if (typeof brainrotDetector !== 'undefined') {
+    const customSignal = brainrotDetector.evaluateCustomRules(textLower);
+    score += customSignal.scoreDelta;
+  }
+
+  return Math.max(0, Math.min(score, 100));
 }
 
 /**

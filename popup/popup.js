@@ -94,6 +94,22 @@ async function loadSettings() {
     const aiMode = settings.aiDetector?.mode || 'warn';
     document.getElementById('aiDetectorMode').value = aiMode;
 
+    const customRules = settings.customRules || {};
+    const customRulesEnabled = document.getElementById('customRulesEnabled');
+    if (customRulesEnabled) {
+      customRulesEnabled.checked = customRules.enabled ?? true;
+    }
+
+    const customBlockKeywords = document.getElementById('customBlockKeywords');
+    if (customBlockKeywords) {
+      customBlockKeywords.value = (customRules.blockKeywords || []).join('\n');
+    }
+
+    const customAllowKeywords = document.getElementById('customAllowKeywords');
+    if (customAllowKeywords) {
+      customAllowKeywords.value = (customRules.allowKeywords || []).join('\n');
+    }
+
     const showPlaceholders = settings.ui?.showPlaceholders ?? true;
     const showPlaceholdersToggle = document.getElementById('showPlaceholders');
     if (showPlaceholdersToggle) {
@@ -393,6 +409,16 @@ function setupEventListeners() {
     updateSetting('aiDetector', 'enabled', e.target.checked);
   });
 
+  const customRulesEnabledToggle = document.getElementById('customRulesEnabled');
+  if (customRulesEnabledToggle) {
+    customRulesEnabledToggle.addEventListener('change', saveCustomRulesSettings);
+  }
+
+  const saveCustomRulesBtn = document.getElementById('saveCustomRules');
+  if (saveCustomRulesBtn) {
+    saveCustomRulesBtn.addEventListener('click', saveCustomRulesSettings);
+  }
+
 
   // UI settings
   const showPlaceholdersToggle = document.getElementById('showPlaceholders');
@@ -535,6 +561,41 @@ async function resetStatistics() {
 }
 
 // ============================================================
+// CUSTOM KEYWORD RULES
+// ============================================================
+
+async function saveCustomRulesSettings() {
+  try {
+    const enabled = document.getElementById('customRulesEnabled')?.checked ?? true;
+    const blockRaw = document.getElementById('customBlockKeywords')?.value || '';
+    const allowRaw = document.getElementById('customAllowKeywords')?.value || '';
+
+    const blockKeywords = _parseCustomKeywords(blockRaw);
+    const allowKeywords = _parseCustomKeywords(allowRaw);
+
+    if (blockKeywords.length > 100 || allowKeywords.length > 100) {
+      showToast('Max 100 keywords per list', 'error');
+      return;
+    }
+
+    const result = await chrome.storage.sync.get(['antiSlop_settings']);
+    const settings = result.antiSlop_settings || getDefaultSettings();
+
+    settings.customRules = {
+      enabled,
+      blockKeywords,
+      allowKeywords
+    };
+
+    await chrome.storage.sync.set({ antiSlop_settings: settings });
+    showToast('Custom rules saved');
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Error saving custom rules:', error);
+    showToast('Error saving custom rules', 'error');
+  }
+}
+
+// ============================================================
 // HELPERS
 // ============================================================
 
@@ -588,6 +649,18 @@ function _escapeHtml(str) {
   return div.innerHTML;
 }
 
+function _parseCustomKeywords(raw) {
+  if (!raw) return [];
+  return Array.from(
+    new Set(
+      raw
+        .split(/[\n,]/)
+        .map(item => item.trim().toLowerCase())
+        .filter(item => item.length >= 3)
+    )
+  );
+}
+
 function getDefaultSettings() {
   return {
     youtube: { enabled: true, sensitivity: 'medium' },
@@ -598,6 +671,7 @@ function getDefaultSettings() {
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
+    customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
     ui: { showPlaceholders: true }
   };
 }

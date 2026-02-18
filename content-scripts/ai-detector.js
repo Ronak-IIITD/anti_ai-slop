@@ -12,6 +12,11 @@
   let mode = 'warn'; // 'warn', 'block', 'off'
   let threshold = 65;
   let hasAnalyzed = false;
+  let customRules = {
+    enabled: true,
+    blockKeywords: [],
+    allowKeywords: []
+  };
 
   // ============================================================
   // INITIALIZATION
@@ -29,6 +34,7 @@
     // Load settings
     const settings = await storageManager.getSettings();
     const aiSettings = settings.aiDetector || {};
+    customRules = _parseCustomRules(settings.customRules || {});
 
     mode = aiSettings.mode || 'warn';
     threshold = aiPatternDetector.getSensitivityThreshold(
@@ -84,11 +90,21 @@
       // Analyze content - v2 returns { score, reasons, contentType }
       const result = aiPatternDetector.analyzeSlopScore(articleText, document);
       const { score, reasons, contentType } = result;
+      const customSignal = _evaluateCustomRules(articleText);
+      const adjustedScore = Math.max(0, Math.min(100, score + customSignal.scoreDelta));
+      const adjustedReasons = [...reasons];
 
-      log(PLATFORM, `Analysis complete - Score: ${score}/100, Type: ${contentType}, Reasons: [${reasons.join(', ')}]`);
+      if (customSignal.blockMatches.length > 0) {
+        adjustedReasons.push('custom-block-keyword');
+      }
+      if (customSignal.allowMatches.length > 0) {
+        adjustedReasons.push('custom-allow-keyword');
+      }
+
+      log(PLATFORM, `Analysis complete - Score: ${adjustedScore}/100, Type: ${contentType}, Reasons: [${adjustedReasons.join(', ')}]`);
 
       // Check if should take action
-      if (aiPatternDetector.shouldBlock(score, threshold)) {
+      if (aiPatternDetector.shouldBlock(adjustedScore, threshold)) {
         const title = aiPatternDetector.extractTitle(document);
 
         // Log to recent blocks
@@ -96,7 +112,7 @@
           await storageManager.addRecentBlock({
             url: window.location.href,
             title: title || document.title,
-            score: score
+            score: adjustedScore
           });
         } catch (err) {
           logError(PLATFORM, 'Failed to log recent block', err);
@@ -104,19 +120,19 @@
 
         if (mode === 'block') {
           // Hard block - hide content and show full-page overlay
-          blockPage(score, reasons, contentType);
+          blockPage(adjustedScore, adjustedReasons, contentType);
           await incrementBlockCounter('aiArticles', 1);
-          notifyBackground('blocked', score);
-          log(PLATFORM, `Page BLOCKED (score: ${score}, mode: block)`);
+          notifyBackground('blocked', adjustedScore);
+          log(PLATFORM, `Page BLOCKED (score: ${adjustedScore}, mode: block)`);
         } else {
           // Warn mode - show dismissible banner at top
-          showWarningBanner(score, reasons, contentType);
+          showWarningBanner(adjustedScore, adjustedReasons, contentType);
           await incrementBlockCounter('aiArticles', 1);
-          notifyBackground('warned', score);
-          log(PLATFORM, `Page WARNED (score: ${score}, mode: warn)`);
+          notifyBackground('warned', adjustedScore);
+          log(PLATFORM, `Page WARNED (score: ${adjustedScore}, mode: warn)`);
         }
       } else {
-        log(PLATFORM, `Page allowed (score: ${score})`);
+        log(PLATFORM, `Page allowed (score: ${adjustedScore})`);
         notifyBackground('clean');
       }
     } catch (error) {
@@ -346,6 +362,52 @@
     }, 2500);
   }
 
+  function _parseCustomRules(rules) {
+    return {
+      enabled: rules.enabled !== false,
+      blockKeywords: _normalizeKeywordList(rules.blockKeywords),
+      allowKeywords: _normalizeKeywordList(rules.allowKeywords)
+    };
+  }
+
+  function _normalizeKeywordList(list) {
+    if (!Array.isArray(list)) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(
+        list
+          .map(item => String(item).trim().toLowerCase())
+          .filter(item => item.length >= 3)
+      )
+    ).slice(0, 100);
+  }
+
+  function _evaluateCustomRules(text) {
+    if (!customRules.enabled || !text) {
+      return { scoreDelta: 0, blockMatches: [], allowMatches: [] };
+    }
+
+    const normalized = String(text).toLowerCase();
+    const blockMatches = customRules.blockKeywords.filter(keyword => normalized.includes(keyword));
+    const allowMatches = customRules.allowKeywords.filter(keyword => normalized.includes(keyword));
+
+    let scoreDelta = 0;
+    if (blockMatches.length > 0) {
+      scoreDelta += 20 + Math.min((blockMatches.length - 1) * 10, 25);
+    }
+    if (allowMatches.length > 0) {
+      scoreDelta -= 25 + Math.min((allowMatches.length - 1) * 10, 25);
+    }
+
+    return {
+      scoreDelta,
+      blockMatches,
+      allowMatches
+    };
+  }
+
   /**
    * Notify background script of current page status
    * Used for icon badge updates
@@ -373,6 +435,7 @@
 
       isEnabled = newSettings?.aiDetector?.enabled ?? false;
       mode = newSettings?.aiDetector?.mode || 'warn';
+      customRules = _parseCustomRules(newSettings?.customRules || {});
 
       if (wasEnabled !== isEnabled || oldMode !== mode) {
         log(PLATFORM, `Settings changed: enabled=${isEnabled}, mode=${mode}`);

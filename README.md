@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 ![JavaScript](https://img.shields.io/badge/javascript-vanilla-yellow.svg)
@@ -56,8 +56,17 @@ Each platform has independent toggles and settings:
 | **YouTube** | Shorts, brainrot videos | Sensitivity (low/medium/high), clickbait toggle |
 | **Instagram** | Reels, brainrot posts/explore | Sensitivity (low/medium/high), clickbait toggle |
 | **X/Twitter** | Brainrot tweets/replies | Sensitivity (low/medium/high), brainrot/clickbait toggles |
+| **Reddit** | Brainrot posts, low-effort threads | Sensitivity (low/medium/high), fade mode for comments |
+| **Google Search** | AI Overviews, SEO spam, content farms | Sensitivity, hide AI Overviews, content farm filtering |
+| **LinkedIn** | Motivational spam, AI engagement bait | Sensitivity, fade/hide actions for spammy posts |
 | **TikTok** | Full feed or per-video | Feed block toggle |
 | **News/Blogs** | AI-generated articles | Sensitivity (low/medium/high), show warnings toggle |
+
+### ⚙️ Custom Keyword Rules (New)
+- Add your own **always-block** keywords for content you never want to see
+- Add your own **always-allow** keywords to reduce false positives
+- Global behavior: rules apply across platform filters and AI article detection
+- Managed in popup under **Custom Keyword Rules**
 
 ### 🎨 Visual Feedback
 - **Placeholders with "Show Content" button**: Blocked items are replaced with a clickable placeholder (toggle in settings)
