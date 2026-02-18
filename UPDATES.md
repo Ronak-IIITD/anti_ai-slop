@@ -33,6 +33,24 @@
 
 ## Changelog
 
+### 2026-02-17 (v1.2.0 Release) - Stronger Detection Update
+- **feat**: Significantly stronger detection across all platforms
+  - **Thresholds lowered**: Medium now 35 (was 50), High now 20 (was 35)
+  - **Twitter/X**: Reply threshold 25 (was 40), 40+ AI reply patterns, emoji-only detection
+  - **LinkedIn**: Threshold 25 (was 35), catches more motivational/engagement spam
+  - **Google**: Threshold 30 (was 40), 45+ content farm domains, 17 SEO patterns
+  - **Reddit**: Comment threshold 45 (was 70), catches more low-effort content
+- **feat**: Brainrot detector v3 - much more aggressive
+  - Added 20+ new brainrot patterns (Gen Alpha slang, AI markers, engagement farming)
+  - Added AI content patterns section (video intros, article phrases, conclusions)
+  - Stronger scoring: single strong keyword = 20 points (was 15)
+  - Channel name red flags for spammy channels
+- **feat**: Expanded content farm list (Google Search)
+  - Added medium.com, newsbreak.com, vocal.media (AI spam hubs)
+  - Added more gaming news sites (gamingbolt, pushsquare, etc.)
+  - Content farm score increased to 40 points
+- **update**: SEO spam patterns expanded from 9 to 17 patterns
+
 ### 2026-02-17 (v1.2.0 Release) - Later Update
 - **fix**: Improved Twitter/X AI reply detection and visible badges
   - Lowered threshold for AI replies (40 instead of 70) to catch more
