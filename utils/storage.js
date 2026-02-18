@@ -172,7 +172,7 @@ const DEFAULT_SETTINGS = {
     enabled: true,
     threshold: 65,
     sensitivity: 'medium', // low=80, medium=60, high=40
-    mode: 'warn' // 'warn' = show banner, 'block' = hide content, 'off' = disabled
+    mode: 'block' // 'block' = hide content, 'off' = disabled
   },
   customRules: {
     enabled: true,
@@ -222,7 +222,7 @@ class StorageManager {
         // Ensure new fields exist (migration for existing users)
         if (!settings.aiDetector?.mode) {
           settings.aiDetector = settings.aiDetector || {};
-          settings.aiDetector.mode = 'warn';
+          settings.aiDetector.mode = 'block';
         }
         if (!settings.customRules) {
           settings.customRules = {

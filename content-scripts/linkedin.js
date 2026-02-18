@@ -181,17 +181,12 @@ async function scanLinkedInFeed() {
 
       const analysis = analyzeLinkedInPost(post);
       if (analysis.shouldFilter) {
-        if (analysis.action === 'hide') {
-          hideElement(post, analysis.reason);
-        } else if (analysis.action === 'fade') {
-          fadeElement(post, analysis.reason);
-          _addLinkedInBadge(post, analysis);
-        }
+        hideElement(post, analysis.reason || 'linkedin-slop');
         blocked++;
       }
     });
 
-    // Also scan comments (fade mode)
+    // Also scan comments (hard block)
     await _scanLinkedInComments();
 
     if (blocked > 0) {
@@ -205,7 +200,7 @@ async function scanLinkedInFeed() {
 }
 
 /**
- * Scan LinkedIn comments (fade mode - don't hide)
+ * Scan LinkedIn comments (hard block)
  */
 async function _scanLinkedInComments() {
   const comments = document.querySelectorAll(LINKEDIN_SELECTORS.comment);
@@ -221,7 +216,7 @@ async function _scanLinkedInComments() {
 
     const score = _scoreLinkedInComment(text);
     if (score >= 50) {
-      fadeElement(comment, 'ai-comment');
+      hideElement(comment, 'ai-comment');
     }
   });
 }
@@ -303,11 +298,7 @@ function analyzeLinkedInPost(post) {
 
   if (score >= threshold) {
     shouldFilter = true;
-    if (score >= threshold + 25) {
-      action = 'hide';
-    } else {
-      action = 'fade';
-    }
+    action = 'hide';
   }
 
   return { shouldFilter, action, reason: reasons.join(', '), score: Math.max(0, Math.min(score, 100)) };
@@ -348,32 +339,6 @@ function _scoreLinkedInComment(text) {
   return Math.max(0, Math.min(score, 100));
 }
 
-/**
- * Add a warning badge to a LinkedIn post
- */
-function _addLinkedInBadge(post, analysis) {
-  if (post.querySelector('.anti-slop-linkedin-badge')) return;
-
-  const badge = document.createElement('div');
-  badge.className = 'anti-slop-linkedin-badge';
-  badge.innerHTML = `
-    <span class="anti-slop-linkedin-badge-icon">&#x26A0;</span>
-    <span class="anti-slop-linkedin-badge-text">${_escapeLinkedInHtml(analysis.reason)}</span>
-    <button class="anti-slop-linkedin-badge-hide" type="button">Hide</button>
-  `;
-
-  post.style.position = 'relative';
-  post.insertBefore(badge, post.firstChild);
-
-  // Hide button
-  const hideBtn = badge.querySelector('.anti-slop-linkedin-badge-hide');
-  hideBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    unfadeElement(post);
-    hideElement(post, analysis.reason);
-  });
-}
-
 // ============================================================
 // HELPERS
 // ============================================================
@@ -385,12 +350,6 @@ function _getLinkedInThreshold(sensitivity) {
     case 'high': return 15;
     default: return 25;
   }
-}
-
-function _escapeLinkedInHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 // ============================================================

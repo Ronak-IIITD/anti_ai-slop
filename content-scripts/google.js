@@ -191,14 +191,7 @@ async function scanGoogleResults() {
 
       const analysis = analyzeSearchResult(result);
       if (analysis.shouldFilter) {
-        if (analysis.action === 'hide') {
-          hideElement(result, analysis.reason);
-        } else if (analysis.action === 'fade') {
-          fadeElement(result, analysis.reason);
-          _addSearchResultBadge(result, analysis);
-        } else if (analysis.action === 'warn') {
-          _addSearchResultBadge(result, analysis);
-        }
+        hideElement(result, analysis.reason || 'search-slop');
         blocked++;
       }
     });
@@ -234,44 +227,9 @@ async function handleAIOverview() {
                           el.querySelector('[data-attrid*="SGE"]');
 
       if (isAIContent || GOOGLE_SELECTORS.aiOverview.indexOf(selector) <= 3) {
-        _collapseAIOverview(el);
+        hideElement(el, 'ai-overview-spam');
         googleBlockedCount++;
-        log('Google', 'AI Overview collapsed');
-      }
-    });
-  }
-}
-
-/**
- * Collapse AI Overview with a toggle to expand
- */
-function _collapseAIOverview(element) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'anti-slop-ai-overview-collapsed';
-  wrapper.innerHTML = `
-    <div class="anti-slop-ai-overview-header">
-      <span class="anti-slop-ai-overview-icon">&#x1F916;</span>
-      <span class="anti-slop-ai-overview-label">AI Overview hidden by Anti-Slop</span>
-      <button class="anti-slop-ai-overview-toggle" type="button">Show</button>
-    </div>
-  `;
-
-  const parent = element.parentNode;
-  if (parent) {
-    parent.insertBefore(wrapper, element);
-    element.style.display = 'none';
-    element.classList.add('anti-slop-hidden');
-
-    const toggleBtn = wrapper.querySelector('.anti-slop-ai-overview-toggle');
-    toggleBtn.addEventListener('click', () => {
-      if (element.style.display === 'none') {
-        element.style.display = '';
-        element.classList.remove('anti-slop-hidden');
-        toggleBtn.textContent = 'Hide';
-      } else {
-        element.style.display = 'none';
-        element.classList.add('anti-slop-hidden');
-        toggleBtn.textContent = 'Show';
+        log('Google', 'AI Overview blocked');
       }
     });
   }
@@ -363,41 +321,15 @@ function analyzeSearchResult(result) {
     reasons.push('all-caps-title');
   }
 
-  // Determine action based on score
-  let shouldFilter = false;
-  let action = 'none';
+  // Hard block mode: filter when score crosses threshold
+  const shouldFilter = score >= threshold;
 
-  if (score >= threshold) {
-    shouldFilter = true;
-    if (score >= threshold + 20) {
-      action = 'hide';
-    } else {
-      action = 'fade';
-    }
-  } else if (score >= threshold - 15 && reasons.length > 0) {
-    shouldFilter = true;
-    action = 'warn';
-  }
-
-  return { shouldFilter, action, reason: reasons.join(', '), score: Math.max(0, Math.min(score, 100)) };
-}
-
-/**
- * Add a warning badge to a search result
- */
-function _addSearchResultBadge(result, analysis) {
-  if (result.querySelector('.anti-slop-search-badge')) return;
-
-  const badge = document.createElement('div');
-  badge.className = 'anti-slop-search-badge';
-  badge.innerHTML = `
-    <span class="anti-slop-search-badge-icon">&#x26A0;</span>
-    <span class="anti-slop-search-badge-text">${_escapeHtml(analysis.reason)}</span>
-    <span class="anti-slop-search-badge-score">Score: ${analysis.score}</span>
-  `;
-
-  result.style.position = 'relative';
-  result.insertBefore(badge, result.firstChild);
+  return {
+    shouldFilter,
+    action: shouldFilter ? 'hide' : 'none',
+    reason: reasons.join(', '),
+    score: Math.max(0, Math.min(score, 100))
+  };
 }
 
 // ============================================================

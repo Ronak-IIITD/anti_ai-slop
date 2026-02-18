@@ -91,7 +91,7 @@ async function loadSettings() {
     document.getElementById('sensitivityValue').textContent =
       sensitivity.charAt(0).toUpperCase() + sensitivity.slice(1);
     
-    const aiMode = settings.aiDetector?.mode || 'warn';
+    const aiMode = settings.aiDetector?.mode || 'block';
     document.getElementById('aiDetectorMode').value = aiMode;
 
     const customRules = settings.customRules || {};
@@ -670,7 +670,7 @@ function getDefaultSettings() {
     google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
-    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
+    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'block' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
     ui: { showPlaceholders: true }
   };

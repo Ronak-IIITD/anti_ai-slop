@@ -6,12 +6,11 @@
   'use strict';
 
   const utils = window.AntiSlopUtils || {};
-  const { log, logError, hideElement, fadeElement, unfadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createGlobalSiteIndicator } = utils;
+  const { log, logError, hideElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = utils;
   const detector = window.brainrotDetector;
   
   const PLATFORM = 'Twitter';
   let blockedCount = 0;
-  let fadedCount = 0;
   let isEnabled = false;
   let sensitivity = 'medium';
   let blockBrainrot = true;
@@ -112,12 +111,6 @@
     
     filterTweets();
     
-    setTimeout(() => {
-      if (typeof createGlobalSiteIndicator === 'function') {
-        createGlobalSiteIndicator('twitter', { enabled: isEnabled, blocked: blockedCount + fadedCount });
-      }
-    }, 2000);
-    
     startObserver();
     log(PLATFORM, 'Ready');
   }
@@ -132,23 +125,18 @@
         
         const analysis = analyzeTweet(tweet);
         
-        if (analysis.action === 'block') {
+        if (analysis.action === 'block' || analysis.action === 'fade') {
           hideElement(tweet, analysis.reason);
           markProcessed(tweet);
           blockedCount++;
           incrementBlockCounter('twitter', 1);
-        } else if (analysis.action === 'fade') {
-          fadeElement(tweet, analysis.reason);
-          markProcessed(tweet);
-          fadedCount++;
-          addVisibleIndicator(tweet, analysis.score, analysis.reason);
         } else {
           markProcessed(tweet);
         }
       });
       
-      if (blockedCount > 0 || fadedCount > 0) {
-        log(PLATFORM, `Blocked: ${blockedCount}, Faded: ${fadedCount}`);
+      if (blockedCount > 0) {
+        log(PLATFORM, `Blocked: ${blockedCount}`);
       }
     } catch (error) {
       logError(PLATFORM, 'Error in filterTweets', error);
@@ -223,7 +211,7 @@
       // Determine action
       if (isReply) {
         if (score >= replyThreshold) {
-          return { action: 'fade', reason: reasons.join(', ') || 'low-quality', score };
+          return { action: 'block', reason: reasons.join(', ') || 'low-quality', score };
         }
       } else {
         if (score >= normalThreshold) {
@@ -325,48 +313,6 @@
       }
       return pattern.test(text);
     });
-  }
-
-  // Add visible indicator
-  function addVisibleIndicator(tweet, score, reason) {
-    if (tweet.querySelector('.anti-slop-visible-badge')) return;
-
-    const computedStyle = window.getComputedStyle(tweet);
-    if (computedStyle.position === 'static') {
-      tweet.style.position = 'relative';
-    }
-
-    const badge = document.createElement('div');
-    badge.className = 'anti-slop-visible-badge';
-    badge.innerHTML = `
-      <span class="anti-slop-vbadge-score">AI: ${score}</span>
-      <span class="anti-slop-vbadge-reason">${_escapeHtml(reason.split(',')[0])}</span>
-      <button class="anti-slop-vbadge-hide" type="button" title="Hide">&#x2715;</button>
-      <button class="anti-slop-vbadge-show" type="button" title="Show">&#x2713;</button>
-    `;
-
-    tweet.appendChild(badge);
-
-    badge.querySelector('.anti-slop-vbadge-hide').addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      unfadeElement(tweet);
-      hideElement(tweet, 'user-hidden');
-      badge.remove();
-    });
-
-    badge.querySelector('.anti-slop-vbadge-show').addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      unfadeElement(tweet);
-      badge.remove();
-    });
-  }
-
-  function _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   function startObserver() {

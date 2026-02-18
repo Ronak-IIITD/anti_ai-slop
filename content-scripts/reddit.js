@@ -1,16 +1,15 @@
 // Reddit Brainrot Content Filter
 // Filters out brainrot, low-effort posts, and upvote bait
-// Uses fade mode for comments (similar to Twitter replies)
+// Hard-block mode for posts and comments
 
 (async function() {
   'use strict';
 
-  const { log, logError, hideElement, fadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createGlobalSiteIndicator } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
   const detector = window.brainrotDetector;
   
   const PLATFORM = 'Reddit';
   let blockedCount = 0;
-  let fadedCount = 0;
   let isEnabled = false;
   let sensitivity = 'medium';
   const hasDetector = !!detector;
@@ -125,13 +124,6 @@
     
     filterPosts();
     
-    setTimeout(() => {
-      createGlobalSiteIndicator('reddit', {
-        enabled: isEnabled,
-        blocked: blockedCount + fadedCount
-      });
-    }, 2000);
-    
     startObserver();
     
     log(PLATFORM, 'Initialized successfully');
@@ -147,25 +139,18 @@
         
         const analysis = analyzePost(post);
         
-        if (analysis.action === 'block') {
+        if (analysis.action === 'block' || analysis.action === 'fade') {
           hideElement(post, analysis.reason);
           markProcessed(post);
           blockedCount++;
           incrementBlockCounter('reddit', 1);
-        } else if (analysis.action === 'fade') {
-          fadeElement(post, analysis.reason);
-          markProcessed(post);
-          fadedCount++;
         } else {
           markProcessed(post);
         }
       });
       
       if (blockedCount > 0) {
-        log(PLATFORM, `Blocked ${blockedCount} posts`);
-      }
-      if (fadedCount > 0) {
-        log(PLATFORM, `Faded ${fadedCount} comments`);
+        log(PLATFORM, `Blocked ${blockedCount} items`);
       }
     } catch (error) {
       logError(PLATFORM, 'Error in filterPosts', error);
@@ -212,9 +197,9 @@
         const slopScore = detector.analyzeSlopScore(metadata);
         
         if (isComment) {
-          // Comments: use fade mode
+          // Comments: hard block
           if (detector.shouldBlock(slopScore, commentThreshold)) {
-            return { action: 'fade', reason: `ai-comment-${slopScore}`, score: slopScore };
+            return { action: 'block', reason: `ai-comment-${slopScore}`, score: slopScore };
           }
         } else {
           // Posts: block normally
@@ -226,14 +211,12 @@
       
       // Check Reddit-specific patterns
       if (isBrainrotPost(postText)) {
-        return isComment
-          ? { action: 'fade', reason: 'reddit-brainrot', score: 60 }
-          : { action: 'block', reason: 'reddit-brainrot', score: 60 };
+        return { action: 'block', reason: 'reddit-brainrot', score: 60 };
       }
       
       // Check low-effort posts
       if (!isComment && isLowEffortPost(postText)) {
-        return { action: 'fade', reason: 'low-effort', score: 55 };
+        return { action: 'block', reason: 'low-effort', score: 55 };
       }
 
       return { action: 'none' };

@@ -1,15 +1,14 @@
-// AI-Generated Content Detector v2
-// Warning-first approach: shows dismissible banner instead of blocking by default
-// Supports modes: 'warn' (banner), 'block' (hide content), 'off' (disabled)
+// AI-Generated Content Detector v3
+// Hard-block approach: blocks detected AI slop and only shows a lightweight notification
 
 (async function () {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification } = window.AntiSlopUtils;
 
   const PLATFORM = 'AI-Detector';
   let isEnabled = false;
-  let mode = 'warn'; // 'warn', 'block', 'off'
+  let mode = 'block'; // forced: 'block' unless user explicitly sets 'off'
   let threshold = 65;
   let hasAnalyzed = false;
   let customRules = {
@@ -36,7 +35,7 @@
     const aiSettings = settings.aiDetector || {};
     customRules = _parseCustomRules(settings.customRules || {});
 
-    mode = aiSettings.mode || 'warn';
+    mode = aiSettings.mode === 'off' ? 'off' : 'block';
     threshold = aiPatternDetector.getSensitivityThreshold(
       aiSettings.sensitivity || 'medium'
     );
@@ -118,19 +117,10 @@
           logError(PLATFORM, 'Failed to log recent block', err);
         }
 
-        if (mode === 'block') {
-          // Hard block - hide content and show full-page overlay
-          blockPage(adjustedScore, adjustedReasons, contentType);
-          await incrementBlockCounter('aiArticles', 1);
-          notifyBackground('blocked', adjustedScore);
-          log(PLATFORM, `Page BLOCKED (score: ${adjustedScore}, mode: block)`);
-        } else {
-          // Warn mode - show dismissible banner at top
-          showWarningBanner(adjustedScore, adjustedReasons, contentType);
-          await incrementBlockCounter('aiArticles', 1);
-          notifyBackground('warned', adjustedScore);
-          log(PLATFORM, `Page WARNED (score: ${adjustedScore}, mode: warn)`);
-        }
+        blockPage(adjustedScore, adjustedReasons, contentType);
+        await incrementBlockCounter('aiArticles', 1);
+        notifyBackground('blocked', adjustedScore);
+        log(PLATFORM, `Page BLOCKED (score: ${adjustedScore}, mode: block)`);
       } else {
         log(PLATFORM, `Page allowed (score: ${adjustedScore})`);
         notifyBackground('clean');
@@ -142,67 +132,8 @@
   }
 
   // ============================================================
-  // WARNING BANNER (default mode)
-  // Shows a dismissible banner at the top of the page
-  // ============================================================
-
-  function showWarningBanner(score, reasons, contentType) {
-    // Don't add multiple banners
-    if (document.getElementById('anti-slop-warning-banner')) return;
-
-    const reasonText = _formatReasons(reasons);
-
-    const banner = document.createElement('div');
-    banner.id = 'anti-slop-warning-banner';
-    banner.className = 'anti-slop-warning-banner';
-    banner.innerHTML = `
-      <div class="anti-slop-banner-content">
-        <div class="anti-slop-banner-icon">&#x26A0;</div>
-        <div class="anti-slop-banner-text">
-          <strong>Possible AI-generated content detected</strong>
-          <span class="anti-slop-banner-details">
-            Score: ${score}/100 &middot; Type: ${contentType} &middot; ${reasonText}
-          </span>
-        </div>
-        <div class="anti-slop-banner-actions">
-          <button class="anti-slop-banner-btn anti-slop-btn-whitelist" id="anti-slop-whitelist-site">
-            Trust this site
-          </button>
-          <button class="anti-slop-banner-btn anti-slop-btn-dismiss" id="anti-slop-dismiss-banner">
-            Dismiss
-          </button>
-        </div>
-      </div>
-    `;
-
-    // Insert at top of body
-    document.body.insertBefore(banner, document.body.firstChild);
-
-    // Push page content down
-    document.body.style.marginTop = (banner.offsetHeight || 48) + 'px';
-
-    // Event: Dismiss banner
-    document.getElementById('anti-slop-dismiss-banner').addEventListener('click', () => {
-      _removeBanner(banner);
-    });
-
-    // Event: Whitelist this site
-    document.getElementById('anti-slop-whitelist-site').addEventListener('click', async () => {
-      const domain = window.location.hostname.replace(/^www\./, '');
-      try {
-        await storageManager.addToWhitelist(domain);
-        log(PLATFORM, `Added "${domain}" to whitelist`);
-        _removeBanner(banner);
-        _showQuickToast(`${domain} added to whitelist`);
-      } catch (err) {
-        logError(PLATFORM, 'Failed to whitelist domain', err);
-      }
-    });
-  }
-
-  // ============================================================
-  // BLOCK MODE (full-page overlay)
-  // Hides content and shows blocking message
+  // BLOCK MODE
+  // Hides content and shows a lightweight notification only
   // ============================================================
 
   function blockPage(score, reasons, contentType) {
@@ -220,114 +151,35 @@
 
     let blocked = false;
     for (const selector of contentSelectors) {
-      const element = document.querySelector(selector);
-      if (element && !isProcessed(element)) {
+      document.querySelectorAll(selector).forEach(element => {
+        if (!isProcessed(element)) {
+          hideElement(element, `ai-slop-${score}`);
+          markProcessed(element);
+          blocked = true;
+        }
+      });
+    }
+
+    if (!blocked && document.body) {
+      const topLevelElements = Array.from(document.body.children).filter(el =>
+        !el.id?.startsWith('anti-slop-') &&
+        el.tagName !== 'SCRIPT' &&
+        el.tagName !== 'STYLE'
+      );
+
+      topLevelElements.forEach(element => {
         hideElement(element, `ai-slop-${score}`);
         markProcessed(element);
-        blocked = true;
-        break;
-      }
-    }
-
-    if (!blocked) {
-      document.body.style.display = 'none';
-    }
-
-    // Show blocking overlay
-    const reasonText = _formatReasons(reasons);
-
-    const overlay = document.createElement('div');
-    overlay.id = 'anti-slop-block-overlay';
-    overlay.className = 'anti-slop-block-overlay';
-    overlay.innerHTML = `
-      <div class="anti-slop-block-card">
-        <div class="anti-slop-block-shield">&#x1F6E1;</div>
-        <h1 class="anti-slop-block-title">AI-Generated Content Detected</h1>
-        <p class="anti-slop-block-subtitle">
-          This article has been identified as likely AI-generated slop content.
-        </p>
-        <div class="anti-slop-block-score-box">
-          <p class="anti-slop-block-score">
-            <strong>Slop Score:</strong> ${score}/100
-          </p>
-          <p class="anti-slop-block-meta">
-            Content type: ${contentType} &middot; Threshold: ${threshold} (${_getSensitivityLabel()})
-          </p>
-          <p class="anti-slop-block-reasons">${reasonText}</p>
-        </div>
-        <div class="anti-slop-block-actions">
-          <button class="anti-slop-block-btn anti-slop-block-btn-primary" id="anti-slop-view-anyway">
-            View Anyway
-          </button>
-          <button class="anti-slop-block-btn anti-slop-block-btn-secondary" id="anti-slop-go-back">
-            Go Back
-          </button>
-          <button class="anti-slop-block-btn anti-slop-block-btn-tertiary" id="anti-slop-block-whitelist">
-            Trust This Site
-          </button>
-        </div>
-        <p class="anti-slop-block-hint">
-          Adjust settings in the Anti-Slop extension popup
-        </p>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-    // Ensure body is visible for the overlay
-    if (!blocked) {
-      document.body.style.display = '';
-    }
-
-    // Event: View anyway
-    document.getElementById('anti-slop-view-anyway').addEventListener('click', () => {
-      overlay.remove();
-      // Restore hidden content
-      document.querySelectorAll('[data-anti-slop-processed]').forEach(el => {
-        el.style.display = '';
-        el.classList.remove('anti-slop-hidden');
       });
-      document.body.style.display = '';
-    });
+    }
 
-    // Event: Go back
-    document.getElementById('anti-slop-go-back').addEventListener('click', () => {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.close();
-      }
-    });
-
-    // Event: Whitelist
-    document.getElementById('anti-slop-block-whitelist').addEventListener('click', async () => {
-      const domain = window.location.hostname.replace(/^www\./, '');
-      try {
-        await storageManager.addToWhitelist(domain);
-        log(PLATFORM, `Added "${domain}" to whitelist`);
-        overlay.remove();
-        document.querySelectorAll('[data-anti-slop-processed]').forEach(el => {
-          el.style.display = '';
-          el.classList.remove('anti-slop-hidden');
-        });
-        document.body.style.display = '';
-        _showQuickToast(`${domain} added to whitelist`);
-      } catch (err) {
-        logError(PLATFORM, 'Failed to whitelist domain', err);
-      }
-    });
+    const reasonText = _formatReasons(reasons) || 'spam/generated by ai';
+    showBlockedNotification(`This content was ${reasonText} and has been blocked.`);
   }
 
   // ============================================================
   // HELPERS
   // ============================================================
-
-  /**
-   * Remove the warning banner and restore page layout
-   */
-  function _removeBanner(banner) {
-    document.body.style.marginTop = '';
-    banner.remove();
-  }
 
   /**
    * Format reason codes into readable text
@@ -336,30 +188,6 @@
     if (!reasons || reasons.length === 0) return '';
     const readable = reasons.map(r => r.replace(/-/g, ' ')).join(', ');
     return readable.charAt(0).toUpperCase() + readable.slice(1);
-  }
-
-  /**
-   * Get human-readable sensitivity label
-   */
-  function _getSensitivityLabel() {
-    if (threshold >= 80) return 'Low Sensitivity';
-    if (threshold >= 60) return 'Medium Sensitivity';
-    return 'High Sensitivity';
-  }
-
-  /**
-   * Show a quick toast notification on the page
-   */
-  function _showQuickToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'anti-slop-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-      toast.classList.add('anti-slop-toast-hide');
-      setTimeout(() => toast.remove(), 300);
-    }, 2500);
   }
 
   function _parseCustomRules(rules) {
@@ -434,7 +262,7 @@
       const oldMode = mode;
 
       isEnabled = newSettings?.aiDetector?.enabled ?? false;
-      mode = newSettings?.aiDetector?.mode || 'warn';
+      mode = newSettings?.aiDetector?.mode === 'off' ? 'off' : 'block';
       customRules = _parseCustomRules(newSettings?.customRules || {});
 
       if (wasEnabled !== isEnabled || oldMode !== mode) {

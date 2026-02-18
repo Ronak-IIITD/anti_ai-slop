@@ -34,6 +34,19 @@
 ## Changelog
 
 ### 2026-02-18
+- **feat**: Switched to aggressive hard-block mode across major supported platforms
+  - Twitter/X replies and posts now use hard blocking (no fade mode, no visible badges)
+  - Reddit comments/posts now use hard blocking (no fade mode)
+  - Google Search results now hard block instead of fade/warn badges
+  - LinkedIn posts/comments now hard block without warning badge overlays
+- **update**: AI article detector now enforces hard-block behavior by default
+  - Default mode changed to `block` (only `off` disables)
+  - Removed warning-first UX paths for detected AI slop
+  - Detection now shows lightweight blocked notification only
+- **update**: Common blocking utilities now enforce hide-only behavior
+  - Removed placeholder/show-content flow for blocked content
+  - Added throttled notification: "Spam/AI-generated content has been blocked"
+
 - **feat**: Added global custom keyword rules (block/allow) in popup settings
   - New **Custom Keyword Rules** section with toggle, block list, and allow list
   - Supports comma/newline keyword input with validation and deduplication

@@ -1,6 +1,9 @@
 // Common utilities for all content scripts
 // Shared functions to reduce code duplication
 
+let _lastBlockedNotificationAt = 0;
+const BLOCK_NOTIFICATION_COOLDOWN_MS = 1800;
+
 // Debounce function for performance optimization
 function debounce(func, wait) {
   let timeout;
@@ -30,73 +33,11 @@ function throttle(func, limit) {
 function hideElement(element, reason = 'slop') {
   if (!element || element.classList.contains('anti-slop-hidden')) return;
 
-  const isTikTokBlock = reason === 'feed-blocked' || reason === 'video-blocked';
-  const shouldShowPlaceholder = !isTikTokBlock;
+  element.classList.add('anti-slop-hidden');
+  element.setAttribute('data-anti-slop', reason);
+  element.style.display = 'none';
 
-  const finalizeHide = () => {
-    element.classList.add('anti-slop-hidden');
-    element.setAttribute('data-anti-slop', reason);
-    element.style.display = 'none';
-  };
-
-  if (!shouldShowPlaceholder) {
-    finalizeHide();
-    return;
-  }
-
-  try {
-    if (!chrome?.storage?.sync?.get) {
-      finalizeHide();
-      return;
-    }
-
-    chrome.storage.sync.get(['antiSlop_settings'], (result) => {
-      const settings = result.antiSlop_settings || {};
-      const showPlaceholders = settings.ui?.showPlaceholders ?? true;
-
-      if (!showPlaceholders) {
-        finalizeHide();
-        return;
-      }
-
-      const placeholder = document.createElement('div');
-      placeholder.className = 'anti-slop-blocked-placeholder';
-      const safeReason = reason.replace(/[<>&"']/g, (char) => {
-        const map = {
-          '<': '&lt;',
-          '>': '&gt;',
-          '&': '&amp;',
-          '"': '&quot;',
-          "'": '&#39;'
-        };
-        return map[char];
-      });
-      placeholder.innerHTML = `
-        <div class="anti-slop-reason">Blocked: ${safeReason}</div>
-        <button class="anti-slop-show-btn" type="button">Show Content</button>
-      `;
-
-      const parent = element.parentNode;
-      if (parent) {
-        parent.insertBefore(placeholder, element);
-      }
-
-      finalizeHide();
-
-      const button = placeholder.querySelector('.anti-slop-show-btn');
-      if (button) {
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          element.style.display = '';
-          element.classList.remove('anti-slop-hidden');
-          element.classList.add('anti-slop-revealed');
-          placeholder.remove();
-        });
-      }
-    });
-  } catch (error) {
-    finalizeHide();
-  }
+  showBlockedNotification();
 }
 
 // Show element (for toggling)
@@ -111,33 +52,52 @@ function showElement(element) {
 // Fade element (reduce visibility instead of hiding)
 // Used for replies/comments where 90% is AI but 15% is useful
 function fadeElement(element, reason = 'ai-faded') {
-  if (!element || element.classList.contains('anti-slop-faded')) return;
-
-  element.classList.add('anti-slop-faded');
-  element.setAttribute('data-anti-slop', reason);
-  element.style.opacity = '0.4';
-  element.style.filter = 'grayscale(80%)';
-  element.style.transition = 'opacity 0.3s ease, filter 0.3s ease';
-
-  element.addEventListener('mouseenter', () => {
-    element.style.opacity = '0.7';
-    element.style.filter = 'grayscale(40%)';
-  });
-
-  element.addEventListener('mouseleave', () => {
-    element.style.opacity = '0.4';
-    element.style.filter = 'grayscale(80%)';
-  });
+  hideElement(element, reason);
 }
 
 // Unfade element (restore visibility)
 function unfadeElement(element) {
-  if (!element) return;
-  
-  element.classList.remove('anti-slop-faded');
-  element.removeAttribute('data-anti-slop');
-  element.style.opacity = '';
-  element.style.filter = '';
+  showElement(element);
+}
+
+function showBlockedNotification(message = 'Spam/AI-generated content has been blocked') {
+  const now = Date.now();
+  if (now - _lastBlockedNotificationAt < BLOCK_NOTIFICATION_COOLDOWN_MS) {
+    return;
+  }
+  _lastBlockedNotificationAt = now;
+
+  const existing = document.getElementById('anti-slop-hard-block-toast');
+  if (existing) {
+    existing.textContent = message;
+    return;
+  }
+
+  const notification = document.createElement('div');
+  notification.id = 'anti-slop-hard-block-toast';
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: #111827;
+    color: #fff;
+    border: 1px solid #374151;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 2147483647;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  `;
+
+  const mountTarget = document.body || document.documentElement;
+  mountTarget.appendChild(notification);
+
+  setTimeout(() => {
+    notification.remove();
+  }, 2200);
 }
 
 // Check if element is already processed
@@ -474,6 +434,7 @@ if (typeof window !== 'undefined') {
     incrementBlockCounter,
     isPlatformEnabled,
     injectCSS,
+    showBlockedNotification,
     createBlockNotification,
     createGlobalSiteIndicator
   };
