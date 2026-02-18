@@ -139,7 +139,7 @@
         
         const analysis = analyzePost(post);
         
-        if (analysis.action === 'block' || analysis.action === 'fade') {
+        if (analysis.action === 'block') {
           hideElement(post, analysis.reason);
           markProcessed(post);
           blockedCount++;
@@ -183,8 +183,12 @@
       }
 
       const isComment = isCommentPost(post);
-      const threshold = hasDetector ? detector.getSensitivityThreshold(sensitivity) : 35;
-      
+
+      // User preference: only block replies/comments, never block Reddit posts
+      if (!isComment) {
+        return { action: 'none' };
+      }
+
       // Use slightly higher threshold for comments (but still lower than before)
       const commentThreshold = 45;
 
@@ -196,27 +200,15 @@
         };
         const slopScore = detector.analyzeSlopScore(metadata);
         
-        if (isComment) {
-          // Comments: hard block
-          if (detector.shouldBlock(slopScore, commentThreshold)) {
-            return { action: 'block', reason: `ai-comment-${slopScore}`, score: slopScore };
-          }
-        } else {
-          // Posts: block normally
-          if (detector.shouldBlock(slopScore, threshold)) {
-            return { action: 'block', reason: `brainrot-${slopScore}`, score: slopScore };
-          }
+        // Comments: hard block
+        if (detector.shouldBlock(slopScore, commentThreshold)) {
+          return { action: 'block', reason: `ai-comment-${slopScore}`, score: slopScore };
         }
       }
       
       // Check Reddit-specific patterns
       if (isBrainrotPost(postText)) {
         return { action: 'block', reason: 'reddit-brainrot', score: 60 };
-      }
-      
-      // Check low-effort posts
-      if (!isComment && isLowEffortPost(postText)) {
-        return { action: 'block', reason: 'low-effort', score: 55 };
       }
 
       return { action: 'none' };

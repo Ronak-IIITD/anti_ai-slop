@@ -125,7 +125,7 @@
         
         const analysis = analyzeTweet(tweet);
         
-        if (analysis.action === 'block' || analysis.action === 'fade') {
+        if (analysis.action === 'block') {
           hideElement(tweet, analysis.reason);
           markProcessed(tweet);
           blockedCount++;
@@ -163,10 +163,14 @@
       }
 
       const isReply = isReplyTweet(tweet);
+
+      // User preference: only hard block replies (AI/spam), not main feed tweets
+      if (!isReply) {
+        return { action: 'none' };
+      }
       
       // LOWER thresholds for stronger detection
       const replyThreshold = 25;  // Was 40
-      const normalThreshold = hasDetector ? detector.getSensitivityThreshold(sensitivity) : 30;
 
       let score = 0;
       const reasons = [];
@@ -209,14 +213,8 @@
       }
 
       // Determine action
-      if (isReply) {
-        if (score >= replyThreshold) {
-          return { action: 'block', reason: reasons.join(', ') || 'low-quality', score };
-        }
-      } else {
-        if (score >= normalThreshold) {
-          return { action: 'block', reason: reasons.join(', ') || 'low-quality', score };
-        }
+      if (score >= replyThreshold) {
+        return { action: 'block', reason: reasons.join(', ') || 'low-quality', score };
       }
 
       return { action: 'none' };

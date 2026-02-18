@@ -178,29 +178,8 @@ async function initGoogleFilter() {
  */
 async function scanGoogleResults() {
   try {
-    // 1. Handle AI Overview
+    // Handle AI Overview (user can choose to show/hide)
     await handleAIOverview();
-
-    // 2. Scan individual search results
-    const results = document.querySelectorAll(GOOGLE_SELECTORS.searchResult);
-    let blocked = 0;
-
-    results.forEach(result => {
-      if (isProcessed(result)) return;
-      markProcessed(result);
-
-      const analysis = analyzeSearchResult(result);
-      if (analysis.shouldFilter) {
-        hideElement(result, analysis.reason || 'search-slop');
-        blocked++;
-      }
-    });
-
-    if (blocked > 0) {
-      googleBlockedCount += blocked;
-      await incrementBlockCounter('google', blocked);
-      log('Google', `Filtered ${blocked} results (total: ${googleBlockedCount})`);
-    }
   } catch (error) {
     logError('Google', 'Error scanning results', error);
   }
@@ -227,9 +206,44 @@ async function handleAIOverview() {
                           el.querySelector('[data-attrid*="SGE"]');
 
       if (isAIContent || GOOGLE_SELECTORS.aiOverview.indexOf(selector) <= 3) {
-        hideElement(el, 'ai-overview-spam');
+        _collapseAIOverview(el);
         googleBlockedCount++;
-        log('Google', 'AI Overview blocked');
+        log('Google', 'AI Overview collapsed');
+      }
+    });
+  }
+}
+
+/**
+ * Collapse AI Overview with a toggle to expand
+ */
+function _collapseAIOverview(element) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'anti-slop-ai-overview-collapsed';
+  wrapper.innerHTML = `
+    <div class="anti-slop-ai-overview-header">
+      <span class="anti-slop-ai-overview-icon">&#x1F916;</span>
+      <span class="anti-slop-ai-overview-label">AI Overview hidden by Anti-Slop</span>
+      <button class="anti-slop-ai-overview-toggle" type="button">Show</button>
+    </div>
+  `;
+
+  const parent = element.parentNode;
+  if (parent) {
+    parent.insertBefore(wrapper, element);
+    element.style.display = 'none';
+    element.classList.add('anti-slop-hidden');
+
+    const toggleBtn = wrapper.querySelector('.anti-slop-ai-overview-toggle');
+    toggleBtn.addEventListener('click', () => {
+      if (element.style.display === 'none') {
+        element.style.display = '';
+        element.classList.remove('anti-slop-hidden');
+        toggleBtn.textContent = 'Hide';
+      } else {
+        element.style.display = 'none';
+        element.classList.add('anti-slop-hidden');
+        toggleBtn.textContent = 'Show';
       }
     });
   }

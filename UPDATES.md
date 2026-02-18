@@ -34,6 +34,13 @@
 ## Changelog
 
 ### 2026-02-18
+- **update**: Refined aggressive mode to selective hard-block policy
+  - Google AI Overview restored to user-controlled show/hide toggle behavior (no forced hard block)
+  - Twitter hard blocking limited to reply-level AI/spam content only (main tweets left untouched)
+  - Reddit hard blocking limited to replies/comments only (posts no longer blocked)
+  - LinkedIn hard blocking kept for spam posts and AI-like replies/comments
+  - Instagram/TikTok hard blocking kept for brainrot content
+
 - **feat**: Switched to aggressive hard-block mode across major supported platforms
   - Twitter/X replies and posts now use hard blocking (no fade mode, no visible badges)
   - Reddit comments/posts now use hard blocking (no fade mode)
