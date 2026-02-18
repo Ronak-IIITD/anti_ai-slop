@@ -33,6 +33,16 @@
 
 ## Changelog
 
+### 2026-02-17 (v1.2.0 Release) - Later Update
+- **fix**: Improved Twitter/X AI reply detection and visible badges
+  - Lowered threshold for AI replies (40 instead of 70) to catch more
+  - Added 25+ AI reply pattern detectors (well said, great post, spot on, etc.)
+  - Added visible badge on faded replies (always shows AI score, not just hover)
+  - Added quick hide/show buttons on each faded reply
+  - Better reply detection with 5 different methods (connecting lines, context, siblings)
+  - Fixed badge positioning with proper CSS
+  - Very short generic comments (like just "this") now score 80 (auto-fade)
+
 ### 2026-02-17 (v1.2.0 Release)
 - **feat**: Added Google Search filtering support
   - Hides/collapses AI Overviews (SGE) with toggle to show
