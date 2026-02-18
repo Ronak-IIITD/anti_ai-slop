@@ -1,11 +1,12 @@
-// Twitter/X Brainrot Content Filter
-// Filters out brainrot and clickbait content
+// Twitter/X Brainrot & AI Content Filter v2
+// Filters out brainrot, clickbait, and AI-generated content
 // Uses fade mode for replies (90% AI, 15% useful - don't fully block)
+// Updated as of 2026-02-17
 
 (async function() {
   'use strict';
 
-  const { log, logError, hideElement, fadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createGlobalSiteIndicator } = window.AntiSlopUtils;
+  const { log, logError, hideElement, fadeElement, unfadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createGlobalSiteIndicator } = window.AntiSlopUtils || {};
   const detector = window.brainrotDetector;
   
   const PLATFORM = 'Twitter';
@@ -18,32 +19,23 @@
   const hasDetector = !!detector;
 
   // Twitter/X selectors (both old Twitter and new X.com)
-  // Updated selectors as of 2026-02-11
+  // Updated selectors as of 2026-02-17
   const SELECTORS = {
-    // Tweet/post containers
     tweet: [
       'article[data-testid="tweet"]',
-      '[data-testid="tweet"]',
-      'article[role="article"]'
+      'article[role="article"]',
+      '[data-testid="tweet"]'
     ],
     
-    // Tweet text content
     tweetText: [
       '[data-testid="tweetText"]',
-      '[lang]' // Text usually has lang attribute
+      'div[lang]'
     ],
 
-    // Reply indicators
-    reply: [
-      '[data-testid="reply"]',
-      '[data-testid="reply-button"]',
-      'div[data-testid="reply"]'
-    ],
-    
-    // Reply chain - tweets that are replies have these ancestors
-    replyIndicator: [
-      '[data-testid="cellInnerDiv"] [role="group"]',
-      'article:has([data-testid="reply"])'
+    replyContainer: [
+      '[data-testid="cellInnerDiv"]',
+      '[data-testid="tweet"] ~ [data-testid="tweet"]',
+      'div[style*="border-left"]'
     ]
   };
 
@@ -57,7 +49,34 @@
     /changed my life/i,
     /going viral/i,
     /thread 🧵/i,
-    /🚨/g // Alert emoji spam
+    /🚨/g
+  ];
+
+  // AI-generated reply indicators (for Twitter comments)
+  const AI_REPLY_PATTERNS = [
+    /\bwell said\b/i,
+    /\bgreat post\b/i,
+    /\bcouldn'?t agree more\b/i,
+    /\bso true\b/i,
+    /\bthis is so important\b/i,
+    /\blove this\b/i,
+    /\babsolutely\b.{0,20}$/,              // "Absolutely" at end
+    /\bspot on\b/i,
+    /\bthis resonates\b/i,
+    /\bneeded to hear this\b/i,
+    /\bpowerful message\b/i,
+    /\bthank you for sharing\b/i,
+    /\binsightful\b.{0,30}$/i,             // "Insightful" near end
+    /\bbrilliant\b/i,
+    /\bwell put\b/i,
+    /\bnail(ed)? it\b/i,
+    /\bthis exactly\b/i,
+    /\b100(%| percent) (this|agree)\b/i,
+    /\b((very|super|really) )?well written\b/i,
+    /\b(excellent|amazing|fantastic|wonderful) (post|article|read)\b/i,
+    /\bi (just |simply )?(love|adore|appreciate) this\b/i,
+    /\b(clapping|👏|🙌)/,                    // Clapping emoji spam
+    /^\s*(well said|great post|spot on|this|agreed|facts|exactly)\s*[!.]*\s*$/i,  // Very short generic
   ];
 
   // Initialize filter
@@ -69,7 +88,6 @@
       return;
     }
 
-    // Load settings
     const settings = await storageManager.getSettings();
     sensitivity = settings.twitter?.sensitivity || 'medium';
     blockBrainrot = settings.twitter?.blockBrainrot ?? true;
@@ -80,12 +98,14 @@
     // Initial sweep
     filterTweets();
     
-    // Show global site indicator
+    // Show global site indicator after delay
     setTimeout(() => {
-      createGlobalSiteIndicator('twitter', {
-        enabled: isEnabled,
-        blocked: blockedCount + fadedCount
-      });
+      if (typeof createGlobalSiteIndicator === 'function') {
+        createGlobalSiteIndicator('twitter', {
+          enabled: isEnabled,
+          blocked: blockedCount + fadedCount
+        });
+      }
     }, 2000);
     
     // Watch for new tweets
@@ -110,24 +130,18 @@
           blockedCount++;
           incrementBlockCounter('twitter', 1);
         } else if (analysis.action === 'fade') {
-          // For replies - fade instead of block (90% AI but 15% useful)
           fadeElement(tweet, analysis.reason);
           markProcessed(tweet);
           fadedCount++;
-          // Add hover indicator for faded tweets
-          if (analysis.score) {
-            addHoverIndicator(tweet, analysis.score, true);
-          }
+          // Add visible indicator badge (not just hover)
+          addVisibleIndicator(tweet, analysis.score, analysis.reason);
         } else {
           markProcessed(tweet);
         }
       });
       
-      if (blockedCount > 0) {
-        log(PLATFORM, `Blocked ${blockedCount} posts`);
-      }
-      if (fadedCount > 0) {
-        log(PLATFORM, `Faded ${fadedCount} replies`);
+      if (blockedCount > 0 || fadedCount > 0) {
+        log(PLATFORM, `Blocked: ${blockedCount}, Faded: ${fadedCount}`);
       }
     } catch (error) {
       logError(PLATFORM, 'Error in filterTweets', error);
@@ -142,31 +156,29 @@
       try {
         const found = document.querySelectorAll(selector);
         found.forEach(tweet => tweets.push(tweet));
-      } catch (e) {
-        // Selector might not work on this version
-      }
+      } catch (e) {}
     });
     
-    // Remove duplicates
     return Array.from(new Set(tweets));
   }
 
   // Analyze tweet to determine if it should be blocked/faded
   function analyzeTweet(tweet) {
     try {
-      // Extract tweet text
       const tweetText = extractTweetText(tweet);
       
-      if (!tweetText) {
+      if (!tweetText || tweetText.length < 3) {
         return { action: 'none' };
       }
 
       const isReply = isReplyTweet(tweet);
-      
-      // Use higher threshold for replies - fade instead of block
-      const replyThreshold = 70; // More lenient for replies
+      const replyThreshold = 40;  // Lower threshold - catch more AI
       const normalThreshold = hasDetector ? detector.getSensitivityThreshold(sensitivity) : 50;
 
+      let score = 0;
+      const reasons = [];
+
+      // 1. Brainrot detection
       if (blockBrainrot && hasDetector) {
         const metadata = {
           title: '',
@@ -174,33 +186,46 @@
           channelName: extractTweetAuthor(tweet)
         };
         const slopScore = detector.analyzeSlopScore(metadata);
-        
-        if (isReply) {
-          // For replies: use fade mode (higher threshold)
-          if (detector.shouldBlock(slopScore, replyThreshold)) {
-            return {
-              action: 'fade',
-              reason: `ai-reply-${slopScore}`,
-              score: slopScore
-            };
-          }
-        } else {
-          // For main tweets: block normally
-          if (detector.shouldBlock(slopScore, normalThreshold)) {
-            return {
-              action: 'block',
-              reason: `brainrot-${slopScore}`,
-              score: slopScore
-            };
-          }
+        if (slopScore > 0) {
+          score = slopScore;
+          reasons.push('brainrot');
         }
       }
-      
-      // Check for clickbait if enabled
+
+      // 2. AI reply detection (for comments/replies)
+      if (isReply) {
+        const aiReplyScore = detectAIReply(tweetText);
+        if (aiReplyScore > 0) {
+          score = Math.max(score, aiReplyScore);
+          reasons.push('ai-reply');
+        }
+      }
+
+      // 3. Clickbait detection
       if (blockClickbait && isClickbait(tweetText)) {
-        return isReply 
-          ? { action: 'fade', reason: 'clickbait-reply', score: 60 }
-          : { action: 'block', reason: 'clickbait', score: 60 };
+        score = Math.max(score, 60);
+        reasons.push('clickbait');
+      }
+
+      // Determine action based on context
+      if (isReply) {
+        // For replies: fade mode (don't fully block)
+        if (score >= replyThreshold) {
+          return {
+            action: 'fade',
+            reason: reasons.join(', ') || 'ai-content',
+            score: score
+          };
+        }
+      } else {
+        // For main tweets: block mode
+        if (score >= normalThreshold) {
+          return {
+            action: 'block',
+            reason: reasons.join(', ') || 'low-quality',
+            score: score
+          };
+        }
       }
 
       return { action: 'none' };
@@ -210,25 +235,73 @@
     }
   }
 
+  // Detect AI-generated reply
+  function detectAIReply(text) {
+    let score = 0;
+    const textLower = text.toLowerCase();
+    
+    // Count AI reply pattern matches
+    let matches = 0;
+    for (const pattern of AI_REPLY_PATTERNS) {
+      if (pattern.test(text)) {
+        matches++;
+      }
+    }
+
+    // Score based on matches
+    if (matches >= 3) score = 70;
+    else if (matches >= 2) score = 55;
+    else if (matches >= 1) score = 35;
+
+    // Very short generic comments (likely AI/bot)
+    if (text.length < 30 && matches >= 1) {
+      score += 20;
+    }
+
+    // No original thought - just agreement
+    if (/^(well said|great post|spot on|agreed|facts|exactly|this)$/i.test(text.trim())) {
+      score = 80;
+    }
+
+    return Math.min(score, 100);
+  }
+
   // Check if tweet is a reply
   function isReplyTweet(tweet) {
-    // Check for reply indicators in the tweet
-    const replyButton = tweet.querySelector('[data-testid="reply"]');
-    if (!replyButton) return false;
-    
-    // Check if there's a parent that indicates this is in a reply thread
-    // Replies usually appear in a different context
-    const parent = tweet.parentElement;
-    if (parent) {
-      // Check if parent has multiple articles (reply chain)
-      const siblings = parent.querySelectorAll('article[data-testid="tweet"]');
-      if (siblings.length > 1) return true;
+    // Method 1: Check for reply context indicators
+    const replyContext = tweet.closest('[data-testid="cellInnerDiv"]');
+    if (replyContext) {
+      // Check if there's a connecting line (reply thread indicator)
+      const hasConnectingLine = replyContext.querySelector('div[style*="border-left"]');
+      if (hasConnectingLine) return true;
     }
-    
-    // Check for "replying to" text
-    const tweetText = extractTweetText(tweet);
-    if (tweetText && /replying to/i.test(tweetText)) return true;
-    
+
+    // Method 2: Check for "Replying to" text
+    const replyInfo = tweet.querySelector('[data-testid="reply"]');
+    const parentText = tweet.textContent || '';
+    if (/replying to/i.test(parentText)) return true;
+
+    // Method 3: Check if tweet is in a thread (has previous tweet visible)
+    const prevSibling = tweet.previousElementSibling;
+    if (prevSibling && prevSibling.querySelector('article[data-testid="tweet"]')) {
+      return true;
+    }
+
+    // Method 4: Check for "Show replies" or similar nearby
+    const nextSibling = tweet.nextElementSibling;
+    if (nextSibling && /replies/i.test(nextSibling.textContent || '')) {
+      return true;
+    }
+
+    // Method 5: Nested tweets (replies in conversation view)
+    const article = tweet.closest('article');
+    if (article) {
+      const parent = article.parentElement;
+      if (parent && parent.querySelectorAll('article').length > 1) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -248,7 +321,6 @@
       }
     }
     
-    // Fallback: get all text from article
     return getTextContent(tweet);
   }
 
@@ -281,72 +353,66 @@
   function isClickbait(text) {
     return CLICKBAIT_PATTERNS.some(pattern => {
       if (pattern.global) {
-        // For patterns with 'g' flag, count matches
         const matches = text.match(pattern);
-        return matches && matches.length >= 3; // 3+ emoji = spam
+        return matches && matches.length >= 3;
       }
       return pattern.test(text);
     });
   }
 
-  // Add hover indicator badge to AI-detected tweets
-  // Shows on hover, offers quick actions
-  function addHoverIndicator(tweet, score, isReply) {
-    if (tweet.classList.contains('anti-slop-has-badge')) return;
-    tweet.classList.add('anti-slop-has-badge');
+  // Add visible indicator badge to faded tweets (always visible, not just hover)
+  function addVisibleIndicator(tweet, score, reason) {
+    if (tweet.querySelector('.anti-slop-visible-badge')) return;
 
-    let badge = null;
-
-    const showBadge = () => {
-      if (badge) {
-        badge.style.display = 'flex';
-        return;
-      }
-
-      badge = document.createElement('div');
-      badge.className = 'anti-slop-hover-badge';
-      badge.innerHTML = `
-        <span class="anti-slop-badge-icon">&#x26A0;</span>
-        <span class="anti-slop-badge-text">AI: ${score}</span>
-        <button class="anti-slop-badge-btn" data-action="hide">Hide</button>
-      `;
-
+    // Ensure tweet has position context
+    const computedStyle = window.getComputedStyle(tweet);
+    if (computedStyle.position === 'static') {
       tweet.style.position = 'relative';
-      tweet.appendChild(badge);
+    }
 
-      // Hide button action
-      const hideBtn = badge.querySelector('[data-action="hide"]');
-      hideBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const action = isReply ? 'fade' : 'block';
-        if (action === 'fade') {
-          fadeElement(tweet, 'user-hidden');
-        } else {
-          hideElement(tweet, 'user-hidden');
-        }
-        badge.remove();
-      });
-    };
+    const badge = document.createElement('div');
+    badge.className = 'anti-slop-visible-badge';
+    badge.innerHTML = `
+      <span class="anti-slop-vbadge-score">AI: ${score}</span>
+      <span class="anti-slop-vbadge-reason">${_escapeHtml(reason.split(',')[0])}</span>
+      <button class="anti-slop-vbadge-hide" type="button" title="Hide this">&#x2715;</button>
+      <button class="anti-slop-vbadge-show" type="button" title="Show anyway">&#x2713;</button>
+    `;
 
-    const hideBadge = () => {
-      if (badge) {
-        badge.style.display = 'none';
-      }
-    };
+    tweet.appendChild(badge);
 
-    tweet.addEventListener('mouseenter', showBadge);
-    tweet.addEventListener('mouseleave', hideBadge);
+    // Hide button
+    const hideBtn = badge.querySelector('.anti-slop-vbadge-hide');
+    hideBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      unfadeElement(tweet);
+      hideElement(tweet, 'user-hidden');
+      badge.remove();
+    });
+
+    // Show button (remove fade)
+    const showBtn = badge.querySelector('.anti-slop-vbadge-show');
+    showBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      unfadeElement(tweet);
+      badge.remove();
+    });
+  }
+
+  function _escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   // Start mutation observer
   function startObserver() {
     const observer = createDebouncedObserver(() => {
-      blockedCount = 0;
-      fadedCount = 0;
       filterTweets();
     }, 300);
 
-    // Observe timeline container
     const timeline = document.querySelector('[role="main"]') || document.body;
     
     observer.observe(timeline, {
@@ -370,8 +436,6 @@
       if (currentUrl !== lastUrl) {
         lastUrl = currentUrl;
         log(PLATFORM, 'URL changed, re-scanning...');
-        blockedCount = 0;
-        fadedCount = 0;
         setTimeout(filterTweets, 500);
       }
     }).observe(document.body, { childList: true, subtree: true });
@@ -379,30 +443,31 @@
   setupUrlChangeObserver();
 
   // Listen for settings changes
-  chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'sync' && changes.antiSlop_settings) {
-      const newSettings = changes.antiSlop_settings.newValue;
-      const wasEnabled = isEnabled;
-      isEnabled = newSettings?.twitter?.enabled ?? false;
-      sensitivity = newSettings?.twitter?.sensitivity || 'medium';
-      blockBrainrot = newSettings?.twitter?.blockBrainrot ?? true;
-      blockClickbait = newSettings?.twitter?.blockClickbait ?? true;
-      
-      if (wasEnabled !== isEnabled) {
-        log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);
-        if (isEnabled) {
-          location.reload();
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'sync' && changes.antiSlop_settings) {
+        const newSettings = changes.antiSlop_settings.newValue;
+        const wasEnabled = isEnabled;
+        isEnabled = newSettings?.twitter?.enabled ?? false;
+        sensitivity = newSettings?.twitter?.sensitivity || 'medium';
+        blockBrainrot = newSettings?.twitter?.blockBrainrot ?? true;
+        blockClickbait = newSettings?.twitter?.blockClickbait ?? true;
+        
+        if (wasEnabled !== isEnabled) {
+          log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);
+          if (isEnabled) {
+            location.reload();
+          }
+        } else if (isEnabled) {
+          log(PLATFORM, `Settings updated (sensitivity: ${sensitivity})`);
+          document.querySelectorAll('[data-anti-slop-processed]').forEach(el => {
+            el.removeAttribute('data-anti-slop-processed');
+          });
+          filterTweets();
         }
-      } else if (isEnabled) {
-        log(PLATFORM, `Settings updated (sensitivity: ${sensitivity})`);
-        // Re-scan with new settings
-        document.querySelectorAll('[data-anti-slop-processed]').forEach(el => {
-          el.removeAttribute('data-anti-slop-processed');
-        });
-        filterTweets();
       }
-    }
-  });
+    });
+  }
 
   // Start when DOM is ready
   if (document.readyState === 'loading') {

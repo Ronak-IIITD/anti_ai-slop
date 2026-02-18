@@ -1,5 +1,7 @@
-/* Twitter/X Filtering Styles */
+/* Twitter/X Filtering Styles v2 */
+/* Updated as of 2026-02-17 */
 
+/* Hidden elements */
 .anti-slop-hidden {
   display: none !important;
   visibility: hidden !important;
@@ -9,31 +11,31 @@
   padding: 0 !important;
 }
 
-/* Hide tweet containers smoothly */
+/* Tweet with anti-slop marker */
 article[data-anti-slop] {
   display: none !important;
 }
 
-/* Smooth fade for better UX */
+/* Smooth transitions */
 article[data-testid="tweet"] {
-  transition: opacity 0.2s ease-out;
+  transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
 /* Blocked content placeholder */
 .anti-slop-blocked-placeholder {
   border: 2px dashed #ff6b6b;
-  background: rgba(255, 107, 107, 0.06);
+  background: rgba(255, 107, 107, 0.08);
   padding: 14px 16px;
   margin: 8px 0;
   border-radius: 12px;
   text-align: center;
   cursor: pointer;
   transition: background 0.2s ease;
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .anti-slop-blocked-placeholder:hover {
-  background: rgba(255, 107, 107, 0.12);
+  background: rgba(255, 107, 107, 0.15);
 }
 
 .anti-slop-blocked-placeholder .anti-slop-reason {
@@ -46,10 +48,15 @@ article[data-testid="tweet"] {
   background: #ff6b6b;
   color: #ffffff;
   border: none;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   cursor: pointer;
   font-size: 13px;
+  font-weight: 500;
+}
+
+.anti-slop-blocked-placeholder .anti-slop-show-btn:hover {
+  background: #e05555;
 }
 
 .anti-slop-revealed {
@@ -58,33 +65,95 @@ article[data-testid="tweet"] {
   opacity: 0.85;
 }
 
-/* Fade mode for replies - 90% AI but 15% useful */
+/* ============================================================
+   FADE MODE - For replies (90% AI but 15% useful)
+   ============================================================ */
+
 .anti-slop-faded {
-  opacity: 0.4 !important;
+  opacity: 0.35 !important;
   filter: grayscale(80%) !important;
   transition: opacity 0.3s ease, filter 0.3s ease !important;
   pointer-events: auto !important;
 }
 
 .anti-slop-faded:hover {
-  opacity: 0.7 !important;
+  opacity: 0.6 !important;
   filter: grayscale(40%) !important;
 }
 
-/* AI indicator badge for faded elements */
-.anti-slop-ai-badge {
+/* ============================================================
+   VISIBLE BADGE - Always visible on faded content
+   ============================================================ */
+
+.anti-slop-visible-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  background: rgba(100, 100, 100, 0.8);
-  color: #fff;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  z-index: 100;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(40, 40, 40, 0.95);
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  border-radius: 6px;
+  padding: 4px 8px;
+  z-index: 1000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: badgeSlideIn 0.3s ease;
 }
 
-/* Hover indicator badge for AI-detected tweets */
+@keyframes badgeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anti-slop-vbadge-score {
+  color: #ff6b6b;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.anti-slop-vbadge-reason {
+  color: #aaa;
+  font-size: 10px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anti-slop-vbadge-hide,
+.anti-slop-vbadge-show {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.anti-slop-vbadge-hide {
+  color: #ff6b6b;
+}
+
+.anti-slop-vbadge-hide:hover {
+  background: rgba(255, 107, 107, 0.2);
+}
+
+.anti-slop-vbadge-show {
+  color: #4ade80;
+}
+
+.anti-slop-vbadge-show:hover {
+  background: rgba(74, 222, 128, 0.2);
+}
+
+/* ============================================================
+   HOVER BADGE - For additional info on hover
+   ============================================================ */
+
 .anti-slop-hover-badge {
   position: absolute;
   top: -8px;
@@ -124,4 +193,29 @@ article[data-testid="tweet"] {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   DARK MODE SUPPORT (X.com default)
+   ============================================================ */
+
+.anti-slop-visible-badge {
+  background: rgba(30, 30, 30, 0.95);
+  border-color: rgba(255, 107, 107, 0.4);
+}
+
+/* ============================================================
+   AI INDICATOR - Small badge for non-faded items
+   ============================================================ */
+
+.anti-slop-ai-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(100, 100, 100, 0.8);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 100;
 }
