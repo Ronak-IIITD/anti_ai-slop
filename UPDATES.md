@@ -66,7 +66,7 @@
   - Existing users auto-migrate to default custom rule settings
   - Keywords are normalized (lowercase/trimmed), min length enforced, max list size capped
 
-### 2026-02-18 (v1.2.2) - X.com Robust Fix
+### 2026-02-18 (v1.2.2) - X.com & LinkedIn Robust Fix
 - **fix**: Complete rewrite of Twitter/X filter for reliability
   - Multi-selector strategy (5+ different selectors for tweets)
   - Runs filter 4 times on page load (0s, 1s, 2s, 4s) - ensures it catches content
@@ -74,8 +74,15 @@
   - Better reply detection (checks parent context, sibling articles, "replying to" text)
   - 30+ AI reply patterns including emoji detection
   - Thresholds: replies 20, posts 35 (very aggressive)
-  - New quick badge with hide button
-  - Console logging to debug what's happening
+  - Console logging to debug
+- **fix**: Complete rewrite of LinkedIn filter for reliability
+  - Runs 5 times on page load (0s, 1s, 2s, 4s, 6s)
+  - Very aggressive thresholds: Medium 20, High 12, Low 35
+  - 40+ motivational spam patterns
+  - LinkedIn poem detection (short line format)
+  - AI-generated post detection
+  - Multiple selectors for posts and comments
+  - Hashtag spam detection (5+ hashtags = fade)
 
 ### 2026-02-17 (v1.2.0 Release) - Stronger Detection Update
 - **feat**: Significantly stronger detection across all platforms
