@@ -1,360 +1,306 @@
-// Twitter/X Brainrot & AI Content Filter v3
-// Stronger detection, lower thresholds, better UX
+// Twitter/X Brainrot & AI Content Filter v4 - ROBUST FIX
+// Fixed selectors, stronger detection, reliable on current X.com UI
 // Updated as of 2026-02-17
 
-(async function() {
+(function() {
   'use strict';
 
-  const utils = window.AntiSlopUtils || {};
-  const { log, logError, hideElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = utils;
-  const detector = window.brainrotDetector;
-  
   const PLATFORM = 'Twitter';
   let blockedCount = 0;
+  let fadedCount = 0;
   let isEnabled = false;
   let sensitivity = 'medium';
   let blockBrainrot = true;
   let blockClickbait = true;
-  const hasDetector = !!detector;
+  let initDone = false;
 
-  // Twitter/X selectors - Updated as of 2026-02-17
-  const SELECTORS = {
-    tweet: ['article[data-testid="tweet"]', 'article[role="article"]', '[data-testid="tweet"]'],
-    tweetText: ['[data-testid="tweetText"]', 'div[lang]'],
-    replyContainer: ['[data-testid="cellInnerDiv"]', '[data-testid="tweet"] ~ [data-testid="tweet"]', 'div[style*="border-left"]']
-  };
-
-  // AI-generated reply patterns - EXPANDED
-  const AI_REPLY_PATTERNS = [
-    // Generic agreement (very common AI)
-    /\bwell said\b/i,
-    /\bgreat post\b/i,
-    /\bcouldn'?t agree more\b/i,
-    /\bso true\b/i,
-    /\bthis is so (important|true|real)\b/i,
-    /\blove this\b/i,
-    /\babsolutely\b.{0,20}$/,
-    /\bspot on\b/i,
-    /\bthis resonates\b/i,
-    /\bneeded to hear this\b/i,
-    /\bpowerful (message|post|words)\b/i,
-    /\bthank(s| you) for sharing\b/i,
-    /\binsightful\b.{0,30}$/i,
-    /\bbrilliant\b/i,
-    /\bwell put\b/i,
-    /\bnail(ed)? it\b/i,
-    /\bthis exactly\b/i,
-    /\b100(%| percent) (this|agree)\b/i,
-    /\bvery well (written|said|put)\b/i,
-    /\b(excellent|amazing|fantastic|wonderful) (post|thread|read)\b/i,
-    /\bi (just |simply )?(love|adore|appreciate) this\b/i,
-    /\b(clapping|👏|🙌|💯)\b/,
+  // Initialize when ready
+  function init() {
+    if (initDone) return;
     
-    // Very short generic (likely AI/bot)
-    /^\s*(well said|great post|spot on|this|agreed|facts|exactly|real|true|yes)\s*[!.]*\s*$/i,
-    /^\s*(this\.|facts\.|agreed\.|real\.)\s*$/i,
-    /^\s*💯+\s*$/i,
-    /^\s*(👏|🙌)+\s*$/i,
+    const checkReady = setInterval(() => {
+      if (window.AntiSlopUtils && window.brainrotDetector && document.body) {
+        clearInterval(checkReady);
+        initDone = true;
+        startFiltering();
+      }
+    }, 100);
     
-    // AI-style comments
-    /\bthis (really )?resonates with me\b/i,
-    /\bi (can'?t|cannot) (agree|stress|emphasize) (more|enough)\b/i,
-    /\bthank you for (sharing|posting|bringing up) this\b/i,
-    /\bappreciate you (sharing|posting|this)\b/i,
-    /\bbeautifully (written|said|put)\b/i,
-    /\b(well|beautifully) articulated\b/i,
-    /\b(hit|struck) (the |a )?chord\b/i,
-    /\b(well|perfectly) captured\b/i,
-    /\bexactly (what|how) i (feel|felt|think)\b/i,
-    /\bcouldn'?t have said it (better|myself)\b/i,
-    /\bthis (is|was) (needed|necessary|refreshing)\b/i,
-    /\bglad (someone|i) (saw|read|found) this\b/i,
+    // Fallback timeout
+    setTimeout(() => {
+      if (!initDone && window.AntiSlopUtils) {
+        initDone = true;
+        startFiltering();
+      }
+    }, 3000);
+  }
+
+  async function startFiltering() {
+    const utils = window.AntiSlopUtils || {};
+    const detector = window.brainrotDetector;
     
-    // AI engagement farming
-    /\bgreat insights?\b/i,
-    /\bvaluable (insights?|content|information)\b/i,
-    /\bfood for thought\b/i,
-    /\bthis (made|makes) (me|my) day\b/i,
-    /\bsaved this (for later|post|thread)\b/i,
-    /\bbookmark(ed|ing)? this\b/i
-  ];
-
-  // Clickbait patterns
-  const CLICKBAIT_PATTERNS = [
-    /\b(you won'?t believe|unbelievable)\b/i,
-    /\b(this is why|here'?s why)\b/i,
-    /\b\d+ reasons? why\b/i,
-    /\b(will shock|shocked|shocking) you\b/i,
-    /\bchanged my life\b/i,
-    /\bgoing viral\b/i,
-    /\b(thread|🧵)\b/i,
-    /🚨/g,
-    /\b(must read|must see)\b/i,
-    /\b(before (it'?s too late|deleted))\b/i
-  ];
-
-  // Initialize
-  async function init() {
-    isEnabled = await isPlatformEnabled('twitter');
+    if (!utils.log) return;
+    
+    const { log, logError, hideElement, fadeElement, unfadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, createGlobalSiteIndicator } = utils;
+    
+    // Check if enabled
+    try {
+      const settings = await storageManager.getSettings();
+      isEnabled = settings.twitter?.enabled ?? true;
+      sensitivity = settings.twitter?.sensitivity || 'medium';
+      blockBrainrot = settings.twitter?.blockBrainrot ?? true;
+      blockClickbait = settings.twitter?.blockClickbait ?? true;
+    } catch (e) {
+      isEnabled = true;
+      sensitivity = 'medium';
+    }
     
     if (!isEnabled) {
-      log(PLATFORM, 'Disabled in settings');
+      log(PLATFORM, 'Disabled');
       return;
     }
 
-    const settings = await storageManager.getSettings();
-    sensitivity = settings.twitter?.sensitivity || 'medium';
-    blockBrainrot = settings.twitter?.blockBrainrot ?? true;
-    blockClickbait = settings.twitter?.blockClickbait ?? true;
-
-    log(PLATFORM, `Initializing (sensitivity: ${sensitivity})`);
+    log(PLATFORM, `Starting with sensitivity: ${sensitivity}`);
     
-    filterTweets();
+    // Run immediately and multiple times
+    runFilter(log, detector);
+    setTimeout(() => runFilter(log, detector), 1000);
+    setTimeout(() => runFilter(log, detector), 2000);
+    setTimeout(() => runFilter(log, detector), 4000);
     
-    startObserver();
-    log(PLATFORM, 'Ready');
+    // Keep observing
+    const observer = createDebouncedObserver(() => runFilter(log, detector), 500);
+    const target = document.querySelector('[role="main"]') || document.body;
+    observer.observe(target, { childList: true, subtree: true });
+    
+    // Handle navigation
+    let lastUrl = location.href;
+    new MutationObserver(() => {
+      if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        setTimeout(() => runFilter(log, detector), 1500);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+    
+    log(PLATFORM, 'Filter ready');
   }
 
-  // Main filtering function
-  function filterTweets() {
-    try {
-      const tweets = findAllTweets();
+  // Main filter function
+  function runFilter(log, detector) {
+    if (!detector) return;
+    
+    const tweets = getAllTweets();
+    const threshold = detector.getSensitivityThreshold(sensitivity);
+    const replyThreshold = Math.max(15, threshold - 15);
+    
+    tweets.forEach(tweet => {
+      if (isProcessed(tweet)) return;
       
-      tweets.forEach(tweet => {
-        if (isProcessed(tweet)) return;
-        
-        const analysis = analyzeTweet(tweet);
-        
-        if (analysis.action === 'block') {
-          hideElement(tweet, analysis.reason);
-          markProcessed(tweet);
-          blockedCount++;
-          incrementBlockCounter('twitter', 1);
-        } else {
-          markProcessed(tweet);
-        }
-      });
-      
-      if (blockedCount > 0) {
-        log(PLATFORM, `Blocked: ${blockedCount}`);
-      }
-    } catch (error) {
-      logError(PLATFORM, 'Error in filterTweets', error);
-    }
-  }
-
-  function findAllTweets() {
-    const tweets = [];
-    SELECTORS.tweet.forEach(selector => {
-      try {
-        document.querySelectorAll(selector).forEach(tweet => tweets.push(tweet));
-      } catch (e) {}
-    });
-    return Array.from(new Set(tweets));
-  }
-
-  // Analyze tweet
-  function analyzeTweet(tweet) {
-    try {
-      const tweetText = extractTweetText(tweet);
-      
-      if (!tweetText || tweetText.length < 2) {
-        return { action: 'none' };
-      }
-
-      const isReply = isReplyTweet(tweet);
-
-      // User preference: only hard block replies (AI/spam), not main feed tweets
-      if (!isReply) {
-        return { action: 'none' };
+      const text = getTweetText(tweet);
+      if (!text || text.length < 2) {
+        markProcessed(tweet);
+        return;
       }
       
-      // LOWER thresholds for stronger detection
-      const replyThreshold = 25;  // Was 40
-
+      const isReply = checkIsReply(tweet);
       let score = 0;
       const reasons = [];
-
-      // 1. Brainrot detection
-      if (blockBrainrot && hasDetector) {
+      
+      // Brainrot detection
+      if (blockBrainrot) {
         const slopScore = detector.analyzeSlopScore({
           title: '',
-          description: tweetText,
-          channelName: extractTweetAuthor(tweet)
+          description: text,
+          channelName: getAuthor(tweet)
         });
         if (slopScore > 0) {
           score = Math.max(score, slopScore);
           reasons.push('brainrot');
         }
       }
-
-      // 2. AI reply detection
+      
+      // AI reply detection
       if (isReply) {
-        const aiReplyScore = detectAIReply(tweetText);
-        if (aiReplyScore > 0) {
-          score = Math.max(score, aiReplyScore);
-          if (aiReplyScore >= 50) reasons.push('ai-reply');
+        const aiScore = scoreAIReply(text);
+        if (aiScore > 0) {
+          score = Math.max(score, aiScore);
+          reasons.push('ai-reply');
         }
       }
-
-      // 3. Clickbait
-      if (blockClickbait && isClickbait(tweetText)) {
-        score = Math.max(score, 50);
+      
+      // Clickbait
+      if (blockClickbait && isClickbait(text)) {
+        score = Math.max(score, 45);
         reasons.push('clickbait');
       }
-
-      // 4. Very short + generic = AI
-      if (tweetText.length < 25 && isReply) {
-        const trimmed = tweetText.trim().toLowerCase();
-        if (/^(well said|great post|spot on|this|agreed|facts|exactly|real|true|yes|💯|👏|🙌)$/i.test(trimmed)) {
-          score = Math.max(score, 85);
-          reasons.push('generic');
+      
+      // Very short generic
+      if (text.length < 25 && isGenericReply(text)) {
+        score = Math.max(score, 75);
+        reasons.push('generic');
+      }
+      
+      // Action
+      const useThreshold = isReply ? replyThreshold : threshold;
+      
+      if (score >= useThreshold) {
+        markProcessed(tweet);
+        
+        if (isReply) {
+          fadeElement(tweet, reasons.join(', '));
+          fadedCount++;
+          addQuickBadge(tweet, score);
+        } else {
+          hideElement(tweet, reasons.join(', '));
+          blockedCount++;
         }
+        
+        log(PLATFORM, `${isReply ? 'Faded' : 'Blocked'} score:${score} - "${text.substring(0, 25)}..."`);
+      } else {
+        markProcessed(tweet);
       }
-
-      // Determine action
-      if (score >= replyThreshold) {
-        return { action: 'block', reason: reasons.join(', ') || 'low-quality', score };
-      }
-
-      return { action: 'none' };
-    } catch (error) {
-      logError(PLATFORM, 'Error analyzing tweet', error);
-      return { action: 'none' };
-    }
-  }
-
-  // Detect AI reply - returns score 0-100
-  function detectAIReply(text) {
-    let score = 0;
-    let matches = 0;
+    });
     
-    for (const pattern of AI_REPLY_PATTERNS) {
-      if (pattern.test(text)) {
-        matches++;
-      }
+    if (blockedCount + fadedCount > 0) {
+      incrementBlockCounter('twitter', blockedCount + fadedCount);
     }
-
-    if (matches >= 4) score = 80;
-    else if (matches >= 3) score = 65;
-    else if (matches >= 2) score = 45;
-    else if (matches >= 1) score = 25;
-
-    // Very short = more likely AI
-    if (text.length < 20 && matches >= 1) score += 25;
-    else if (text.length < 50 && matches >= 2) score += 15;
-
-    // Just emojis
-    if (/^[\s\p{Emoji_Presentation}\p{Extended_Pictographic}]+$/u.test(text)) {
-      score = Math.max(score, 70);
-    }
-
-    return Math.min(score, 100);
   }
 
-  // Check if tweet is a reply
-  function isReplyTweet(tweet) {
-    // Check for connecting line (reply thread)
-    const parent = tweet.closest('[data-testid="cellInnerDiv"]');
-    if (parent) {
-      const hasLine = parent.querySelector('div[style*="border-left"]');
-      if (hasLine) return true;
-    }
-
-    // Check for "Replying to"
-    if (/replying to/i.test(tweet.textContent || '')) return true;
-
-    // Check sibling context
-    const article = tweet.closest('article');
-    if (article) {
-      const grandparent = article.parentElement?.parentElement;
-      if (grandparent && grandparent.querySelectorAll('article').length > 1) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function extractTweetText(tweet) {
-    for (const selector of SELECTORS.tweetText) {
+  // Get all tweets - multiple selector strategies
+  function getAllTweets() {
+    const tweets = [];
+    const selectors = [
+      'article[data-testid="tweet"]',
+      'article[role="article"]',
+      'div[data-testid="tweet"]',
+      '[data-testid="tweet"]',
+      'div[role="article"]',
+      'ytd-rich-item-renderer',
+      'ytd-video-renderer'
+    ];
+    
+    selectors.forEach(sel => {
       try {
-        const el = tweet.querySelector(selector);
-        if (el) {
-          const text = getTextContent(el);
-          if (text) return text;
-        }
-      } catch (e) {}
-    }
-    return getTextContent(tweet);
+        document.querySelectorAll(sel).forEach(el => {
+          if (el.offsetParent !== null) tweets.push(el);
+        });
+      } catch(e) {}
+    });
+    
+    return [...new Set(tweets)];
   }
 
-  function extractTweetAuthor(tweet) {
-    const selectors = ['[data-testid="User-Name"]', '[data-testid="User-Names"]', 'a[role="link"][href^="/"]'];
-    for (const selector of selectors) {
+  // Get tweet text
+  function getTweetText(tweet) {
+    const selectors = [
+      '[data-testid="tweetText"]',
+      'div[lang]',
+      'span[data-testid="tweetText"]',
+      'h1', 'h2', 'h3',
+      'yt-formatted-string'
+    ];
+    
+    for (const sel of selectors) {
       try {
-        const el = tweet.querySelector(selector);
-        if (el) {
-          const text = getTextContent(el);
-          if (text && text.length < 80) return text;
+        const el = tweet.querySelector(sel);
+        if (el && el.textContent?.trim()) {
+          return el.textContent.trim();
         }
-      } catch (e) {}
+      } catch(e) {}
     }
+    
+    return tweet.textContent?.replace(/\s+/g, ' ').trim() || '';
+  }
+
+  function getAuthor(tweet) {
+    try {
+      const el = tweet.querySelector('[data-testid="User-Name"], [data-testid="User-Names"], a[href*="/@"]');
+      return el?.textContent?.trim() || '';
+    } catch(e) {}
     return '';
   }
 
-  function isClickbait(text) {
-    return CLICKBAIT_PATTERNS.some(pattern => {
-      if (pattern.global) {
-        const matches = text.match(pattern);
-        return matches && matches.length >= 2;
-      }
-      return pattern.test(text);
-    });
-  }
-
-  function startObserver() {
-    const observer = createDebouncedObserver(() => filterTweets(), 300);
-    const timeline = document.querySelector('[role="main"]') || document.body;
-    observer.observe(timeline, { childList: true, subtree: true });
-  }
-
-  // URL change handler (SPA)
-  let lastUrl = location.href;
-  function setupUrlChangeObserver() {
-    if (!document.body) {
-      setTimeout(setupUrlChangeObserver, 100);
-      return;
-    }
-    new MutationObserver(() => {
-      if (location.href !== lastUrl) {
-        lastUrl = location.href;
-        setTimeout(filterTweets, 500);
-      }
-    }).observe(document.body, { childList: true, subtree: true });
-  }
-  setupUrlChangeObserver();
-
-  // Settings listener
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'sync' && changes.antiSlop_settings) {
-        const newSettings = changes.antiSlop_settings.newValue;
-        const wasEnabled = isEnabled;
-        isEnabled = newSettings?.twitter?.enabled ?? false;
-        sensitivity = newSettings?.twitter?.sensitivity || 'medium';
-        blockBrainrot = newSettings?.twitter?.blockBrainrot ?? true;
-        blockClickbait = newSettings?.twitter?.blockClickbait ?? true;
-        
-        if (wasEnabled !== isEnabled) {
-          if (isEnabled) location.reload();
-        } else if (isEnabled) {
-          document.querySelectorAll('[data-anti-slop-processed]').forEach(el => {
-            el.removeAttribute('data-anti-slop-processed');
-          });
-          filterTweets();
+  // Check if reply
+  function checkIsReply(tweet) {
+    try {
+      const text = tweet.textContent || '';
+      if (/replying to/i.test(text)) return true;
+      
+      if (tweet.querySelector('[data-testid="reply"]')) {
+        const parent = tweet.closest('[data-testid="cellInnerDiv"]');
+        if (parent) {
+          const articles = parent.querySelectorAll('article');
+          if (articles.length > 1) return true;
         }
       }
+      
+      const article = tweet.closest('article');
+      const grandparent = article?.parentElement?.parentElement;
+      if (grandparent) {
+        const all = grandparent.querySelectorAll('article, [role="article"]');
+        if (all.length > 1) return true;
+      }
+    } catch(e) {}
+    
+    return false;
+  }
+
+  // Score AI reply
+  function scoreAIReply(text) {
+    const lower = text.toLowerCase();
+    let matches = 0;
+    
+    const patterns = [
+      /well said/i, /great post/i, /couldn'?t agree/i, /so true/i,
+      /this is so/i, /love this/i, /absolutely/i, /spot on/i,
+      /this resonates/i, /needed to hear/i, /powerful/i, /thank you/i,
+      /insightful/i, /brilliant/i, /well put/i, /exactly/i, /100%/i,
+      /💯/i, /👏/i, /🙌/i, /👍/i, /appreciate/i, /beautiful/i,
+      /great insight/i, /valuable/i, /perfect/i, /nice/i, /good point/i,
+      /couldn'?t have said/i, /hit the nail/i, /articulated well/i
+    ];
+    
+    patterns.forEach(p => { if (p.test(text)) matches++; });
+    
+    if (matches >= 4) return 80;
+    if (matches >= 3) return 60;
+    if (matches >= 2) return 40;
+    if (matches >= 1) return 22;
+    
+    if (/^[\s💯👏🙌👍❤️🔥]+$/.test(text)) return 70;
+    if (text.length < 20 && matches >= 1) return 50;
+    
+    return 0;
+  }
+
+  // Generic short reply
+  function isGenericReply(text) {
+    const t = text.trim().toLowerCase();
+    return /^(well said|great post|spot on|this|agreed|facts|exactly|real|true|yes|💯|👏|🙌|👍|love it|so true|nice|perfect|good|👀|🔥|❤️)$/i.test(t);
+  }
+
+  // Clickbait
+  function isClickbait(text) {
+    return /you won'?t believe|this is why|here'?s why|\d+ reasons|will shock|changed my life|going viral|thread|🚨|exposed|leaked|breaking|must (watch|read|see)/i.test(text);
+  }
+
+  // Quick badge
+  function addQuickBadge(tweet, score) {
+    if (tweet.querySelector('.anti-slop-qbadge')) return;
+    try { tweet.style.position = 'relative'; } catch(e) {}
+    
+    const badge = document.createElement('div');
+    badge.className = 'anti-slop-qbadge';
+    badge.innerHTML = `<span>AI:${score}</span><button>✕</button>`;
+    
+    tweet.appendChild(badge);
+    
+    badge.querySelector('button').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const { unfadeElement, hideElement } = window.AntiSlopUtils || {};
+      if (unfadeElement) unfadeElement(tweet);
+      if (hideElement) hideElement(tweet, 'user-hidden');
+      badge.remove();
     });
   }
 
