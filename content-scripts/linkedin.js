@@ -1,363 +1,339 @@
-// LinkedIn Content Script for Anti-Slop Extension
-// Filters motivational spam, AI-generated posts, engagement bait
-// Updated as of 2026-02-17
+// LinkedIn Content Script for Anti-Slop Extension v4 - ROBUST
+// Complete rewrite with strong detection, multiple runs, reliable selectors
+// Updated as of 2026-02-18
 
-// ============================================================
-// SELECTORS (Updated as of 2026-02-17)
-// ============================================================
+(function() {
+  'use strict';
 
-const LINKEDIN_SELECTORS = {
-  // Feed posts
-  feedPost: 'div.feed-shared-update-v2, div[data-urn*="activity"]',
-  // Post text content
-  postText: '.feed-shared-text, .break-words, .feed-shared-update-v2__description',
-  // Post author
-  postAuthor: '.update-components-actor__name, .feed-shared-actor__name',
-  // Post engagement metrics
-  postReactions: '.social-details-social-counts__reactions-count',
-  postComments: '.social-details-social-counts__comments',
-  // Comment elements
-  comment: '.comments-comment-item, .comments-comment-entity',
-  commentText: '.comments-comment-item__main-content, .comments-comment-entity__content',
-  // Promoted posts
-  promotedLabel: '.update-components-actor__sub-description-link, [data-ad-banner]',
-  // Repost indicator
-  repostIndicator: '.update-components-header__text-view'
-};
+  const PLATFORM = 'LinkedIn';
+  let blockedCount = 0;
+  let fadedCount = 0;
+  let initDone = false;
 
-// ============================================================
-// LINKEDIN BRAINROT / SPAM PATTERNS
-// ============================================================
+  // Initialize
+  function init() {
+    if (initDone) return;
+    
+    const checkReady = setInterval(() => {
+      if (window.AntiSlopUtils && window.brainrotDetector && document.body) {
+        clearInterval(checkReady);
+        initDone = true;
+        startFiltering();
+      }
+    }, 100);
+    
+    setTimeout(() => {
+      if (!initDone && window.AntiSlopUtils) {
+        initDone = true;
+        startFiltering();
+      }
+    }, 3000);
+  }
 
-// Strong motivational spam indicators
-const LINKEDIN_SPAM_STRONG = [
-  'agree?',
-  'thoughts?',
-  'agree or disagree',
-  'repost if you agree',
-  'share if you agree',
-  'like if you agree',
-  'comment your thoughts',
-  'drop a comment',
-  'i got fired',
-  'i got rejected',
-  'i was homeless',
-  'i went from',
-  'here\'s what i learned',
-  'nobody talks about this',
-  'unpopular opinion:',
-  'hot take:',
-  'controversial take:',
-  'this might be controversial',
-  'i said what i said',
-  'let that sink in',
-  'read that again',
-  'say it louder',
-  'the best ceo i ever had',
-  'my boss told me',
-  'a candidate showed up',
-  'i interviewed someone',
-  'hustle culture',
-  'grind mindset',
-  'rise and grind',
-  'no days off',
-  'while you were sleeping'
-];
-
-// Moderate indicators - need multiple
-const LINKEDIN_SPAM_MODERATE = [
-  'be kind',
-  'be grateful',
-  'be humble',
-  'hard work pays off',
-  'success is',
-  'failure is',
-  'your network is your net worth',
-  'hire for attitude',
-  'culture eats strategy',
-  'work-life balance',
-  'quiet quitting',
-  'the great resignation',
-  'toxic workplace',
-  'red flag',
-  'green flag',
-  'leadership is',
-  'a true leader',
-  'real leadership',
-  'this is leadership',
-  'if you don\'t build your dream',
-  'wake up at 5am',
-  'morning routine',
-  'productivity hack',
-  'life-changing',
-  'game-changing'
-];
-
-// AI-generated LinkedIn post indicators
-const LINKEDIN_AI_PATTERNS = [
-  /^(I|Here'?s|Let me|Today|This)/m,  // AI always starts same way
-  /\n\n[A-Z]/g,                        // Short paragraphs starting with caps
-  /\b(delve|navigate|landscape|holistic|paradigm|synergy)\b/gi,
-  /\b(thought leader|value proposition|actionable insights|key takeaways)\b/gi,
-  /\b(in (today'?s|this) (world|age|era|landscape|market))\b/gi,
-  /\b(it'?s (important|crucial|essential|vital) to)\b/gi,
-  /\n\n(1\.|Step 1|First,|Here are)/,  // Numbered lists (very AI-like on LinkedIn)
-  /\b(remember|don'?t forget):?\s*\n/gi // "Remember:" followed by newline
-];
-
-// Engagement bait formatting patterns
-const ENGAGEMENT_BAIT_PATTERNS = [
-  /^.{0,50}\n\n/,                      // Very short first line (hook)
-  /^\S+\.\n\n/m,                       // Single word/sentence followed by double newline
-  /\n\n\.\n\n/,                        // Single period on its own line (LinkedIn poets)
-  /(?:\n[^\n]{1,30}){5,}/,             // Many short lines (LinkedIn poem format)
-  /\n\n(Agree\??|Thoughts\??|Share\??|Repost)/i, // Engagement CTA at end
-  /\n\n#\w+\s+#\w+\s+#\w+/            // Hashtag spam at end
-];
-
-// ============================================================
-// MAIN FUNCTIONS
-// ============================================================
-
-let linkedinBlockedCount = 0;
-let linkedinSettings = null;
-let _linkedinInitialized = false;
-
-/**
- * Initialize LinkedIn content script
- */
-async function initLinkedInFilter() {
-  if (_linkedinInitialized) return;
-  _linkedinInitialized = true;
-
-  try {
-    const enabled = await isPlatformEnabled('linkedin');
-    if (!enabled) {
-      log('LinkedIn', 'Platform disabled, skipping');
+  async function startFiltering() {
+    const utils = window.AntiSlopUtils || {};
+    const detector = window.brainrotDetector;
+    
+    if (!utils.log) return;
+    
+    const { log, logError, hideElement, fadeElement, unfadeElement, isProcessed, markProcessed, getTextContent, incrementBlockCounter } = utils;
+    
+    let sensitivity = 'medium';
+    let isEnabled = true;
+    
+    try {
+      const settings = await storageManager.getSettings();
+      isEnabled = settings.linkedin?.enabled ?? true;
+      sensitivity = settings.linkedin?.sensitivity || 'medium';
+    } catch (e) {}
+    
+    if (!isEnabled) {
+      log(PLATFORM, 'Disabled');
       return;
     }
 
-    linkedinSettings = await storageManager.getSettings();
-    const sensitivity = linkedinSettings.linkedin?.sensitivity || 'medium';
-
-    log('LinkedIn', `Initialized with sensitivity: ${sensitivity}`);
-
-    // Wait for feed to load
-    await waitForElement(LINKEDIN_SELECTORS.feedPost, 10000);
-
-    // Initial scan
-    await scanLinkedInFeed();
-
-    // Watch for new posts loaded via infinite scroll
-    const observer = createDebouncedObserver(async () => {
-      await scanLinkedInFeed();
-    }, 500);
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
+    log(PLATFORM, `Starting (sensitivity: ${sensitivity})`);
+    
+    // Run multiple times like Twitter
+    runFilter(log, detector, sensitivity);
+    setTimeout(() => runFilter(log, detector, sensitivity), 1000);
+    setTimeout(() => runFilter(log, detector, sensitivity), 2000);
+    setTimeout(() => runFilter(log, detector, sensitivity), 4000);
+    setTimeout(() => runFilter(log, detector, sensitivity), 6000);
+    
+    // Observer
+    const observer = new MutationObserver(() => {
+      runFilter(log, detector, sensitivity);
     });
-
-    log('LinkedIn', 'MutationObserver active');
-  } catch (error) {
-    logError('LinkedIn', 'Failed to initialize', error);
+    
+    const target = document.querySelector('.scaffold-finite-scroll') || 
+                   document.querySelector('.feed-shared-update-v2')?.parentElement ||
+                   document.body;
+    
+    observer.observe(target, { childList: true, subtree: true });
+    
+    // Navigation
+    let lastUrl = location.href;
+    new MutationObserver(() => {
+      if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        setTimeout(() => runFilter(log, detector, sensitivity), 2000);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+    
+    log(PLATFORM, 'Filter ready');
   }
-}
 
-/**
- * Scan LinkedIn feed for spam/AI content
- */
-async function scanLinkedInFeed() {
-  try {
-    const posts = document.querySelectorAll(LINKEDIN_SELECTORS.feedPost);
-    let blocked = 0;
-
+  // Main filter
+  function runFilter(log, detector, sensitivity) {
+    if (!detector) return;
+    
+    const threshold = getThreshold(sensitivity);
+    const posts = getAllPosts();
+    
     posts.forEach(post => {
       if (isProcessed(post)) return;
-      markProcessed(post);
-
-      // Skip promoted/ad posts (handled by ad blockers)
-      if (post.querySelector(LINKEDIN_SELECTORS.promotedLabel)) return;
-
-      const analysis = analyzeLinkedInPost(post);
-      if (analysis.shouldFilter) {
-        hideElement(post, analysis.reason || 'linkedin-slop');
-        blocked++;
+      
+      const text = getPostText(post);
+      if (!text || text.length < 5) {
+        markProcessed(post);
+        return;
+      }
+      
+      const isComment = isCommentPost(post);
+      let score = 0;
+      const reasons = [];
+      
+      // Motivational spam patterns
+      const spamScore = scoreSpam(text);
+      if (spamScore > 0) {
+        score = Math.max(score, spamScore);
+        reasons.push('spam');
+      }
+      
+      // AI-generated patterns
+      const aiScore = scoreAI(text);
+      if (aiScore > 0) {
+        score = Math.max(score, aiScore);
+        reasons.push('ai');
+      }
+      
+      // Brainrot
+      const brainrotScore = detector.analyzeSlopScore({
+        title: text.substring(0, 100),
+        description: text,
+        channelName: ''
+      });
+      if (brainrotScore > 0) {
+        score = Math.max(score, brainrotScore);
+        reasons.push('brainrot');
+      }
+      
+      // LinkedIn poem format (short lines)
+      if (isLinkedInPoem(text)) {
+        score = Math.max(score, 55);
+        reasons.push('poem');
+      }
+      
+      // Hashtag spam
+      const hashtagCount = (text.match(/#\w+/g) || []).length;
+      if (hashtagCount >= 5) {
+        score = Math.max(score, 30);
+        reasons.push('hashtag-spam');
+      }
+      
+      const useThreshold = isComment ? Math.max(15, threshold - 10) : threshold;
+      
+      if (score >= useThreshold) {
+        markProcessed(post);
+        
+        if (isComment) {
+          fadeElement(post, reasons.join(', '));
+          fadedCount++;
+        } else {
+          hideElement(post, reasons.join(', '));
+          blockedCount++;
+        }
+        
+        log(PLATFORM, `${isComment ? 'Faded' : 'Blocked'} score:${score} - "${text.substring(0, 30)}..."`);
+      } else {
+        markProcessed(post);
       }
     });
-
-    // Also scan comments (hard block)
-    await _scanLinkedInComments();
-
-    if (blocked > 0) {
-      linkedinBlockedCount += blocked;
-      await incrementBlockCounter('linkedin', blocked);
-      log('LinkedIn', `Filtered ${blocked} posts (total: ${linkedinBlockedCount})`);
-    }
-  } catch (error) {
-    logError('LinkedIn', 'Error scanning feed', error);
-  }
-}
-
-/**
- * Scan LinkedIn comments (hard block)
- */
-async function _scanLinkedInComments() {
-  const comments = document.querySelectorAll(LINKEDIN_SELECTORS.comment);
-
-  comments.forEach(comment => {
-    if (isProcessed(comment)) return;
-    markProcessed(comment);
-
-    const textEl = comment.querySelector(LINKEDIN_SELECTORS.commentText);
-    const text = textEl?.textContent?.trim() || '';
-
-    if (text.length < 10) return;
-
-    const score = _scoreLinkedInComment(text);
-    if (score >= 50) {
-      hideElement(comment, 'ai-comment');
-    }
-  });
-}
-
-/**
- * Analyze a LinkedIn post for spam/AI content
- * @param {HTMLElement} post - Feed post element
- * @returns {Object} { shouldFilter, action, reason, score }
- */
-function analyzeLinkedInPost(post) {
-  const sensitivity = linkedinSettings?.linkedin?.sensitivity || 'medium';
-  const threshold = _getLinkedInThreshold(sensitivity);
-
-  // Extract post text
-  const textEl = post.querySelector(LINKEDIN_SELECTORS.postText);
-  const text = textEl?.textContent?.trim() || '';
-
-  if (text.length < 20) return { shouldFilter: false, action: 'none', reason: '', score: 0 };
-
-  const textLower = text.toLowerCase();
-  let score = 0;
-  const reasons = [];
-
-  // 1. Strong spam keywords (max 30 points)
-  const strongCount = LINKEDIN_SPAM_STRONG.filter(p => textLower.includes(p)).length;
-  if (strongCount >= 3) { score += 30; reasons.push('motivational-spam'); }
-  else if (strongCount >= 2) { score += 20; reasons.push('engagement-bait'); }
-  else if (strongCount >= 1) { score += 10; reasons.push('spam-pattern'); }
-
-  // 2. Moderate spam keywords (max 15 points)
-  const moderateCount = LINKEDIN_SPAM_MODERATE.filter(p => textLower.includes(p)).length;
-  if (moderateCount >= 3) { score += 15; reasons.push('corporate-buzzwords'); }
-  else if (moderateCount >= 2) { score += 8; }
-
-  // 3. AI-generated post patterns (max 25 points)
-  const aiPatternCount = LINKEDIN_AI_PATTERNS.filter(p => p.test(text)).length;
-  if (aiPatternCount >= 4) { score += 25; reasons.push('ai-generated'); }
-  else if (aiPatternCount >= 3) { score += 15; reasons.push('likely-ai'); }
-  else if (aiPatternCount >= 2) { score += 8; }
-
-  // 4. Engagement bait formatting (max 20 points)
-  const baitCount = ENGAGEMENT_BAIT_PATTERNS.filter(p => p.test(text)).length;
-  if (baitCount >= 3) { score += 20; reasons.push('engagement-bait-format'); }
-  else if (baitCount >= 2) { score += 12; reasons.push('linkedin-poet'); }
-  else if (baitCount >= 1) { score += 5; }
-
-  // 5. Short-line "LinkedIn poem" format (max 10 points)
-  const lines = text.split('\n').filter(l => l.trim().length > 0);
-  const shortLines = lines.filter(l => l.trim().length < 40);
-  if (lines.length >= 5 && shortLines.length / lines.length > 0.7) {
-    score += 10;
-    reasons.push('poem-format');
-  }
-
-  // 6. Hashtag spam at end (max 5 points)
-  const hashtagMatch = text.match(/#\w+/g);
-  if (hashtagMatch && hashtagMatch.length >= 5) {
-    score += 5;
-    reasons.push('hashtag-spam');
-  }
-
-  // 7. Custom keyword rules (global user overrides)
-  if (typeof brainrotDetector !== 'undefined') {
-    const customSignal = brainrotDetector.evaluateCustomRules(textLower);
-    if (customSignal.scoreDelta !== 0) {
-      score += customSignal.scoreDelta;
-      if (customSignal.blockMatches.length > 0) {
-        reasons.push('custom-block-keyword');
-      }
-      if (customSignal.allowMatches.length > 0) {
-        reasons.push('custom-allow-keyword');
-      }
+    
+    if (blockedCount + fadedCount > 0) {
+      incrementBlockCounter('linkedin', blockedCount + fadedCount);
     }
   }
 
-  // Determine action
-  let shouldFilter = false;
-  let action = 'none';
-
-  if (score >= threshold) {
-    shouldFilter = true;
-    action = 'hide';
+  function getThreshold(sensitivity) {
+    switch (sensitivity) {
+      case 'low': return 35;
+      case 'medium': return 20;
+      case 'high': return 12;
+      default: return 20;
+    }
   }
 
-  return { shouldFilter, action, reason: reasons.join(', '), score: Math.max(0, Math.min(score, 100)) };
-}
-
-/**
- * Score a LinkedIn comment for AI-generated content
- */
-function _scoreLinkedInComment(text) {
-  const textLower = text.toLowerCase();
-  let score = 0;
-
-  // Generic agreement comments
-  const genericPhrases = [
-    'well said', 'great post', 'couldn\'t agree more', 'so true',
-    'this is so important', 'love this', 'absolutely', 'spot on',
-    'this resonates', 'needed to hear this', 'powerful message',
-    'thank you for sharing', 'thanks for sharing this',
-    'insightful', 'very insightful', 'brilliant insights'
-  ];
-
-  const matches = genericPhrases.filter(p => textLower.includes(p)).length;
-  if (matches >= 2) score += 40;
-  else if (matches >= 1) score += 20;
-
-  // Very short generic comments
-  if (text.length < 50 && matches >= 1) score += 20;
-
-  // AI patterns in comments
-  if (/\b(delve|navigate|landscape|holistic)\b/i.test(text)) score += 15;
-  if (/\b(it'?s (important|crucial) to)\b/i.test(text)) score += 10;
-
-  if (typeof brainrotDetector !== 'undefined') {
-    const customSignal = brainrotDetector.evaluateCustomRules(textLower);
-    score += customSignal.scoreDelta;
+  // Get all posts
+  function getAllPosts() {
+    const posts = [];
+    const selectors = [
+      '.feed-shared-update-v2',
+      '.feed-shared-update',
+      'div[data-urn*="activity"]',
+      '.scaffold-finite-scroll .feed-shared',
+      '.full-height .feed-shared',
+      '.occludable-update',
+      '[data-occludable-id]'
+    ];
+    
+    selectors.forEach(sel => {
+      try {
+        document.querySelectorAll(sel).forEach(el => {
+          if (el.offsetParent !== null) posts.push(el);
+        });
+      } catch(e) {}
+    });
+    
+    return [...new Set(posts)];
   }
 
-  return Math.max(0, Math.min(score, 100));
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-function _getLinkedInThreshold(sensitivity) {
-  switch (sensitivity) {
-    case 'low': return 40;
-    case 'medium': return 25;
-    case 'high': return 15;
-    default: return 25;
+  // Get post text
+  function getPostText(post) {
+    const selectors = [
+      '.feed-shared-text',
+      '.feed-shared-update-v2__description',
+      '.break-words',
+      '.feed-shared-update__description',
+      '[data-ember-id] .feed-shared-text',
+      '.occludable-update__main-content',
+      '.feed-shared-navigation'
+    ];
+    
+    for (const sel of selectors) {
+      try {
+        const el = post.querySelector(sel);
+        if (el && el.textContent?.trim()) {
+          return el.textContent.trim();
+        }
+      } catch(e) {}
+    }
+    
+    return post.textContent?.replace(/\s+/g, ' ').trim() || '';
   }
-}
 
-// ============================================================
-// INITIALIZE
-// ============================================================
+  // Check if comment
+  function isCommentPost(post) {
+    const selectors = [
+      '.comments-comment-item',
+      '.comments-comment-entity',
+      '.comments-post-comment',
+      '[data-test-comment]'
+    ];
+    
+    for (const sel of selectors) {
+      try {
+        if (post.closest(sel)) return true;
+      } catch(e) {}
+    }
+    
+    // Check for "reply" context
+    const parent = post.parentElement;
+    if (parent) {
+      const comments = parent.querySelectorAll('.comments-comment-item, .comments-comment-entity');
+      if (comments.length > 0) return true;
+    }
+    
+    return false;
+  }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initLinkedInFilter);
-} else {
-  initLinkedInFilter();
-}
+  // Score spam/motivational content
+  function scoreSpam(text) {
+    const lower = text.toLowerCase();
+    let score = 0;
+    let matches = 0;
+    
+    // Strong patterns
+    const strong = [
+      /agree\??/i, /thoughts\??/i, /agree or disagree/i,
+      /repost if you agree/i, /share if you agree/i, /like if you agree/i,
+      /drop a comment/i, /comment your thoughts/i,
+      /i got fired/i, /i got rejected/i, /i was homeless/i,
+      /i went from/i, /here'?s what i learned/i, /nobody talks about this/i,
+      /unpopular opinion/i, /hot take/i, /controversial take/i,
+      /my boss told me/i, /a candidate showed up/i, /i interviewed/i,
+      /hustle culture/i, /grind mindset/i, /rise and grind/i,
+      /no days off/i, /while you were sleeping/i,
+      /be kind be grateful/i, /be humble/i, /hard work pays/i,
+      /your network is your net worth/i, /hire for attitude/i,
+      /culture eats strategy/i, /quiet quitting/i, /toxic workplace/i,
+      /red flag/i, /green flag/i, /leadership is/i, /a true leader/i,
+      /wake up at 5am/i, /morning routine/i, /productivity hack/i,
+      /life-changing/i, /game-changing/i
+    ];
+    
+    strong.forEach(p => { if (p.test(text)) matches++; });
+    
+    if (matches >= 4) score = 85;
+    else if (matches >= 3) score = 65;
+    else if (matches >= 2) score = 45;
+    else if (matches >= 1) score = 25;
+    
+    return Math.min(score, 100);
+  }
+
+  // Score AI-generated
+  function scoreAI(text) {
+    const lower = text.toLowerCase();
+    let score = 0;
+    let matches = 0;
+    
+    const patterns = [
+      /^in today'?s/i, /^here'?s/i, /^let me/i, /^today/i,
+      /delve into/i, /navigate the landscape/i, /holistic approach/i,
+      /paradigm shift/i, /thought leader/i, /value proposition/i,
+      /actionable insights/i, /key takeaways/i,
+      /it'?s important to/i, /it is crucial to/i,
+      /\n\n[A-Z]/g,  // Short paragraphs with capitals
+      /\n\n.+\n\n.+\n\n.+\n\n/,  // Multiple short paragraphs
+      /in (the )?(world|age|era|landscape|market) of/i,
+      /empower/i, /leverage/i, /optimize/i, /streamline/i,
+      /transformative/i, /revolutionize/i, /cutting-edge/i,
+      /best practices/i, /comprehensive guide/i, /ultimate guide/i
+    ];
+    
+    patterns.forEach(p => { if (p.test(text)) matches++; });
+    
+    if (matches >= 4) score = 75;
+    else if (matches >= 3) score = 55;
+    else if (matches >= 2) score = 35;
+    else if (matches >= 1) score = 18;
+    
+    // LinkedIn poem detection
+    const lines = text.split('\n').filter(l => l.trim().length > 0);
+    const shortLines = lines.filter(l => l.trim().length < 40);
+    if (lines.length >= 4 && shortLines.length / lines.length > 0.7) {
+      score = Math.max(score, 50);
+    }
+    
+    return Math.min(score, 100);
+  }
+
+  // LinkedIn poem format
+  function isLinkedInPoem(text) {
+    const lines = text.split('\n').filter(l => l.trim().length > 0);
+    if (lines.length < 4) return false;
+    
+    const shortLines = lines.filter(l => l.trim().length < 40);
+    return shortLines.length / lines.length > 0.6;
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
