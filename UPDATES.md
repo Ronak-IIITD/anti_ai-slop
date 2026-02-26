@@ -66,6 +66,17 @@
   - Existing users auto-migrate to default custom rule settings
   - Keywords are normalized (lowercase/trimmed), min length enforced, max list size capped
 
+### 2026-02-18 (v1.2.2) - X.com Robust Fix
+- **fix**: Complete rewrite of Twitter/X filter for reliability
+  - Multi-selector strategy (5+ different selectors for tweets)
+  - Runs filter 4 times on page load (0s, 1s, 2s, 4s) - ensures it catches content
+  - More text extraction selectors (7 options)
+  - Better reply detection (checks parent context, sibling articles, "replying to" text)
+  - 30+ AI reply patterns including emoji detection
+  - Thresholds: replies 20, posts 35 (very aggressive)
+  - New quick badge with hide button
+  - Console logging to debug what's happening
+
 ### 2026-02-17 (v1.2.0 Release) - Stronger Detection Update
 - **feat**: Significantly stronger detection across all platforms
   - **Thresholds lowered**: Medium now 35 (was 50), High now 20 (was 35)
