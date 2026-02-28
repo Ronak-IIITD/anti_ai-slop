@@ -1,6 +1,7 @@
-// AI Content Detection Patterns v2
+// AI Content Detection Patterns v3
 // Context-aware, density-based detection of AI-generated low-quality content
 // Reduces false positives by requiring MULTIPLE indicators and high density
+// Updated as of 2026-03-01
 
 // ============================================================
 // AI PHRASE INDICATORS
@@ -28,7 +29,42 @@ const AI_PHRASES_STRONG = [
   'embark on a journey',
   'tapestry of',
   'multifaceted',
-  'in the realm of'
+  'in the realm of',
+  // Added 2026-03-01: modern LLM output patterns
+  'let\'s dive in',
+  'let\'s break it down',
+  'let\'s unpack',
+  'at its core',
+  'at the end of the day',
+  'serves as a testament',
+  'stands as a testament',
+  'a testament to',
+  'it\'s no secret that',
+  'look no further',
+  'whether you\'re a seasoned',
+  'whether you\'re a beginner or',
+  'the bottom line is',
+  'the key takeaway',
+  'crucial to understand',
+  'harness the power',
+  'pivotal role',
+  'plays a pivotal',
+  'a deep dive into',
+  'demystify',
+  'demystifying',
+  'the intricacies of',
+  'a myriad of',
+  'foster a sense of',
+  'foster collaboration',
+  'foster innovation',
+  'it bears mentioning',
+  'not only... but also',
+  'can\'t be overstated',
+  'cannot be overstated',
+  'without further ado',
+  'in an era where',
+  'in a world where',
+  'in this comprehensive'
 ];
 
 // Tier 2: Moderate indicators (common in AI, but also in formal writing)
@@ -50,7 +86,39 @@ const AI_PHRASES_MODERATE = [
   'leverage',
   'optimize',
   'streamline',
-  'best practices'
+  'best practices',
+  // Added 2026-03-01: broader moderate indicators
+  'it\'s crucial to',
+  'it is essential to',
+  'it\'s essential to',
+  'in essence',
+  'notably',
+  'significantly',
+  'interestingly',
+  'undeniably',
+  'arguably',
+  'here\'s the thing',
+  'here is the thing',
+  'the reality is',
+  'the truth is',
+  'when it comes to',
+  'as we move forward',
+  'going forward',
+  'moving forward',
+  'at the forefront',
+  'on the flip side',
+  'that said',
+  'with that said',
+  'to put it simply',
+  'in a nutshell',
+  'actionable insights',
+  'actionable tips',
+  'key considerations',
+  'pro tip',
+  'bonus tip',
+  'wrapping up',
+  'final thoughts',
+  'the takeaway'
 ];
 
 // ============================================================
@@ -60,16 +128,25 @@ const AI_PHRASES_MODERATE = [
 
 const AI_STRUCTURAL_PATTERNS = {
   // AI overuses transition words at paragraph starts
-  paragraphTransitions: /(?:^|\n)\s*(Moreover|Furthermore|However|Additionally|In conclusion|To summarize|Firstly|Secondly|Thirdly|In addition|On the other hand|That being said|With that in mind|It'?s worth noting|It'?s important to note)/gm,
+  paragraphTransitions: /(?:^|\n)\s*(Moreover|Furthermore|However|Additionally|In conclusion|To summarize|Firstly|Secondly|Thirdly|In addition|On the other hand|That being said|With that in mind|It'?s worth noting|It'?s important to note|Let'?s explore|Let'?s dive|Let'?s take a look|Let'?s break|Moving on|Next up|Now let'?s)/gm,
 
   // Generic opening patterns
-  genericOpenings: /^(In today'?s|In this (article|post|guide|blog)|When it comes to|In the (world|realm|landscape) of|Are you looking for|Have you ever wondered)/im,
+  genericOpenings: /^(In today'?s|In this (article|post|guide|blog)|When it comes to|In the (world|realm|landscape) of|Are you looking for|Have you ever wondered|If you'?re like most|Picture this|Imagine a world)/im,
 
   // Unnecessary hedging/filler
   hedgingLanguage: /\b(it'?s (important|worth|crucial|essential) to (note|mention|understand|remember|highlight|emphasize))\b/gi,
 
   // Excessive use of power words
-  buzzwords: /\b(enhance|elevate|unlock|leverage|optimize|streamline|empower|revolutionize|transform|supercharge|skyrocket|turbocharge|game-chang)/gi
+  buzzwords: /\b(enhance|elevate|unlock|leverage|optimize|streamline|empower|revolutionize|transform|supercharge|skyrocket|turbocharge|game-chang|cutting-edge|state-of-the-art|next-level|world-class|top-notch|best-in-class)/gi,
+
+  // AI list patterns: "Here are X things/ways/tips/reasons..."
+  listIntros: /\b(here are|here'?s|below are|the following|these \d+|top \d+|\d+ (ways|things|tips|reasons|steps|strategies|methods|tricks|hacks|secrets|mistakes|benefits|advantages|examples))\b/gi,
+
+  // AI paragraph templates: numbered/bulleted structure
+  numberedParagraphs: /(?:^|\n)\s*(\d+[\.\)]\s|[-*]\s|Step \d+)/gm,
+
+  // AI conclusion patterns
+  conclusionPatterns: /\b(in (conclusion|summary|closing)|to (summarize|sum up|conclude|wrap up)|all in all|the bottom line|key takeaways?|final thoughts?)\b/gi
 };
 
 // ============================================================
@@ -213,16 +290,17 @@ class AIPatternDetector {
    * Uses density-based analysis, not raw counts
    * @param {string} article - Article text
    * @param {Document} doc - Page document
-   * @returns {Object} { score, reasons, contentType }
+   * @returns {Object} { score, reasons, contentType, breakdown }
    */
   analyzeSlopScore(article, doc) {
     const text = article.toLowerCase();
     const wordCount = text.trim().split(/\s+/).length;
     const reasons = [];
+    const breakdown = {};
 
     // Skip very short pages (< 150 words) - not enough signal
     if (wordCount < 150) {
-      return { score: 0, reasons: ['too-short-to-analyze'], contentType: CONTENT_TYPES.GENERIC };
+      return { score: 0, reasons: ['too-short-to-analyze'], contentType: CONTENT_TYPES.GENERIC, breakdown: {} };
     }
 
     // Classify content type
@@ -233,19 +311,27 @@ class AIPatternDetector {
     let rawScore = 0;
 
     // 1. Strong AI Phrase Density (max 30 points)
-    const strongCount = this.countPhrases(text, this.strongPhrases);
+    const strongMatches = this.findPhraseMatches(text, this.strongPhrases);
+    const strongCount = strongMatches.length;
     const strongDensity = strongCount / (wordCount / 1000); // per 1000 words
-    if (strongDensity >= 8) { rawScore += 30; reasons.push('high-ai-phrase-density'); }
-    else if (strongDensity >= 5) { rawScore += 20; reasons.push('moderate-ai-phrase-density'); }
-    else if (strongDensity >= 3) { rawScore += 10; reasons.push('some-ai-phrases'); }
+    let phraseScore = 0;
+    if (strongDensity >= 8) { phraseScore = 30; reasons.push('high-ai-phrase-density'); }
+    else if (strongDensity >= 5) { phraseScore = 20; reasons.push('moderate-ai-phrase-density'); }
+    else if (strongDensity >= 3) { phraseScore = 10; reasons.push('some-ai-phrases'); }
+    rawScore += phraseScore;
+    breakdown.phrases = { score: phraseScore, matches: strongMatches };
 
     // 2. Moderate Phrase Check (max 15 points, only if strong phrases also present)
+    let fillerScore = 0;
     if (strongCount >= 1) {
-      const moderateCount = this.countPhrases(text, this.moderatePhrases);
+      const moderateMatches = this.findPhraseMatches(text, this.moderatePhrases);
+      const moderateCount = moderateMatches.length;
       const moderateDensity = moderateCount / (wordCount / 1000);
-      if (moderateDensity >= 10) { rawScore += 15; reasons.push('high-filler-density'); }
-      else if (moderateDensity >= 6) { rawScore += 8; reasons.push('moderate-filler-density'); }
+      if (moderateDensity >= 10) { fillerScore = 15; reasons.push('high-filler-density'); }
+      else if (moderateDensity >= 6) { fillerScore = 8; reasons.push('moderate-filler-density'); }
+      breakdown.filler = { score: fillerScore, matches: moderateMatches };
     }
+    rawScore += fillerScore;
 
     // 3. Structural Pattern Analysis (max 25 points)
     const structuralScore = this.analyzeStructure(article, wordCount);
@@ -253,6 +339,7 @@ class AIPatternDetector {
     if (structuralScore.reasons.length > 0) {
       reasons.push(...structuralScore.reasons);
     }
+    breakdown.structure = { score: structuralScore.score, reasons: structuralScore.reasons };
 
     // 4. Content Quality Analysis (max 15 points)
     const qualityScore = this.analyzeQuality(article, wordCount);
@@ -260,6 +347,7 @@ class AIPatternDetector {
     if (qualityScore.reasons.length > 0) {
       reasons.push(...qualityScore.reasons);
     }
+    breakdown.quality = { score: qualityScore.score, reasons: qualityScore.reasons };
 
     // 5. Credibility Check (max 15 points)
     const credScore = this.checkCredibility(doc);
@@ -267,12 +355,37 @@ class AIPatternDetector {
     if (credScore.reasons.length > 0) {
       reasons.push(...credScore.reasons);
     }
+    breakdown.credibility = { score: credScore.score, reasons: credScore.reasons };
+
+    // 6. NEW: Vocabulary Diversity Analysis (max 10 points)
+    const vocabScore = this.analyzeVocabularyDiversity(text, wordCount);
+    rawScore += vocabScore.score;
+    if (vocabScore.reasons.length > 0) {
+      reasons.push(...vocabScore.reasons);
+    }
+    breakdown.vocabulary = { score: vocabScore.score, reasons: vocabScore.reasons };
+
+    // 7. NEW: Repetition Analysis (max 10 points)
+    const repetitionScore = this.analyzeRepetition(article);
+    rawScore += repetitionScore.score;
+    if (repetitionScore.reasons.length > 0) {
+      reasons.push(...repetitionScore.reasons);
+    }
+    breakdown.repetition = { score: repetitionScore.score, reasons: repetitionScore.reasons };
+
+    // 8. NEW: List/Template Pattern Analysis (max 10 points)
+    const templateScore = this.analyzeTemplatePatterns(article, wordCount);
+    rawScore += templateScore.score;
+    if (templateScore.reasons.length > 0) {
+      reasons.push(...templateScore.reasons);
+    }
+    breakdown.templates = { score: templateScore.score, reasons: templateScore.reasons };
 
     // Apply content type multiplier
     const adjustedScore = Math.round(rawScore * multiplier);
     const finalScore = Math.min(adjustedScore, 100);
 
-    return { score: finalScore, reasons, contentType };
+    return { score: finalScore, reasons, contentType, breakdown };
   }
 
   // ============================================================
@@ -284,6 +397,40 @@ class AIPatternDetector {
    */
   countPhrases(text, phrases) {
     return phrases.filter(phrase => text.includes(phrase)).length;
+  }
+
+  /**
+   * Find phrase matches and return matched phrases (for highlighting)
+   * @param {string} text - Lowercased text
+   * @param {string[]} phrases - Phrases to find
+   * @returns {string[]} Matched phrases
+   */
+  findPhraseMatches(text, phrases) {
+    return phrases.filter(phrase => text.includes(phrase));
+  }
+
+  /**
+   * Get all matched AI phrases in original text (for inline highlighting)
+   * Returns positions and matched text
+   * @param {string} originalText - Original (non-lowercased) article text
+   * @returns {Array<{phrase: string, tier: string}>} Matched phrases with tier info
+   */
+  getAllMatchedPhrases(originalText) {
+    const text = originalText.toLowerCase();
+    const matches = [];
+
+    for (const phrase of this.strongPhrases) {
+      if (text.includes(phrase)) {
+        matches.push({ phrase, tier: 'strong' });
+      }
+    }
+    for (const phrase of this.moderatePhrases) {
+      if (text.includes(phrase)) {
+        matches.push({ phrase, tier: 'moderate' });
+      }
+    }
+
+    return matches;
   }
 
   /**
@@ -374,6 +521,140 @@ class AIPatternDetector {
     }
 
     return { score: Math.min(score, 15), reasons };
+  }
+
+  // ============================================================
+  // NEW DETECTION DIMENSIONS (v3)
+  // ============================================================
+
+  /**
+   * Analyze vocabulary diversity (Type-Token Ratio)
+   * AI text tends to have lower vocabulary diversity than human writing
+   * @returns {Object} { score, reasons }
+   */
+  analyzeVocabularyDiversity(text, wordCount) {
+    let score = 0;
+    const reasons = [];
+
+    if (wordCount < 200) return { score: 0, reasons: [] };
+
+    const words = text.split(/\s+/).filter(w => w.length > 3); // skip short words
+    const uniqueWords = new Set(words);
+    const ttr = uniqueWords.size / words.length; // Type-Token Ratio
+
+    // Low TTR means repetitive vocabulary (AI-like)
+    // Human writing typically has TTR > 0.45 for articles
+    if (ttr < 0.30) {
+      score += 7;
+      reasons.push('very-low-vocabulary-diversity');
+    } else if (ttr < 0.38) {
+      score += 4;
+      reasons.push('low-vocabulary-diversity');
+    }
+
+    // Check for overuse of certain connector words
+    const connectors = ['however', 'additionally', 'furthermore', 'moreover', 'therefore', 'consequently', 'nevertheless'];
+    let connectorCount = 0;
+    for (const c of connectors) {
+      const regex = new RegExp('\\b' + c + '\\b', 'gi');
+      const matches = text.match(regex);
+      if (matches) connectorCount += matches.length;
+    }
+    const connectorDensity = connectorCount / (wordCount / 1000);
+    if (connectorDensity > 8) {
+      score += 3;
+      reasons.push('excessive-connectors');
+    }
+
+    return { score: Math.min(score, 10), reasons };
+  }
+
+  /**
+   * Analyze repetitive patterns (phrase/structure repetition)
+   * AI tends to repeat exact phrases and use parallel structure excessively
+   * @returns {Object} { score, reasons }
+   */
+  analyzeRepetition(article) {
+    let score = 0;
+    const reasons = [];
+
+    const sentences = article.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
+    if (sentences.length < 5) return { score: 0, reasons: [] };
+
+    // Check for repeated sentence beginnings (AI loves "This", "It", "The")
+    const beginnings = sentences.map(s => {
+      const words = s.split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+      return words;
+    });
+
+    const beginningCounts = {};
+    for (const b of beginnings) {
+      beginningCounts[b] = (beginningCounts[b] || 0) + 1;
+    }
+
+    const repeatedBeginnings = Object.values(beginningCounts).filter(c => c >= 3).length;
+    if (repeatedBeginnings >= 3) {
+      score += 5;
+      reasons.push('highly-repetitive-structure');
+    } else if (repeatedBeginnings >= 2) {
+      score += 3;
+      reasons.push('repetitive-sentence-starts');
+    }
+
+    // Check for repeated 3-grams (trigrams)
+    const words = article.toLowerCase().split(/\s+/);
+    if (words.length > 100) {
+      const trigrams = {};
+      for (let i = 0; i < words.length - 2; i++) {
+        const tri = words[i] + ' ' + words[i + 1] + ' ' + words[i + 2];
+        trigrams[tri] = (trigrams[tri] || 0) + 1;
+      }
+
+      const repeatedTrigrams = Object.values(trigrams).filter(c => c >= 4).length;
+      if (repeatedTrigrams >= 5) {
+        score += 5;
+        reasons.push('repetitive-phrases');
+      } else if (repeatedTrigrams >= 3) {
+        score += 3;
+        reasons.push('some-repeated-phrases');
+      }
+    }
+
+    return { score: Math.min(score, 10), reasons };
+  }
+
+  /**
+   * Analyze template/list patterns
+   * AI loves numbered lists, "Here are X ways", listicle format
+   * @returns {Object} { score, reasons }
+   */
+  analyzeTemplatePatterns(article, wordCount) {
+    let score = 0;
+    const reasons = [];
+
+    // Check for list intro patterns
+    const listIntros = article.match(this.structuralPatterns.listIntros) || [];
+    if (listIntros.length >= 3) {
+      score += 4;
+      reasons.push('list-heavy-content');
+    }
+
+    // Check for numbered/bulleted items
+    const numberedItems = article.match(this.structuralPatterns.numberedParagraphs) || [];
+    const numberedDensity = numberedItems.length / (wordCount / 500);
+    if (numberedDensity > 2) {
+      score += 3;
+      reasons.push('excessive-list-structure');
+    }
+
+    // Check for multiple conclusion patterns (AI often summarizes multiple times)
+    const conclusions = article.match(this.structuralPatterns.conclusionPatterns) || [];
+    if (conclusions.length >= 2) {
+      score += 3;
+      reasons.push('multiple-conclusions');
+    }
+
+    return { score: Math.min(score, 10), reasons };
   }
 
   // ============================================================

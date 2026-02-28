@@ -111,6 +111,14 @@ async function migrateSettings() {
       changed = true;
     }
 
+    // Migrate mode from 'block' to 'warn' for v4 UX upgrade
+    if (settings.aiDetector && settings.aiDetector.mode === 'block' && !settings.aiDetector._v4Migrated) {
+      settings.aiDetector.mode = 'warn';
+      settings.aiDetector._v4Migrated = true;
+      changed = true;
+      console.log('[Anti-Slop] Migrated AI detector mode from block to warn (v4 UX upgrade)');
+    }
+
     if (changed) {
       await chrome.storage.sync.set({ antiSlop_settings: settings });
       console.log('[Anti-Slop] Settings migrated');

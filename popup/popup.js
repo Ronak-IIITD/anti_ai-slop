@@ -670,7 +670,7 @@ function getDefaultSettings() {
     google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
-    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'block' },
+    aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
     ui: { showPlaceholders: true }
   };

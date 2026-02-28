@@ -171,8 +171,8 @@ const DEFAULT_SETTINGS = {
   aiDetector: {
     enabled: true,
     threshold: 65,
-    sensitivity: 'medium', // low=80, medium=60, high=40
-    mode: 'block' // 'block' = hide content, 'off' = disabled
+    sensitivity: 'medium', // low=80, medium=65, high=45
+    mode: 'warn' // 'warn' = show warnings + highlights, 'block' = hide content, 'off' = disabled
   },
   customRules: {
     enabled: true,
@@ -222,7 +222,12 @@ class StorageManager {
         // Ensure new fields exist (migration for existing users)
         if (!settings.aiDetector?.mode) {
           settings.aiDetector = settings.aiDetector || {};
-          settings.aiDetector.mode = 'block';
+          settings.aiDetector.mode = 'warn';
+        }
+        // Migrate old 'block' default to 'warn' for better UX (v4 upgrade)
+        if (settings.aiDetector.mode === 'block' && !settings.aiDetector._v4Migrated) {
+          settings.aiDetector.mode = 'warn';
+          settings.aiDetector._v4Migrated = true;
         }
         if (!settings.customRules) {
           settings.customRules = {

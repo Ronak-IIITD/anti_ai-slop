@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.2.2
+> Version: 1.3.0
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
@@ -32,6 +32,51 @@
 ---
 
 ## Changelog
+
+### 2026-03-01 (v1.3.0) - AI Detection UX Overhaul
+- **feat**: Confidence-tiered UX for AI content detection
+  - **High confidence (75+)**: Full-page interstitial with score breakdown, reason tags, and actions (Go Back / View Anyway / Whitelist)
+  - **Medium confidence (threshold-74)**: Warning banner at top of page with AI score, phrase count, and dismiss/whitelist/highlight toggle
+  - **Low confidence (30-threshold)**: Subtle floating badge in corner showing AI probability score
+  - Users can always choose to view content - no more blind blocking
+- **feat**: AI phrase highlighting mode
+  - Detected AI phrases are underlined inline (dotted underline) so users learn to spot AI writing
+  - Strong indicators: red dotted underline; Moderate indicators: yellow dotted underline
+  - Toggle highlights on/off from the warning banner
+  - Hover tooltip shows indicator tier (strong/moderate)
+- **feat**: Rich interstitial page with score breakdown
+  - Visual score bar (0-100) with color coding
+  - Collapsible breakdown showing contribution from each detection dimension
+  - Reason tags (friendly labels) showing why content was flagged
+  - Three actions: Go Back (primary), View Anyway, Always Allow Site
+  - "View Anyway" downgrades to warning banner + phrase highlights
+- **feat**: 30+ new AI phrase patterns for 2025-2026 LLM output
+  - Strong tier: "let's dive in", "serves as a testament", "whether you're a seasoned", "cannot be overstated", "demystify", "a myriad of", "foster innovation", "in an era where", and more
+  - Moderate tier: "actionable insights", "pro tip", "final thoughts", "the takeaway", "as we move forward", "on the flip side", and more
+- **feat**: 3 new detection dimensions in AI scoring engine
+  - **Vocabulary Diversity**: Type-Token Ratio analysis detects repetitive AI vocabulary
+  - **Repetition Analysis**: Detects repeated sentence beginnings and trigram patterns
+  - **Template/List Patterns**: Detects listicle format, excessive numbered items, multiple conclusions
+  - Total scoring now: phrases (30) + filler (15) + structure (25) + quality (15) + credibility (15) + vocabulary (10) + repetition (10) + templates (10) = 130 raw max (multiplied by content type)
+- **feat**: Expanded structural pattern detection
+  - Added list intro patterns ("here are X ways", "top N tips")
+  - Added conclusion patterns ("in conclusion", "key takeaways", "final thoughts")
+  - Added more transition words ("Let's explore", "Moving on", "Next up")
+  - Added more generic openings ("Picture this", "Imagine a world", "If you're like most")
+  - Added more buzzwords ("next-level", "world-class", "best-in-class")
+- **update**: Default AI detector mode changed from "block" to "warn"
+  - New users get warning-first UX by default
+  - Existing users auto-migrated from block to warn mode (v4 migration)
+  - Users can still choose "block" mode in popup settings
+- **update**: Popup UI updated with new mode options
+  - AI detector mode selector now has: Warn (recommended) / Block / Off
+  - Added help text explaining the difference between warn and block modes
+  - Help text styled with accent border for visibility
+- **update**: Score analysis now returns detailed breakdown object for UI rendering
+  - `analyzeSlopScore()` returns `breakdown` with per-dimension scores
+  - `findPhraseMatches()` returns actual matched phrases (for highlighting)
+  - `getAllMatchedPhrases()` returns all matched phrases with tier info
+- **update**: Version bumped to 1.3.0
 
 ### 2026-02-18
 - **update**: Refined aggressive mode to selective hard-block policy

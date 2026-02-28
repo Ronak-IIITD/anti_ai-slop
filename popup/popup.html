@@ -247,10 +247,15 @@
           <label class="input-label">
             Mode:
             <select id="aiDetectorMode">
+              <option value="warn">Warn (recommended)</option>
               <option value="block">Block (hide content)</option>
               <option value="off">Off</option>
             </select>
           </label>
+          <p class="help-text mode-help">
+            <strong>Warn:</strong> Shows warnings + highlights AI phrases. You decide what to read.<br>
+            <strong>Block:</strong> High-confidence AI content is blocked with an interstitial.
+          </p>
           <label class="input-label">
             Sensitivity: <span id="sensitivityValue">Medium</span>
             <select id="sensitivity">

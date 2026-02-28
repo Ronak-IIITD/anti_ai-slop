@@ -1,4 +1,6 @@
-/* Anti-Slop AI Content Detector Styles v2 (Modern Dark Theme) */
+/* Anti-Slop AI Content Detector Styles v4 (Confidence-Tiered UX) */
+/* Updated as of 2026-03-01 */
+
 /* Shared Variables (Prefixed to avoid conflicts) */
 :root {
   --as-bg-primary: #0d1117;
@@ -29,128 +31,12 @@
   visibility: hidden !important;
 }
 
-/* Ensure blocked content stays hidden */
 [data-anti-slop*="ai-slop"] {
   display: none !important;
 }
 
 /* ============================================================
-   WARNING BANNER (warn mode)
-   Modern glassmorphism strip at top
-   ============================================================ */
-
-.anti-slop-warning-banner {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: auto;
-  min-width: 400px;
-  max-width: 90%;
-  z-index: 2147483647;
-  background: rgba(22, 27, 34, 0.95); /* bg-secondary with opacity */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--as-border);
-  border-radius: var(--as-radius-md);
-  color: var(--as-text-primary);
-  font-family: var(--as-font-stack);
-  box-shadow: var(--as-shadow-md), 0 0 0 1px rgba(137, 87, 229, 0.1);
-  animation: anti-slop-slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-}
-
-/* Purple accent line at top */
-.anti-slop-warning-banner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--as-accent), #a371f7);
-}
-
-.anti-slop-banner-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-}
-
-.anti-slop-banner-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--as-warning);
-  filter: drop-shadow(0 0 8px rgba(210, 153, 34, 0.3));
-}
-
-.anti-slop-banner-text {
-  flex: 1;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--as-text-secondary);
-}
-
-.anti-slop-banner-text strong {
-  display: block;
-  font-weight: 600;
-  color: var(--as-text-primary);
-  margin-bottom: 2px;
-}
-
-.anti-slop-banner-details {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.anti-slop-banner-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.anti-slop-banner-btn {
-  border: none;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--as-radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  font-family: var(--as-font-stack);
-}
-
-.anti-slop-btn-dismiss {
-  background: transparent;
-  color: var(--as-text-secondary);
-  border: 1px solid var(--as-border);
-}
-
-.anti-slop-btn-dismiss:hover {
-  background: var(--as-bg-tertiary);
-  color: var(--as-text-primary);
-  border-color: var(--as-text-secondary);
-}
-
-.anti-slop-btn-whitelist {
-  background: rgba(137, 87, 229, 0.15);
-  color: #a371f7; /* Lighter accent for dark bg */
-  border: 1px solid transparent;
-}
-
-.anti-slop-btn-whitelist:hover {
-  background: rgba(137, 87, 229, 0.25);
-  color: #b38df8;
-}
-
-/* ============================================================
-   BLOCK OVERLAY (block mode)
-   Full-page modern dark overlay
+   TIER 1: FULL INTERSTITIAL OVERLAY (High Confidence >= 75)
    ============================================================ */
 
 .anti-slop-block-overlay {
@@ -160,9 +46,9 @@
   width: 100%;
   height: 100%;
   z-index: 2147483647;
-  background: rgba(13, 17, 23, 0.92); /* bg-primary with high opacity */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(13, 17, 23, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -173,92 +59,221 @@
 }
 
 .anti-slop-block-card {
-  max-width: 500px;
+  max-width: 520px;
   width: 100%;
   text-align: center;
   background: var(--as-bg-secondary);
   border: 1px solid var(--as-border);
   border-radius: var(--as-radius-md);
-  padding: 40px 32px;
+  padding: 36px 32px 28px;
   box-shadow: var(--as-shadow-lg);
   position: relative;
   overflow: hidden;
 }
 
-/* Subtle accent glow at top of card */
 .anti-slop-block-card::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
+  height: 2px;
   background: linear-gradient(90deg, transparent, var(--as-accent), transparent);
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .anti-slop-block-shield {
-  font-size: 48px;
-  margin-bottom: 24px;
+  font-size: 44px;
+  margin-bottom: 16px;
   display: inline-block;
   filter: drop-shadow(0 0 16px var(--as-accent-glow));
   animation: anti-slop-float 3s ease-in-out infinite;
 }
 
 .anti-slop-block-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--as-text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .anti-slop-block-subtitle {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--as-text-secondary);
-  margin: 0 0 32px;
+  margin: 0 0 24px;
 }
 
-.anti-slop-block-score-box {
+.anti-slop-block-subtitle strong {
+  color: var(--as-warning);
+}
+
+/* Score Visual Bar */
+.anti-slop-score-visual {
+  margin-bottom: 20px;
+}
+
+.anti-slop-score-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--as-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.anti-slop-score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.anti-slop-score-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+.anti-slop-score-number {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.anti-slop-score-max {
+  font-size: 13px;
+  color: var(--as-text-secondary);
+}
+
+/* Reason Tags */
+.anti-slop-reason-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.anti-slop-reason-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 100px;
+  background: rgba(218, 54, 51, 0.12);
+  color: #f85149;
+  border: 1px solid rgba(218, 54, 51, 0.2);
+  white-space: nowrap;
+}
+
+.anti-slop-reason-tag.good {
+  background: rgba(35, 134, 54, 0.12);
+  color: #3fb950;
+  border-color: rgba(35, 134, 54, 0.2);
+}
+
+/* Score Breakdown (collapsible) */
+.anti-slop-breakdown-details {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.anti-slop-breakdown-toggle {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--as-text-secondary);
+  padding: 8px 0;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.anti-slop-breakdown-toggle::before {
+  content: '>';
+  display: inline-block;
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+
+.anti-slop-breakdown-details[open] .anti-slop-breakdown-toggle::before {
+  transform: rotate(90deg);
+}
+
+.anti-slop-breakdown-toggle:hover {
+  color: var(--as-text-primary);
+}
+
+.anti-slop-breakdown-content {
   background: var(--as-bg-tertiary);
   border: 1px solid var(--as-border);
   border-radius: var(--as-radius-sm);
-  padding: 16px;
-  margin-bottom: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 12px;
+  margin-top: 8px;
 }
 
-.anti-slop-block-score {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--as-danger);
+.anti-slop-breakdown-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
-.anti-slop-block-meta {
+.anti-slop-breakdown-row:last-child {
+  margin-bottom: 0;
+}
+
+.anti-slop-breakdown-label {
+  font-size: 11px;
+  color: var(--as-text-secondary);
+  width: 120px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.anti-slop-breakdown-bar-bg {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.anti-slop-breakdown-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.anti-slop-breakdown-value {
+  font-size: 11px;
+  color: var(--as-text-secondary);
+  font-weight: 600;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.anti-slop-breakdown-empty {
   font-size: 12px;
   color: var(--as-text-secondary);
+  text-align: center;
+  padding: 8px;
 }
 
-.anti-slop-block-reasons {
-  font-size: 12px;
-  color: var(--as-text-secondary);
-  font-style: italic;
-  opacity: 0.8;
-}
-
+/* Action Buttons */
 .anti-slop-block-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
+}
+
+.anti-slop-block-actions-secondary {
+  margin-bottom: 16px;
 }
 
 .anti-slop-block-btn {
@@ -279,7 +294,7 @@
 }
 
 .anti-slop-block-btn-primary:hover {
-  background: #9667e8; /* Slightly lighter purple */
+  background: #9667e8;
   transform: translateY(-1px);
 }
 
@@ -299,7 +314,7 @@
   color: var(--as-text-secondary);
   border: none;
   font-size: 12px;
-  padding: 8px 16px;
+  padding: 6px 14px;
   text-decoration: underline;
   text-decoration-color: transparent;
 }
@@ -310,15 +325,245 @@
 }
 
 .anti-slop-block-hint {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--as-text-secondary);
-  opacity: 0.6;
+  opacity: 0.5;
   margin: 0;
 }
 
 /* ============================================================
+   TIER 2: WARNING BANNER (Medium Confidence)
+   ============================================================ */
+
+.anti-slop-warning-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2147483647;
+  background: rgba(22, 27, 34, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--as-border);
+  color: var(--as-text-primary);
+  font-family: var(--as-font-stack);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+  animation: anti-slop-slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* Accent line at top */
+.anti-slop-warning-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--as-warning), var(--as-danger));
+}
+
+.anti-slop-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.anti-slop-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--as-warning);
+  filter: drop-shadow(0 0 6px rgba(210, 153, 34, 0.3));
+}
+
+.anti-slop-banner-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--as-text-secondary);
+  min-width: 0;
+}
+
+.anti-slop-banner-text strong {
+  display: block;
+  font-weight: 600;
+  color: var(--as-text-primary);
+  margin-bottom: 1px;
+  font-size: 13px;
+}
+
+.anti-slop-banner-details {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.anti-slop-banner-details em {
+  color: var(--as-success);
+}
+
+.anti-slop-banner-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.anti-slop-banner-btn {
+  border: none;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--as-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-family: var(--as-font-stack);
+}
+
+.anti-slop-btn-dismiss {
+  background: transparent;
+  color: var(--as-text-secondary);
+  border: 1px solid var(--as-border);
+  padding: 5px 8px;
+}
+
+.anti-slop-btn-dismiss:hover {
+  background: var(--as-bg-tertiary);
+  color: var(--as-text-primary);
+}
+
+.anti-slop-btn-whitelist {
+  background: rgba(137, 87, 229, 0.15);
+  color: #a371f7;
+  border: 1px solid transparent;
+}
+
+.anti-slop-btn-whitelist:hover {
+  background: rgba(137, 87, 229, 0.25);
+  color: #b38df8;
+}
+
+.anti-slop-btn-highlight {
+  background: rgba(210, 153, 34, 0.12);
+  color: var(--as-warning);
+  border: 1px solid transparent;
+}
+
+.anti-slop-btn-highlight:hover {
+  background: rgba(210, 153, 34, 0.22);
+}
+
+/* Banner hiding animation */
+.anti-slop-banner-hiding {
+  animation: anti-slop-slide-up-out 0.3s ease forwards;
+}
+
+/* ============================================================
+   TIER 3: SUBTLE BADGE (Low Confidence, score 30-threshold)
+   ============================================================ */
+
+.anti-slop-subtle-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 2147483646;
+  background: rgba(22, 27, 34, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--as-border);
+  border-radius: 100px;
+  padding: 6px 12px;
+  font-family: var(--as-font-stack);
+  font-size: 11px;
+  color: var(--as-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  box-shadow: var(--as-shadow-sm);
+  transition: all 0.3s ease;
+  animation: anti-slop-fade-in 0.5s ease;
+  opacity: 0.7;
+}
+
+.anti-slop-subtle-badge:hover {
+  opacity: 1;
+  box-shadow: var(--as-shadow-md);
+}
+
+.anti-slop-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--as-warning);
+  box-shadow: 0 0 6px rgba(210, 153, 34, 0.4);
+  flex-shrink: 0;
+}
+
+.anti-slop-badge-text {
+  font-weight: 600;
+  color: var(--as-text-secondary);
+}
+
+.anti-slop-badge-close {
+  background: none;
+  border: none;
+  color: var(--as-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.anti-slop-subtle-badge:hover .anti-slop-badge-close {
+  opacity: 1;
+}
+
+.anti-slop-badge-close:hover {
+  color: var(--as-text-primary);
+}
+
+/* ============================================================
+   AI PHRASE HIGHLIGHTING (Inline)
+   ============================================================ */
+
+.anti-slop-highlight {
+  border-bottom: 2px dotted;
+  padding-bottom: 1px;
+  cursor: help;
+  transition: background 0.2s, border-color 0.2s;
+  border-radius: 1px;
+}
+
+.anti-slop-highlight-strong {
+  border-color: rgba(218, 54, 51, 0.6);
+  background: rgba(218, 54, 51, 0.08);
+}
+
+.anti-slop-highlight-strong:hover {
+  background: rgba(218, 54, 51, 0.15);
+  border-color: rgba(218, 54, 51, 0.9);
+}
+
+.anti-slop-highlight-moderate {
+  border-color: rgba(210, 153, 34, 0.5);
+  background: rgba(210, 153, 34, 0.06);
+}
+
+.anti-slop-highlight-moderate:hover {
+  background: rgba(210, 153, 34, 0.12);
+  border-color: rgba(210, 153, 34, 0.8);
+}
+
+/* ============================================================
    TOAST NOTIFICATION
-   Modern sleek toast
    ============================================================ */
 
 .anti-slop-toast {
@@ -342,7 +587,6 @@
   animation: anti-slop-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Success dot */
 .anti-slop-toast::before {
   content: '';
   width: 8px;
@@ -362,11 +606,11 @@
 
 @keyframes anti-slop-slide-down {
   from {
-    transform: translate(-50%, -100%);
+    transform: translateY(-100%);
     opacity: 0;
   }
   to {
-    transform: translate(-50%, 0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
@@ -379,6 +623,17 @@
   to {
     transform: translate(-50%, 0);
     opacity: 1;
+  }
+}
+
+@keyframes anti-slop-slide-up-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
   }
 }
 
