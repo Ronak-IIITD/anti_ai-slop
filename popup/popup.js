@@ -431,11 +431,15 @@ async function loadRecentBlocks() {
       const time = _formatTimeAgo(block.timestamp);
       const title = block.title || _extractDomain(block.url);
       const shortTitle = title.length > 50 ? title.substring(0, 47) + '...' : title;
+      const scoreColor = block.score >= 75 ? 'var(--danger)' : block.score >= 50 ? 'var(--warning)' : 'var(--text-secondary)';
       return `
         <div class="recent-block-item">
           <div class="recent-block-info">
             <span class="recent-block-title" title="${_escapeHtml(title)}">${_escapeHtml(shortTitle)}</span>
-            <span class="recent-block-meta">Score: ${block.score} &middot; ${time}</span>
+            <span class="recent-block-meta">
+              <span class="recent-block-score" style="color: ${scoreColor}">AI: ${block.score}%</span>
+              <span class="recent-block-time"> &middot; ${time}</span>
+            </span>
           </div>
         </div>
       `;
@@ -445,6 +449,95 @@ async function loadRecentBlocks() {
   } catch (error) {
     console.error('[Anti-Slop Popup] Error loading recent blocks:', error);
   }
+}
+
+async function clearRecentBlocks() {
+  try {
+    await chrome.storage.local.set({ antiSlop_recentBlocks: [] });
+    document.getElementById('recentBlocksList').innerHTML = '<p class="recent-blocks-empty">No recent detections</p>';
+    showToast('Recent detections cleared');
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Error clearing recent blocks:', error);
+  }
+}
+
+// ============================================================
+// EXPORT/IMPORT SETTINGS
+// ============================================================
+
+async function exportSettings() {
+  try {
+    const settings = await chrome.storage.sync.get();
+    const stats = await chrome.storage.sync.get(['antiSlop_stats']);
+    const whitelist = await chrome.storage.sync.get(['antiSlop_whitelist']);
+    
+    const exportData = {
+      version: '1.5.0',
+      exportedAt: new Date().toISOString(),
+      settings: settings.antiSlop_settings,
+      stats: stats.antiSlop_stats,
+      whitelist: whitelist.antiSlop_whitelist
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `anti-slop-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+    showToast('Settings exported successfully!');
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Export error:', error);
+    showToast('Export failed: ' + error.message, 'error');
+  }
+}
+
+function importSettings() {
+  const input = document.getElementById('importFile');
+  input.click();
+}
+
+async function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    if (!data.version || !data.settings) {
+      throw new Error('Invalid backup file');
+    }
+    
+    // Confirm before importing
+    if (!confirm('This will replace your current settings. Continue?')) {
+      return;
+    }
+    
+    await chrome.storage.sync.set({ antiSlop_settings: data.settings });
+    
+    if (data.stats) {
+      await chrome.storage.sync.set({ antiSlop_stats: data.stats });
+    }
+    
+    if (data.whitelist) {
+      await chrome.storage.sync.set({ antiSlop_whitelist: data.whitelist });
+    }
+    
+    showToast('Settings imported! Reloading...');
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Import error:', error);
+    showToast('Import failed: ' + error.message, 'error');
+  }
+  
+  event.target.value = ''; // Reset input
 }
 
 // ============================================================
@@ -598,6 +691,14 @@ function setupEventListeners() {
       url: 'https://github.com/Ronak-IIITD/anti_ai-slop/issues'
     });
   });
+  
+  // Export/Import
+  document.getElementById('exportSettings').addEventListener('click', exportSettings);
+  document.getElementById('importSettings').addEventListener('click', importSettings);
+  document.getElementById('importFile').addEventListener('change', handleImport);
+  
+  // Clear recent blocks
+  document.getElementById('clearRecentBlocks').addEventListener('click', clearRecentBlocks);
   
   console.log('[Anti-Slop Popup] Event listeners set up');
 }

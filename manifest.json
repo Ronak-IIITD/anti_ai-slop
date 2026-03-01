@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Anti-Slop - AI & Brainrot Content Blocker",
   "short_name": "Anti-Slop",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Block low-quality, addictive content and AI-generated slop across YouTube, Instagram, Twitter, TikTok, Reddit, Google, LinkedIn, Facebook, Bluesky, and news sites. Reclaim your focus.",
   "homepage_url": "https://github.com/Ronak-IIITD/anti_ai-slop",
   "offline_enabled": true,
@@ -168,6 +168,22 @@
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
+    }
+  },
+  "commands": {
+    "toggle-extension": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+A",
+        "mac": "Command+Shift+A"
+      },
+      "description": "Toggle Anti-Slop on/off"
+    },
+    "open-popup": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Open Anti-Slop popup"
     }
   },
   "icons": {

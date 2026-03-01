@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.5.0
+> Version: 1.6.0
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
@@ -32,6 +32,21 @@
 ---
 
 ## Changelog
+
+### 2026-03-01 (v1.6.0) - Export/Import & Shortcuts
+- **feat**: Add Export/Import settings functionality
+  - Export all settings, stats, and whitelist to JSON file
+  - Import settings from another device
+  - New "Settings" section in popup with export/import buttons
+- **feat**: Improve recent detections display
+  - Add color-coded AI scores (red/yellow/gray)
+  - Add timestamp formatting
+  - Add "Clear" button to reset recent detections
+  - Show up to 10 most recent blocks
+- **feat**: Add keyboard shortcuts
+  - Ctrl+Shift+A (Cmd+Shift+A on Mac): Toggle extension on/off
+  - Ctrl+Shift+S (Cmd+Shift+S on Mac): Open popup
+- **update**: Version bumped to 1.6.0
 
 ### 2026-03-01 (v1.5.0) - Threads & Time Tracking
 - **feat**: Add Threads support (Meta's Twitter alternative)

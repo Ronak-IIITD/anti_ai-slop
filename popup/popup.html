@@ -434,10 +434,28 @@
 
     <!-- Recent Blocks -->
     <section class="recent-blocks-section">
-      <h2 class="section-title">Recent Detections</h2>
+      <div class="recent-blocks-header">
+        <h2 class="section-title">Recent Detections</h2>
+        <button class="btn-link btn-sm" id="clearRecentBlocks">Clear</button>
+      </div>
       <div class="recent-blocks-list" id="recentBlocksList">
         <p class="recent-blocks-empty">No recent detections</p>
       </div>
+    </section>
+
+    <!-- Export/Import Settings -->
+    <section class="export-section">
+      <h2 class="section-title">Settings</h2>
+      <div class="export-import-controls">
+        <button class="btn btn-secondary btn-sm" id="exportSettings">
+          &#x2B07; Export Settings
+        </button>
+        <button class="btn btn-secondary btn-sm" id="importSettings">
+          &#x2B06; Import Settings
+        </button>
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+      </div>
+      <p class="export-help">Export your settings to a file, or import settings from another device.</p>
     </section>
 
     <!-- Footer -->

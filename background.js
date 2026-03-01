@@ -476,6 +476,63 @@ async function getStats() {
 }
 
 // ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+
+chrome.commands.onCommand.addListener(async (command) => {
+  console.log('[Anti-Slop] Command:', command);
+  
+  if (command === 'toggle-extension') {
+    // Toggle all platform settings
+    try {
+      const result = await chrome.storage.sync.get(['antiSlop_settings']);
+      const settings = result.antiSlop_settings || {};
+      
+      // Toggle all major platforms
+      const platforms = ['youtube', 'instagram', 'twitter', 'reddit', 'google', 'linkedin', 'tiktok', 'facebook', 'bluesky', 'threads'];
+      let anyEnabled = false;
+      
+      for (const p of platforms) {
+        if (settings[p]?.enabled) {
+          anyEnabled = true;
+          break;
+        }
+      }
+      
+      // If any are enabled, disable all. If all disabled, enable all.
+      const newState = !anyEnabled;
+      
+      for (const p of platforms) {
+        settings[p] = settings[p] || {};
+        settings[p].enabled = newState;
+      }
+      
+      settings.aiDetector = settings.aiDetector || {};
+      settings.aiDetector.enabled = newState;
+      
+      await chrome.storage.sync.set({ antiSlop_settings: settings });
+      
+      console.log('[Anti-Slop] Extension toggled:', newState ? 'ON' : 'OFF');
+      
+      // Notify all tabs
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        try {
+          chrome.tabs.sendMessage(tab.id, { action: 'settingsChanged' });
+        } catch (e) {}
+      }
+    } catch (error) {
+      console.error('[Anti-Slop] Toggle error:', error);
+    }
+  }
+  
+  if (command === 'open-popup') {
+    // Just focus the extension - chrome handles this automatically
+    console.log('[Anti-Slop] Open popup command');
+  }
+});
+
+// ============================================================
 // LIFECYCLE
 // ============================================================
 
