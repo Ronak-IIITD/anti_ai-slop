@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.2.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 ![JavaScript](https://img.shields.io/badge/javascript-vanilla-yellow.svg)
@@ -11,7 +11,7 @@
 
 A privacy-first Chrome extension that filters out algorithmic junk, AI-generated articles, and engagement bait—so you can browse with focus.
 
-[Features](#features) • [Install](#installation) • [Usage](#usage) • [Contributing](#contributing)
+[Features](#features) • [Install](#installation) • [📖 User Guide](USER_GUIDE.md) • [🚀 Deployment Guide](DEPLOYMENT_GUIDE.md) • [Contributing](#contributing)
 
 </div>
 
@@ -33,45 +33,41 @@ Built with vanilla JavaScript (no dependencies), designed for speed and privacy.
 ## ✨ Features
 
 ### 🧠 Brainrot Detection
-Smart filtering using **tiered keyword scoring**:
-- **Strong indicators** (e.g., "skibidi", "gyatt", "fanum tax", "mewing", "looksmaxxing"): High weight
-- **Moderate indicators** (e.g., "slay", "no cap", "bussin"): Medium weight  
-- **Weak indicators** (e.g., "fr", "ong", "bruh"): Low weight (requires clustering)
-- **Engagement bait** (e.g., "part 2 in bio", "wait for the end"): Flagged separately
+Smart filtering using **60+ tiered keyword patterns**:
+- **Strong indicators**: skibidi, gyatt, rizz, fanum tax, mewing, looksmaxxing, sigma grindset
+- **Engagement bait**: "part 2 in bio", "tag a friend", "share if you agree"
+- **Low-effort content**: reposts, "no context", meme compilations
+- **Crypto/self-help spam**: to the moon, diamond hands, hustle culture, etc.
 
-Content needs **multiple signals** to be blocked, reducing false positives.
+### 🤖 AI Article Detection (Confidence-Tiered UX)
+Three response levels based on detection confidence:
+- **High (75+)**: Full-page warning with score breakdown
+- **Medium (threshold-74)**: Warning banner at top of page
+- **Low (30-threshold)**: Subtle floating badge
+- **AI Phrase Highlighting**: Detected phrases underlined inline
 
-### 🤖 AI Article Detection
-Identifies AI-generated long-form content using:
-- **Phrase density analysis**: Detects repetitive corporate jargon and filler phrases
-- **Structural patterns**: Identifies formulaic intros, listicle markers, and AI hedging language
-- **Adjustable sensitivity**: Low (strict), Medium (balanced), High (aggressive)
-- **Whitelist support**: Exclude trusted domains from scanning
+### 🎛️ 12 Platform Support
+| Platform | Blocks |
+|----------|--------|
+| YouTube | Shorts, brainrot videos |
+| Instagram | Reels, brainrot posts |
+| Twitter/X | Brainrot tweets, replies |
+| Reddit | Brainrot posts, low-effort content |
+| Google Search | AI Overviews, SEO spam |
+| LinkedIn | Motivational spam, AI posts |
+| TikTok | Full feed or brainrot |
+| Facebook | Reels, Stories, suggested |
+| Bluesky | Brainrot, engagement bait |
+| Threads | Brainrot posts |
+| AI Articles | AI-generated content |
+| News Sites | AI-generated articles |
 
-### 🎛️ Platform-Specific Controls
-Each platform has independent toggles and settings:
-
-| Platform | Blocks | Settings Available |
-|----------|--------|-------------------|
-| **YouTube** | Shorts, brainrot videos | Sensitivity (low/medium/high), clickbait toggle |
-| **Instagram** | Reels, brainrot posts/explore | Sensitivity (low/medium/high), clickbait toggle |
-| **X/Twitter** | Brainrot tweets/replies | Sensitivity (low/medium/high), brainrot/clickbait toggles |
-| **Reddit** | Brainrot posts, low-effort threads | Sensitivity (low/medium/high), fade mode for comments |
-| **Google Search** | AI Overviews, SEO spam, content farms | Sensitivity, hide AI Overviews, content farm filtering |
-| **LinkedIn** | Motivational spam, AI engagement bait | Sensitivity, fade/hide actions for spammy posts |
-| **TikTok** | Full feed or per-video | Feed block toggle |
-| **News/Blogs** | AI-generated articles | Sensitivity (low/medium/high), show warnings toggle |
-
-### ⚙️ Custom Keyword Rules (New)
-- Add your own **always-block** keywords for content you never want to see
-- Add your own **always-allow** keywords to reduce false positives
-- Global behavior: rules apply across platform filters and AI article detection
-- Managed in popup under **Custom Keyword Rules**
-
-### 🎨 Visual Feedback
-- **Placeholders with "Show Content" button**: Blocked items are replaced with a clickable placeholder (toggle in settings)
-- **Block counter**: See how many items you've filtered in the stats dashboard
-- **Time saved estimate**: Rough calculation of reclaimed attention
+### 🎯 Additional Features
+- **Focus Mode**: One toggle to block ALL social media
+- **Time Tracking**: Monitor daily/weekly social media usage
+- **Custom Keyword Rules**: Add your own block/allow keywords
+- **Export/Import**: Backup and restore settings
+- **Keyboard Shortcuts**: Toggle with Ctrl+Shift+A
 
 ### 🔒 Privacy-First Design
 - No remote servers
@@ -84,13 +80,14 @@ Each platform has independent toggles and settings:
 
 ## 📦 Installation
 
-### Option 1: Install from Source (Development)
+### Option 1: Chrome Web Store (Recommended)
+> 🚧 Coming soon
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Ronak-IIITD/anti_ai-slop.git
-   cd anti_ai-slop
-   ```
+### Option 2: Install from Source
+
+1. **Download the extension:**
+   - Clone: `git clone https://github.com/Ronak-IIITD/anti_ai-slop.git`
+   - Or download the ZIP from GitHub releases
 
 2. **Load in Chrome:**
    - Open `chrome://extensions/`
@@ -102,13 +99,23 @@ Each platform has independent toggles and settings:
    - Click the puzzle icon in Chrome toolbar
    - Pin "Anti-Slop" for easy access
 
-4. **Configure:**
-   - Click the extension icon
-   - Toggle platforms on/off
-   - Adjust sensitivity levels
+---
 
-### Option 2: Chrome Web Store
-> 🚧 Coming soon (pending Chrome Web Store review)
+## 📖 Getting Started
+
+For detailed usage instructions, see the **[User Guide](USER_GUIDE.md)**.
+
+Quick overview:
+1. Click the **Anti-Slop icon** in toolbar
+2. Enable platforms you want to filter
+3. Adjust sensitivity (Medium is recommended)
+4. Browse normally - blocked content disappears automatically
+
+---
+
+## 🚀 Deployment
+
+For publishing to the Chrome Web Store, see the **[Deployment Guide](DEPLOYMENT_GUIDE.md)**.
 
 ---
 
