@@ -29,6 +29,7 @@ async function initializeDefaults() {
     tiktok: { enabled: true, blockFeed: true },
     facebook: { enabled: true, sensitivity: 'medium' },
     bluesky: { enabled: true, sensitivity: 'medium' },
+    threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     ui: { showPlaceholders: true }
   };
@@ -46,6 +47,7 @@ async function initializeDefaults() {
       tiktok: 0,
       facebook: 0,
       bluesky: 0,
+      threads: 0,
       aiArticles: 0
     },
     lastReset: new Date().toISOString()
@@ -219,6 +221,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       getWhitelist().then(sendResponse);
       return true;
 
+    case 'getSessionStats':
+      getSessionStats().then(sendResponse);
+      return true;
+
+    case 'recordBlocked':
+      if (tabId) {
+        recordBlockedContent(tabId);
+      }
+      sendResponse({ received: true });
+      return false;
+
     default:
       return false;
   }
@@ -276,10 +289,130 @@ function calculateTimeSaved(platform, count) {
     tiktok: 1,
     facebook: 0.8,
     bluesky: 0.3,
+    threads: 0.3,
     aiArticles: 3
   };
   
   return (timePerItem[platform] || 1) * count;
+}
+
+// ============================================================
+// SESSION TRACKING
+// Track time spent on social media sites
+// ============================================================
+
+const SESSION_TRACKED_DOMAINS = [
+  'youtube.com', 'instagram.com', 'twitter.com', 'x.com',
+  'tiktok.com', 'reddit.com', 'linkedin.com', 'facebook.com',
+  'messenger.com', 'bsky.app', 'threads.net'
+];
+
+let activeSessions = {}; // { tabId: { domain, startTime, blocked } }
+
+function getDomainFromUrl(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, '');
+  } catch (e) {
+    return null;
+  }
+}
+
+function isTrackedDomain(url) {
+  const domain = getDomainFromUrl(url);
+  if (!domain) return false;
+  return SESSION_TRACKED_DOMAINS.some(d => domain.includes(d));
+}
+
+// Track tab updates
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    if (isTrackedDomain(tab.url)) {
+      const domain = getDomainFromUrl(tab.url);
+      activeSessions[tabId] = {
+        domain,
+        startTime: Date.now(),
+        blocked: 0
+      };
+      console.log('[Anti-Slop Session] Started tracking:', domain);
+    }
+  }
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (activeSessions[tabId]) {
+    const session = activeSessions[tabId];
+    const duration = Math.round((Date.now() - session.startTime) / 1000);
+    
+    if (duration > 5) { // Only log sessions > 5 seconds
+      saveSessionTime(session.domain, duration, session.blocked);
+    }
+    
+    delete activeSessions[tabId];
+  }
+});
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  // Switch tracked tab
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url && isTrackedDomain(tab.url)) {
+      const domain = getDomainFromUrl(tab.url);
+      activeSessions[activeInfo.tabId] = {
+        domain,
+        startTime: Date.now(),
+        blocked: activeSessions[activeInfo.tabId]?.blocked || 0
+      };
+    }
+  });
+});
+
+async function saveSessionTime(domain, durationSeconds, blockedCount) {
+  try {
+    const result = await chrome.storage.local.get(['antiSlop_sessions']);
+    const sessions = result.antiSlop_sessions || {};
+    
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    if (!sessions[today]) {
+      sessions[today] = {};
+    }
+    
+    if (!sessions[today][domain]) {
+      sessions[today][domain] = { time: 0, visits: 0, blocked: 0 };
+    }
+    
+    sessions[today][domain].time += durationSeconds;
+    sessions[today][domain].visits += 1;
+    sessions[today][domain].blocked += blockedCount;
+    
+    // Keep only last 30 days
+    const dates = Object.keys(sessions).sort().reverse();
+    if (dates.length > 30) {
+      dates.slice(30).forEach(d => delete sessions[d]);
+    }
+    
+    await chrome.storage.local.set({ antiSlop_sessions: sessions });
+    console.log('[Anti-Slop Session] Saved:', domain, durationSeconds, 'seconds');
+  } catch (error) {
+    console.error('[Anti-Slop Session] Error saving:', error);
+  }
+}
+
+// Record when content is blocked during session
+function recordBlockedContent(tabId) {
+  if (activeSessions[tabId]) {
+    activeSessions[tabId].blocked += 1;
+  }
+}
+
+// Get session stats for popup
+async function getSessionStats() {
+  try {
+    const result = await chrome.storage.local.get(['antiSlop_sessions']);
+    return result.antiSlop_sessions || {};
+  } catch (error) {
+    return {};
+  }
 }
 
 // ============================================================

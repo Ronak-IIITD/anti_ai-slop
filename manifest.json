@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Anti-Slop - AI & Brainrot Content Blocker",
   "short_name": "Anti-Slop",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Block low-quality, addictive content and AI-generated slop across YouTube, Instagram, Twitter, TikTok, Reddit, Google, LinkedIn, Facebook, Bluesky, and news sites. Reclaim your focus.",
   "homepage_url": "https://github.com/Ronak-IIITD/anti_ai-slop",
   "offline_enabled": true,
@@ -25,6 +25,8 @@
     "*://*.messenger.com/*",
     "*://bsky.app/*",
     "*://*.bsky.app/*",
+    "*://threads.net/*",
+    "*://*.threads.net/*",
     "*://*/*"
   ],
   "background": {
@@ -86,6 +88,12 @@
       "run_at": "document_start"
     },
     {
+      "matches": ["*://threads.net/*", "*://*.threads.net/*"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/threads.js"],
+      "css": ["content-scripts/threads.css"],
+      "run_at": "document_start"
+    },
+    {
       "matches": ["*://*/*"],
       "js": ["utils/storage.js", "utils/ai-patterns.js", "content-scripts/common.js", "content-scripts/ai-detector.js"],
       "css": ["content-scripts/ai-detector.css"],
@@ -104,6 +112,8 @@
         "*://*.bsky.app/*",
         "*://*.google.com/*",
         "*://*.google.co.in/*",
+        "*://threads.net/*",
+        "*://*.threads.net/*",
         "*://*.github.com/*",
         "*://*.stackoverflow.com/*",
         "*://*.claude.ai/*",

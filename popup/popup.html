@@ -91,6 +91,26 @@
       <button class="btn btn-secondary btn-sm" id="resetStats">Reset Statistics</button>
     </section>
 
+    <!-- Time Tracking Stats -->
+    <section class="stats-section">
+      <h2 class="section-title">Time Tracking</h2>
+      <div class="time-stats-grid">
+        <div class="time-stat-card">
+          <div class="time-stat-label">Today</div>
+          <div class="time-stat-value" id="todayTime">0m</div>
+          <div class="time-stat-detail" id="todaySites">on 0 sites</div>
+        </div>
+        <div class="time-stat-card">
+          <div class="time-stat-label">This Week</div>
+          <div class="time-stat-value" id="weekTime">0m</div>
+          <div class="time-stat-detail" id="weekBlocked">blocked 0 times</div>
+        </div>
+      </div>
+      <div class="time-breakdown" id="timeBreakdown">
+        <p class="time-breakdown-empty">Time breakdown will appear here</p>
+      </div>
+    </section>
+
     <!-- Platform Controls -->
     <section class="controls-section">
       <h2 class="section-title">Platform Controls</h2>
@@ -284,6 +304,29 @@
             </select>
           </label>
           <p class="help-text">Filters engagement bait, brainrot, and suggested content</p>
+        </div>
+      </div>
+
+      <!-- Threads -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F4AC;</span>
+          <span class="control-name">Threads</span>
+          <label class="toggle">
+            <input type="checkbox" id="threadsToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Sensitivity:
+            <select id="threadsSensitivity">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <p class="help-text">Filters brainrot posts and engagement bait</p>
         </div>
       </div>
 

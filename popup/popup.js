@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   await loadSettings();
   await loadStatistics();
+  await loadSessionStats();
   await loadCurrentSiteStatus();
   await loadWhitelist();
   await loadRecentBlocks();
@@ -74,6 +75,17 @@ async function loadSettings() {
     const blueskySensitivitySelect = document.getElementById('blueskySensitivity');
     if (blueskySensitivitySelect) {
       blueskySensitivitySelect.value = blueskySensitivity;
+    }
+
+    // Threads settings
+    const threadsToggle = document.getElementById('threadsToggle');
+    if (threadsToggle) {
+      threadsToggle.checked = settings.threads?.enabled ?? true;
+    }
+    const threadsSensitivity = settings.threads?.sensitivity || 'medium';
+    const threadsSensitivitySelect = document.getElementById('threadsSensitivity');
+    if (threadsSensitivitySelect) {
+      threadsSensitivitySelect.value = threadsSensitivity;
     }
 
     // Focus Mode
@@ -181,6 +193,78 @@ async function loadStatistics() {
     console.log('[Anti-Slop Popup] Statistics loaded');
   } catch (error) {
     console.error('[Anti-Slop Popup] Error loading statistics:', error);
+  }
+}
+
+// ============================================================
+// TIME TRACKING
+// ============================================================
+
+function formatTime(seconds) {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.round((seconds % 3600) / 60);
+  return `${hours}h ${mins}m`;
+}
+
+async function loadSessionStats() {
+  try {
+    const result = await chrome.runtime.sendMessage({ action: 'getSessionStats' });
+    const sessions = result || {};
+    
+    const today = new Date().toISOString().split('T')[0];
+    const todayData = sessions[today] || {};
+    
+    // Calculate today totals
+    let todayTime = 0;
+    let todayVisits = 0;
+    let todayBlocked = 0;
+    for (const domain of Object.values(todayData)) {
+      todayTime += domain.time || 0;
+      todayVisits += domain.visits || 0;
+      todayBlocked += domain.blocked || 0;
+    }
+    
+    document.getElementById('todayTime').textContent = formatTime(todayTime);
+    document.getElementById('todaySites').textContent = `on ${Object.keys(todayData).length} sites`;
+    
+    // Calculate week totals
+    let weekTime = 0;
+    let weekBlocked = 0;
+    const dates = Object.keys(sessions).sort().reverse().slice(0, 7);
+    for (const date of dates) {
+      const dayData = sessions[date] || {};
+      for (const domain of Object.values(dayData)) {
+        weekTime += domain.time || 0;
+        weekBlocked += domain.blocked || 0;
+      }
+    }
+    
+    document.getElementById('weekTime').textContent = formatTime(weekTime);
+    document.getElementById('weekBlocked').textContent = `blocked ${weekBlocked} times`;
+    
+    // Build breakdown
+    const breakdownEl = document.getElementById('timeBreakdown');
+    if (Object.keys(todayData).length > 0) {
+      const sorted = Object.entries(todayData)
+        .sort((a, b) => (b[1].time || 0) - (a[1].time || 0))
+        .slice(0, 5);
+      
+      breakdownEl.innerHTML = sorted.map(([domain, data]) => `
+        <div class="time-breakdown-item">
+          <span class="time-breakdown-domain">${domain.replace('www.', '')}</span>
+          <span class="time-breakdown-time">${formatTime(data.time || 0)}</span>
+        </div>
+      `).join('');
+    } else {
+      breakdownEl.innerHTML = '<p class="time-breakdown-empty">No time tracked today. Visit some social sites!</p>';
+    }
+    
+    console.log('[Anti-Slop Popup] Session stats loaded');
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Error loading session stats:', error);
+    document.getElementById('timeBreakdown').innerHTML = '<p class="time-breakdown-empty">Enable extension to track time</p>';
   }
 }
 
@@ -702,6 +786,7 @@ function getDefaultSettings() {
     tiktok: { enabled: true, blockFeed: true },
     facebook: { enabled: true, sensitivity: 'medium' },
     bluesky: { enabled: true, sensitivity: 'medium' },
+    threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
     ui: { showPlaceholders: true, focusMode: false }
@@ -722,6 +807,7 @@ function getDefaultStats() {
       tiktok: 0,
       facebook: 0,
       bluesky: 0,
+      threads: 0,
       aiArticles: 0
     },
     lastReset: new Date().toISOString()

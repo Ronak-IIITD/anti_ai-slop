@@ -176,6 +176,10 @@ const DEFAULT_SETTINGS = {
     enabled: true,
     sensitivity: 'medium'
   },
+  threads: {
+    enabled: true,
+    sensitivity: 'medium'
+  },
   aiDetector: {
     enabled: true,
     threshold: 65,
@@ -207,6 +211,7 @@ const DEFAULT_STATS = {
     tiktok: 0,
     facebook: 0,
     bluesky: 0,
+    threads: 0,
     aiArticles: 0
   },
   lastReset: new Date().toISOString()

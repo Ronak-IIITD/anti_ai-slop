@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.4.0
+> Version: 1.5.0
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
@@ -32,6 +32,21 @@
 ---
 
 ## Changelog
+
+### 2026-03-01 (v1.5.0) - Threads & Time Tracking
+- **feat**: Add Threads support (Meta's Twitter alternative)
+  - Filters brainrot posts and engagement bait
+  - Sensitivity controls (Low/Medium/High)
+- **feat**: Add session/time tracking
+  - Tracks time spent on social media sites per day
+  - Records visits and blocked content counts
+  - Stores last 30 days of data
+  - New "Time Tracking" section in popup
+- **feat**: Add daily/weekly stats breakdown in popup
+  - Shows today's time and sites visited
+  - Shows weekly totals (time + blocked count)
+  - Per-site breakdown for today
+- **update**: Version bumped to 1.5.0
 
 ### 2026-03-01 (v1.4.0) - Platform Expansion & Brainrot Updates
 - **feat**: Add Facebook/Meta support
