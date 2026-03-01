@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.3.0
+> Version: 1.4.0
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
@@ -32,6 +32,30 @@
 ---
 
 ## Changelog
+
+### 2026-03-01 (v1.4.0) - Platform Expansion & Brainrot Updates
+- **feat**: Add Facebook/Meta support
+  - Blocks Reels, Stories, suggested content in right rail
+  - Detects brainrot posts in feed with engagement bait scoring
+  - Sensitivity controls (Low/Medium/High)
+  - Filters group suggestions and recommended content
+- **feat**: Add Bluesky support
+  - Detects engagement bait and brainrot in posts
+  - Filters suggested users and trending content
+  - Sensitivity controls (Low/Medium/High)
+- **feat**: Add Focus Mode
+  - One toggle to block ALL social media at once
+  - Use for deep work sessions
+  - Integrated into popup UI with prominent toggle
+- **feat**: 40+ new brainrot patterns for 2026 trends
+  - Gen Z/Alpha slang: bussin, sheesh, cap, slay, goated, ice spice, Kendrick, rizzler, etc.
+  - Crypto/brainrot: to the moon, diamond hands, hodl, nft, memecoin, etc.
+  - Self-help brainrot: law of assumption, Neville Goddard, 5am club, hustle culture, etc.
+  - Conspiracy brainrot: wake up sheeple, Agenda, deep state, big pharma, etc.
+  - Engagement farming: screenshotting, save this post, poll time, etc.
+  - Gaming brainrot: gameplay, let\'s play, compilation, trolling, etc.
+  - Drama/fame: exposed, tea spill, gossip, drama, etc.
+- **update**: Version bumped to 1.4.0
 
 ### 2026-03-01 (v1.3.0) - AI Detection UX Overhaul
 - **feat**: Confidence-tiered UX for AI content detection

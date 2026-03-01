@@ -1,0 +1,56 @@
+/* Facebook Content Blocker Styles */
+/* Updated as of 2026-03-01 */
+
+/* Hide elements marked as brainrot/slop */
+[data-anti-slop*="facebook-"] {
+  display: none !important;
+}
+
+/* Facebook-specific overrides */
+/* Ensure hiding takes precedence over Facebook's styles */
+div[role="article"][data-anti-slop] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide Reels tab in navigation */
+a[href*="/reels/"],
+a[aria-label*="Reels"],
+div[role="navigation"] a[href*="reel"] {
+  display: none !important;
+}
+
+/* Hide Stories row at top of feed */
+div[role="presentation"][aria-label*="Story"] + div,
+div[data-pagelet*="StoriesRow"] {
+  display: none !important;
+}
+
+/* Hide suggested content in right rail */
+div[data-pagelet*="RightRail"],
+div[data-pagelet*="VideoChainingUnit"] {
+  display: none !important;
+}
+
+/* Hide "Suggested for you" posts */
+div[data-pagelet*="InlineSuggestions"],
+span:contains("Suggested for you") {
+  display: none !important;
+}
+
+/* Animation for smooth hiding (optional) */
+.facebook-hidden {
+  animation: facebook-fade-out 0.3s ease forwards;
+}
+
+@keyframes facebook-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+  }
+}

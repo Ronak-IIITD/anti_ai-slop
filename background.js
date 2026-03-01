@@ -27,6 +27,8 @@ async function initializeDefaults() {
     google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
+    facebook: { enabled: true, sensitivity: 'medium' },
+    bluesky: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     ui: { showPlaceholders: true }
   };
@@ -42,6 +44,8 @@ async function initializeDefaults() {
       linkedin: 0,
       instagram: 0,
       tiktok: 0,
+      facebook: 0,
+      bluesky: 0,
       aiArticles: 0
     },
     lastReset: new Date().toISOString()
@@ -270,6 +274,8 @@ function calculateTimeSaved(platform, count) {
     google: 0.3,
     linkedin: 0.5,
     tiktok: 1,
+    facebook: 0.8,
+    bluesky: 0.3,
     aiArticles: 3
   };
   

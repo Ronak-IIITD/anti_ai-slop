@@ -63,6 +63,14 @@
           <span class="platform-count" id="tiktokCount">0</span>
         </div>
         <div class="platform-stat">
+          <span class="platform-name">Facebook Posts</span>
+          <span class="platform-count" id="facebookCount">0</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-name">Bluesky Posts</span>
+          <span class="platform-count" id="blueskyCount">0</span>
+        </div>
+        <div class="platform-stat">
           <span class="platform-name">Reddit Posts</span>
           <span class="platform-count" id="redditCount">0</span>
         </div>
@@ -230,6 +238,67 @@
             <input type="checkbox" id="blockTiktokFeed" checked>
             <span>Block entire feed</span>
           </label>
+        </div>
+      </div>
+
+      <!-- Facebook -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F44D;</span>
+          <span class="control-name">Facebook</span>
+          <label class="toggle">
+            <input type="checkbox" id="facebookToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Sensitivity:
+            <select id="facebookSensitivity">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <p class="help-text">Blocks Reels, Stories, suggested content, and brainrot posts</p>
+        </div>
+      </div>
+
+      <!-- Bluesky -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F318;</span>
+          <span class="control-name">Bluesky</span>
+          <label class="toggle">
+            <input type="checkbox" id="blueskyToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Sensitivity:
+            <select id="blueskySensitivity">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <p class="help-text">Filters engagement bait, brainrot, and suggested content</p>
+        </div>
+      </div>
+
+      <!-- Focus Mode -->
+      <div class="control-item focus-mode">
+        <div class="control-header">
+          <span class="control-icon">&#x1F9E9;</span>
+          <span class="control-name">Focus Mode</span>
+          <label class="toggle">
+            <input type="checkbox" id="focusModeToggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <p class="help-text">When enabled, blocks ALL social media & brainrot content. Use for deep work sessions.</p>
         </div>
       </div>
       

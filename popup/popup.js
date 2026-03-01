@@ -54,6 +54,34 @@ async function loadSettings() {
     // TikTok settings
     document.getElementById('blockTiktokFeed').checked = settings.tiktok?.blockFeed ?? true;
 
+    // Facebook settings
+    const facebookToggle = document.getElementById('facebookToggle');
+    if (facebookToggle) {
+      facebookToggle.checked = settings.facebook?.enabled ?? true;
+    }
+    const facebookSensitivity = settings.facebook?.sensitivity || 'medium';
+    const facebookSensitivitySelect = document.getElementById('facebookSensitivity');
+    if (facebookSensitivitySelect) {
+      facebookSensitivitySelect.value = facebookSensitivity;
+    }
+
+    // Bluesky settings
+    const blueskyToggle = document.getElementById('blueskyToggle');
+    if (blueskyToggle) {
+      blueskyToggle.checked = settings.bluesky?.enabled ?? true;
+    }
+    const blueskySensitivity = settings.bluesky?.sensitivity || 'medium';
+    const blueskySensitivitySelect = document.getElementById('blueskySensitivity');
+    if (blueskySensitivitySelect) {
+      blueskySensitivitySelect.value = blueskySensitivity;
+    }
+
+    // Focus Mode
+    const focusModeToggle = document.getElementById('focusModeToggle');
+    if (focusModeToggle) {
+      focusModeToggle.checked = settings.ui?.focusMode ?? false;
+    }
+
     // Reddit settings
     const redditSensitivity = settings.reddit?.sensitivity || 'medium';
     const redditSensitivitySelect = document.getElementById('redditSensitivity');
@@ -146,6 +174,8 @@ async function loadStatistics() {
     document.getElementById('linkedinCount').textContent = formatNumber(platforms.linkedin || 0);
     document.getElementById('instagramCount').textContent = formatNumber(platforms.instagram || 0);
     document.getElementById('tiktokCount').textContent = formatNumber(platforms.tiktok || 0);
+    document.getElementById('facebookCount').textContent = formatNumber(platforms.facebook || 0);
+    document.getElementById('blueskyCount').textContent = formatNumber(platforms.bluesky || 0);
     document.getElementById('aiArticlesCount').textContent = formatNumber(platforms.aiArticles || 0);
     
     console.log('[Anti-Slop Popup] Statistics loaded');
@@ -670,9 +700,11 @@ function getDefaultSettings() {
     google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
+    facebook: { enabled: true, sensitivity: 'medium' },
+    bluesky: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
-    ui: { showPlaceholders: true }
+    ui: { showPlaceholders: true, focusMode: false }
   };
 }
 
@@ -688,6 +720,8 @@ function getDefaultStats() {
       linkedin: 0,
       instagram: 0,
       tiktok: 0,
+      facebook: 0,
+      bluesky: 0,
       aiArticles: 0
     },
     lastReset: new Date().toISOString()

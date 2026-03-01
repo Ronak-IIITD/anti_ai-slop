@@ -168,6 +168,14 @@ const DEFAULT_SETTINGS = {
     enabled: true,
     blockFeed: true
   },
+  facebook: {
+    enabled: true,
+    sensitivity: 'medium'
+  },
+  bluesky: {
+    enabled: true,
+    sensitivity: 'medium'
+  },
   aiDetector: {
     enabled: true,
     threshold: 65,
@@ -180,7 +188,8 @@ const DEFAULT_SETTINGS = {
     allowKeywords: []
   },
   ui: {
-    showPlaceholders: true
+    showPlaceholders: true,
+    focusMode: false
   }
 };
 
@@ -196,6 +205,8 @@ const DEFAULT_STATS = {
     linkedin: 0,
     instagram: 0,
     tiktok: 0,
+    facebook: 0,
+    bluesky: 0,
     aiArticles: 0
   },
   lastReset: new Date().toISOString()

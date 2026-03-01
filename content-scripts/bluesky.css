@@ -1,0 +1,22 @@
+/* Bluesky Content Blocker Styles */
+/* Updated as of 2026-03-01 */
+
+/* Hide brainrot/slop content */
+[data-anti-slop*="bluesky-"] {
+  display: none !important;
+}
+
+/* Hide suggested users/feeds */
+div[data-testid="suggestedUsers"],
+div[data-testid="trendingFeeds"],
+aside[aria-label*="Discover"],
+div[data-testid=" Who to follow"] {
+  display: none !important;
+}
+
+/* Hide trending topics */
+div[data-testid="trendingTopics"],
+div[data-testid="trendingPosts"],
+div[aria-label*="Trending"] {
+  display: none !important;
+}
