@@ -33,6 +33,34 @@
 
 ## Changelog
 
+### 2026-03-01 - AI Media Detection v1
+- **feat**: Add privacy-first AI media detection utility (`utils/media-detector.js`)
+  - Detects AI-likely images/videos from local metadata and surrounding text only
+  - Uses watermark hints, AI tool keywords, render language, alt text, and media-card heuristics
+  - No cloud calls, no external models, no data leaves the browser
+- **feat**: Add inline AI media warning badges for YouTube and Instagram
+  - Media-heavy cards can now show `AI-likely media XX%` badges
+  - Warning UX only; does not hard-block media in v1
+- **feat**: Add popup controls for AI media detection
+  - Global toggle: `Detect AI Media`
+  - Global sensitivity: Low / Medium / High
+- **update**: Load shared media detector in platform bundles for future expansion
+
+### 2026-03-01 - Polish Pass for New Features
+- **fix**: Wire Facebook, Bluesky, and Threads controls fully into popup settings
+  - Added missing toggle and sensitivity listeners
+  - Added Threads stat counter to popup dashboard
+- **fix**: Make Focus Mode actually preserve and restore prior platform state
+  - Saves previous platform enable states before entering focus mode
+  - Restores those states when focus mode is disabled
+- **fix**: Improve session tracking accuracy for social media timing
+  - Close previous active session when switching tracked tabs
+  - Prevent overcounting by properly finalizing sessions on tab updates/removals
+- **update**: Improve time tracking breakdown UX
+  - Show per-site visit counts alongside time totals
+- **update**: Expand migration/default coverage for new platforms
+  - Added migration-safe defaults for Facebook, Bluesky, Threads, and Focus Mode fields
+
 ### 2026-03-01 (v1.6.0) - Export/Import & Shortcuts
 - **feat**: Add Export/Import settings functionality
   - Export all settings, stats, and whitelist to JSON file

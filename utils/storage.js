@@ -193,7 +193,10 @@ const DEFAULT_SETTINGS = {
   },
   ui: {
     showPlaceholders: true,
-    focusMode: false
+    focusMode: false,
+    focusModePrevious: null,
+    detectAIMedia: true,
+    mediaSensitivity: 'medium'
   }
 };
 
@@ -251,6 +254,30 @@ class StorageManager {
             blockKeywords: [],
             allowKeywords: []
           };
+        }
+        if (!settings.facebook) {
+          settings.facebook = { enabled: true, sensitivity: 'medium' };
+        }
+        if (!settings.bluesky) {
+          settings.bluesky = { enabled: true, sensitivity: 'medium' };
+        }
+        if (!settings.threads) {
+          settings.threads = { enabled: true, sensitivity: 'medium' };
+        }
+        if (!settings.ui) {
+          settings.ui = { showPlaceholders: true, focusMode: false, focusModePrevious: null };
+        }
+        if (typeof settings.ui.focusMode !== 'boolean') {
+          settings.ui.focusMode = false;
+        }
+        if (typeof settings.ui.focusModePrevious === 'undefined') {
+          settings.ui.focusModePrevious = null;
+        }
+        if (typeof settings.ui.detectAIMedia !== 'boolean') {
+          settings.ui.detectAIMedia = true;
+        }
+        if (!settings.ui.mediaSensitivity) {
+          settings.ui.mediaSensitivity = 'medium';
         }
         if (typeof settings.customRules.enabled !== 'boolean') {
           settings.customRules.enabled = true;
@@ -457,6 +484,15 @@ class StorageManager {
         break;
       case 'tiktok':
         timeSaved = count * 1; // 1 min per video
+        break;
+      case 'facebook':
+        timeSaved = count * 0.8;
+        break;
+      case 'bluesky':
+        timeSaved = count * 0.3;
+        break;
+      case 'threads':
+        timeSaved = count * 0.3;
         break;
       case 'aiArticles':
         timeSaved = count * 3; // 3 min per article

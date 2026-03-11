@@ -31,7 +31,7 @@ async function initializeDefaults() {
     bluesky: { enabled: true, sensitivity: 'medium' },
     threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
-    ui: { showPlaceholders: true }
+    ui: { showPlaceholders: true, focusMode: false }
   };
 
   const DEFAULT_STATS = {
@@ -91,6 +91,19 @@ async function migrateSettings() {
       settings.ui.showPlaceholders = true;
       changed = true;
     }
+
+    if (typeof settings.ui.focusMode !== 'boolean') {
+      settings.ui.focusMode = false;
+      changed = true;
+    }
+
+    const platformDefaults = ['facebook', 'bluesky', 'threads'];
+    platformDefaults.forEach(platform => {
+      if (!settings[platform]) {
+        settings[platform] = { enabled: true, sensitivity: 'medium' };
+        changed = true;
+      }
+    });
 
     if (settings.twitter) {
       if (!settings.twitter.sensitivity) {
@@ -255,6 +268,9 @@ async function handleStatsUpdate(data) {
         linkedin: 0,
         instagram: 0,
         tiktok: 0,
+        facebook: 0,
+        bluesky: 0,
+        threads: 0,
         aiArticles: 0
       }
     };
@@ -328,6 +344,9 @@ function isTrackedDomain(url) {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     if (isTrackedDomain(tab.url)) {
+      if (activeSessions[tabId]) {
+        closeActiveSession(tabId);
+      }
       const domain = getDomainFromUrl(tab.url);
       activeSessions[tabId] = {
         domain,
@@ -340,20 +359,16 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  if (activeSessions[tabId]) {
-    const session = activeSessions[tabId];
-    const duration = Math.round((Date.now() - session.startTime) / 1000);
-    
-    if (duration > 5) { // Only log sessions > 5 seconds
-      saveSessionTime(session.domain, duration, session.blocked);
-    }
-    
-    delete activeSessions[tabId];
-  }
+  closeActiveSession(tabId);
 });
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
-  // Switch tracked tab
+  Object.keys(activeSessions).forEach(existingTabId => {
+    if (Number(existingTabId) !== activeInfo.tabId) {
+      closeActiveSession(Number(existingTabId));
+    }
+  });
+
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab && tab.url && isTrackedDomain(tab.url)) {
       const domain = getDomainFromUrl(tab.url);
@@ -365,6 +380,21 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     }
   });
 });
+
+function closeActiveSession(tabId) {
+  if (!activeSessions[tabId]) {
+    return;
+  }
+
+  const session = activeSessions[tabId];
+  const duration = Math.round((Date.now() - session.startTime) / 1000);
+
+  if (duration > 5) {
+    saveSessionTime(session.domain, duration, session.blocked);
+  }
+
+  delete activeSessions[tabId];
+}
 
 async function saveSessionTime(domain, durationSeconds, blockedCount) {
   try {

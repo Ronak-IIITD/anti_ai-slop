@@ -5,13 +5,16 @@
 (async function() {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge } = window.AntiSlopUtils;
   const detector = window.brainrotDetector;
+  const mediaDetector = window.aiMediaDetector;
   
   const PLATFORM = 'YouTube';
   let blockedCount = 0;
   let isEnabled = false;
   let sensitivity = 'medium';
+  let detectAIMedia = true;
+  let mediaSensitivity = 'medium';
 
   // YouTube video/shorts selectors
   // Updated selectors as of 2026-02-11
@@ -45,6 +48,8 @@
     // Get sensitivity setting
     const settings = await storageManager.getSettings();
     sensitivity = settings.youtube?.sensitivity || 'medium';
+    detectAIMedia = settings.ui?.detectAIMedia !== false;
+    mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
 
     log(PLATFORM, `Initializing content filter (sensitivity: ${sensitivity})...`);
     
@@ -118,6 +123,13 @@
         log(PLATFORM, `Video "${metadata.title.substring(0, 50)}..." - Score: ${slopScore}/${threshold}`);
       }
       
+      if (mediaDetector && detectAIMedia) {
+        const mediaResult = mediaDetector.analyzeElement(videoElement, metadata);
+        if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
+          createMediaWarningBadge(videoElement, mediaResult);
+        }
+      }
+
       // Block if it exceeds threshold
       if (detector.shouldBlock(slopScore, threshold)) {
         hideElement(videoElement, 'brainrot-content');
@@ -218,6 +230,8 @@
       const wasEnabled = isEnabled;
       isEnabled = newSettings?.youtube?.enabled ?? false;
       sensitivity = newSettings?.youtube?.sensitivity || 'medium';
+      detectAIMedia = newSettings?.ui?.detectAIMedia !== false;
+      mediaSensitivity = newSettings?.ui?.mediaSensitivity || 'medium';
       
       if (wasEnabled !== isEnabled) {
         log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);

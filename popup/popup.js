@@ -155,6 +155,16 @@ async function loadSettings() {
     if (showPlaceholdersToggle) {
       showPlaceholdersToggle.checked = showPlaceholders;
     }
+
+    const detectAIMediaToggle = document.getElementById('detectAIMedia');
+    if (detectAIMediaToggle) {
+      detectAIMediaToggle.checked = settings.ui?.detectAIMedia ?? true;
+    }
+
+    const mediaSensitivitySelect = document.getElementById('mediaSensitivity');
+    if (mediaSensitivitySelect) {
+      mediaSensitivitySelect.value = settings.ui?.mediaSensitivity || 'medium';
+    }
     
     console.log('[Anti-Slop Popup] Settings loaded');
   } catch (error) {
@@ -188,6 +198,7 @@ async function loadStatistics() {
     document.getElementById('tiktokCount').textContent = formatNumber(platforms.tiktok || 0);
     document.getElementById('facebookCount').textContent = formatNumber(platforms.facebook || 0);
     document.getElementById('blueskyCount').textContent = formatNumber(platforms.bluesky || 0);
+    document.getElementById('threadsCount').textContent = formatNumber(platforms.threads || 0);
     document.getElementById('aiArticlesCount').textContent = formatNumber(platforms.aiArticles || 0);
     
     console.log('[Anti-Slop Popup] Statistics loaded');
@@ -254,7 +265,7 @@ async function loadSessionStats() {
       breakdownEl.innerHTML = sorted.map(([domain, data]) => `
         <div class="time-breakdown-item">
           <span class="time-breakdown-domain">${domain.replace('www.', '')}</span>
-          <span class="time-breakdown-time">${formatTime(data.time || 0)}</span>
+          <span class="time-breakdown-time">${formatTime(data.time || 0)} · ${data.visits || 0} visit${(data.visits || 0) === 1 ? '' : 's'}</span>
         </div>
       `).join('');
     } else {
@@ -611,6 +622,55 @@ function setupEventListeners() {
   document.getElementById('tiktokToggle').addEventListener('change', (e) => {
     updateSetting('tiktok', 'enabled', e.target.checked);
   });
+
+  const facebookToggle = document.getElementById('facebookToggle');
+  if (facebookToggle) {
+    facebookToggle.addEventListener('change', (e) => {
+      updateSetting('facebook', 'enabled', e.target.checked);
+    });
+  }
+
+  const facebookSensitivitySelect = document.getElementById('facebookSensitivity');
+  if (facebookSensitivitySelect) {
+    facebookSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('facebook', 'sensitivity', e.target.value);
+    });
+  }
+
+  const blueskyToggle = document.getElementById('blueskyToggle');
+  if (blueskyToggle) {
+    blueskyToggle.addEventListener('change', (e) => {
+      updateSetting('bluesky', 'enabled', e.target.checked);
+    });
+  }
+
+  const blueskySensitivitySelect = document.getElementById('blueskySensitivity');
+  if (blueskySensitivitySelect) {
+    blueskySensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('bluesky', 'sensitivity', e.target.value);
+    });
+  }
+
+  const threadsToggle = document.getElementById('threadsToggle');
+  if (threadsToggle) {
+    threadsToggle.addEventListener('change', (e) => {
+      updateSetting('threads', 'enabled', e.target.checked);
+    });
+  }
+
+  const threadsSensitivitySelect = document.getElementById('threadsSensitivity');
+  if (threadsSensitivitySelect) {
+    threadsSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('threads', 'sensitivity', e.target.value);
+    });
+  }
+
+  const focusModeToggle = document.getElementById('focusModeToggle');
+  if (focusModeToggle) {
+    focusModeToggle.addEventListener('change', async (e) => {
+      await toggleFocusMode(e.target.checked);
+    });
+  }
   
   document.getElementById('aiDetectorToggle').addEventListener('change', (e) => {
     updateSetting('aiDetector', 'enabled', e.target.checked);
@@ -632,6 +692,20 @@ function setupEventListeners() {
   if (showPlaceholdersToggle) {
     showPlaceholdersToggle.addEventListener('change', (e) => {
       updateSetting('ui', 'showPlaceholders', e.target.checked);
+    });
+  }
+
+  const detectAIMediaToggle = document.getElementById('detectAIMedia');
+  if (detectAIMediaToggle) {
+    detectAIMediaToggle.addEventListener('change', (e) => {
+      updateSetting('ui', 'detectAIMedia', e.target.checked);
+    });
+  }
+
+  const mediaSensitivitySelect = document.getElementById('mediaSensitivity');
+  if (mediaSensitivitySelect) {
+    mediaSensitivitySelect.addEventListener('change', (e) => {
+      updateSetting('ui', 'mediaSensitivity', e.target.value);
     });
   }
   
@@ -725,6 +799,44 @@ async function updateSetting(platform, key, value) {
   } catch (error) {
     console.error('[Anti-Slop Popup] Error updating setting:', error);
     showToast('Error saving settings', 'error');
+  }
+}
+
+async function toggleFocusMode(enabled) {
+  try {
+    const result = await chrome.storage.sync.get(['antiSlop_settings']);
+    const settings = result.antiSlop_settings || getDefaultSettings();
+    const platforms = ['youtube', 'instagram', 'twitter', 'reddit', 'google', 'linkedin', 'tiktok', 'facebook', 'bluesky', 'threads'];
+
+    settings.ui = settings.ui || {};
+
+    if (enabled) {
+      settings.ui.focusModePrevious = {};
+      platforms.forEach(platform => {
+        settings[platform] = settings[platform] || {};
+        settings.ui.focusModePrevious[platform] = settings[platform].enabled !== false;
+        settings[platform].enabled = true;
+      });
+      settings.aiDetector = settings.aiDetector || {};
+      settings.ui.focusModePrevious.aiDetector = settings.aiDetector.enabled !== false;
+      settings.aiDetector.enabled = true;
+    } else if (settings.ui.focusModePrevious) {
+      platforms.forEach(platform => {
+        settings[platform] = settings[platform] || {};
+        settings[platform].enabled = settings.ui.focusModePrevious[platform] !== false;
+      });
+      settings.aiDetector = settings.aiDetector || {};
+      settings.aiDetector.enabled = settings.ui.focusModePrevious.aiDetector !== false;
+      settings.ui.focusModePrevious = null;
+    }
+
+    settings.ui.focusMode = enabled;
+    await chrome.storage.sync.set({ antiSlop_settings: settings });
+    showToast(enabled ? 'Focus Mode enabled' : 'Focus Mode disabled');
+    await loadSettings();
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Error toggling Focus Mode:', error);
+    showToast('Error updating Focus Mode', 'error');
   }
 }
 
@@ -890,7 +1002,7 @@ function getDefaultSettings() {
     threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
-    ui: { showPlaceholders: true, focusMode: false }
+    ui: { showPlaceholders: true, focusMode: false, detectAIMedia: true, mediaSensitivity: 'medium' }
   };
 }
 

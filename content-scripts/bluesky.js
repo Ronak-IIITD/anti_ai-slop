@@ -5,12 +5,15 @@
 (async function () {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge } = window.AntiSlopUtils;
+  const mediaDetector = window.aiMediaDetector;
 
   const PLATFORM = 'Bluesky';
   let isEnabled = false;
   let sensitivity = 'medium';
   let hasFiltered = false;
+  let detectAIMedia = true;
+  let mediaSensitivity = 'medium';
 
   // Bluesky selectors
   const SELECTORS = {
@@ -62,6 +65,8 @@
     const settings = await storageManager.getSettings();
     const bskySettings = settings.bluesky || {};
     sensitivity = bskySettings.sensitivity || 'medium';
+    detectAIMedia = settings.ui?.detectAIMedia !== false;
+    mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
 
     log(PLATFORM, `Initializing (sensitivity: ${sensitivity})`);
 
@@ -120,6 +125,16 @@
         if (!text || text.length < threshold.minChars) return;
 
         const score = analyzeBrainrotScore(text);
+
+        if (mediaDetector && detectAIMedia) {
+          const mediaResult = mediaDetector.analyzeElement(post, {
+            title: text.slice(0, 80),
+            description: text
+          });
+          if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
+            createMediaWarningBadge(post, mediaResult);
+          }
+        }
 
         if (score >= threshold.brainrot || score >= threshold.engagement) {
           hideElement(post, `bluesky-brainrot-${score}`);
@@ -274,5 +289,25 @@
   // ============================================================
 
   init();
+
+  // Listen for settings changes
+  chrome.storage.onChanged.addListener(async (changes, namespace) => {
+    if (namespace === 'sync' && changes.antiSlop_settings) {
+      const newSettings = changes.antiSlop_settings.newValue;
+      const wasEnabled = isEnabled;
+      isEnabled = newSettings?.bluesky?.enabled ?? false;
+      sensitivity = newSettings?.bluesky?.sensitivity || 'medium';
+      detectAIMedia = newSettings?.ui?.detectAIMedia !== false;
+      mediaSensitivity = newSettings?.ui?.mediaSensitivity || 'medium';
+
+      if (wasEnabled !== isEnabled) {
+        log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);
+        location.reload();
+      } else if (isEnabled) {
+        hasFiltered = false;
+        filterContent();
+      }
+    }
+  });
 
 })();

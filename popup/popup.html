@@ -71,6 +71,10 @@
           <span class="platform-count" id="blueskyCount">0</span>
         </div>
         <div class="platform-stat">
+          <span class="platform-name">Threads Posts</span>
+          <span class="platform-count" id="threadsCount">0</span>
+        </div>
+        <div class="platform-stat">
           <span class="platform-name">Reddit Posts</span>
           <span class="platform-count" id="redditCount">0</span>
         </div>
@@ -391,6 +395,28 @@
         </div>
         <div class="control-details">
           <p class="help-text">Show a "Show Content" button instead of hiding completely</p>
+        </div>
+      </div>
+
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F5BC;&#xFE0F;</span>
+          <span class="control-name">Detect AI Media</span>
+          <label class="toggle">
+            <input type="checkbox" id="detectAIMedia" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Media Sensitivity:
+            <select id="mediaSensitivity">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <p class="help-text">Adds warning badges to AI-likely images, thumbnails, and videos using local heuristics.</p>
         </div>
       </div>
 

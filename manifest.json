@@ -35,61 +35,61 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/youtube.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/youtube.js"],
       "css": ["content-scripts/youtube.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/twitter.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/twitter.js"],
       "css": ["content-scripts/twitter.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.reddit.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/reddit.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/reddit.js"],
       "css": ["content-scripts/reddit.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.google.com/*", "*://*.google.co.in/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/utility-scorer.js", "content-scripts/common.js", "content-scripts/google.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "utils/utility-scorer.js", "content-scripts/common.js", "content-scripts/google.js"],
       "css": ["content-scripts/google.css"],
       "run_at": "document_idle"
     },
     {
       "matches": ["*://*.linkedin.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/utility-scorer.js", "content-scripts/common.js", "content-scripts/linkedin.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "utils/utility-scorer.js", "content-scripts/common.js", "content-scripts/linkedin.js"],
       "css": ["content-scripts/linkedin.css"],
       "run_at": "document_idle"
     },
     {
       "matches": ["*://*.instagram.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/instagram.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/instagram.js"],
       "css": ["content-scripts/instagram.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.tiktok.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/tiktok.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/tiktok.js"],
       "css": ["content-scripts/tiktok.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*.facebook.com/*", "*://*.messenger.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/facebook.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/facebook.js"],
       "css": ["content-scripts/facebook.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://bsky.app/*", "*://*.bsky.app/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/bluesky.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/bluesky.js"],
       "css": ["content-scripts/bluesky.css"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://threads.net/*", "*://*.threads.net/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "content-scripts/common.js", "content-scripts/threads.js"],
+      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/threads.js"],
       "css": ["content-scripts/threads.css"],
       "run_at": "document_start"
     },

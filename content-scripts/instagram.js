@@ -5,13 +5,16 @@
 (async function() {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge } = window.AntiSlopUtils;
   const detector = window.brainrotDetector;
+  const mediaDetector = window.aiMediaDetector;
   
   const PLATFORM = 'Instagram';
   let blockedCount = 0;
   let isEnabled = false;
   let sensitivity = 'medium';
+  let detectAIMedia = true;
+  let mediaSensitivity = 'medium';
 
   // Instagram content selectors
   // Updated selectors as of 2026-02-11
@@ -41,6 +44,8 @@
     // Get sensitivity setting
     const settings = await storageManager.getSettings();
     sensitivity = settings.instagram?.sensitivity || 'medium';
+    detectAIMedia = settings.ui?.detectAIMedia !== false;
+    mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
 
     log(PLATFORM, `Initializing content filter (sensitivity: ${sensitivity})...`);
     
@@ -115,6 +120,13 @@
         log(PLATFORM, `Post "${preview}..." - Score: ${slopScore}/${threshold}`);
       }
       
+      if (mediaDetector && detectAIMedia) {
+        const mediaResult = mediaDetector.analyzeElement(postElement, metadata);
+        if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
+          createMediaWarningBadge(postElement, mediaResult);
+        }
+      }
+
       // Block if it exceeds threshold
       if (detector.shouldBlock(slopScore, threshold)) {
         hideElement(postElement, 'brainrot-content');
@@ -235,6 +247,8 @@
       const wasEnabled = isEnabled;
       isEnabled = newSettings?.instagram?.enabled ?? false;
       sensitivity = newSettings?.instagram?.sensitivity || 'medium';
+      detectAIMedia = newSettings?.ui?.detectAIMedia !== false;
+      mediaSensitivity = newSettings?.ui?.mediaSensitivity || 'medium';
       
       if (wasEnabled !== isEnabled) {
         log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);

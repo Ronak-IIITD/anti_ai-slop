@@ -233,6 +233,43 @@ function injectCSS(css) {
   (document.head || document.documentElement).appendChild(style);
 }
 
+function createMediaWarningBadge(element, data = {}) {
+  if (!element || element.querySelector('.anti-slop-media-badge')) {
+    return;
+  }
+
+  const badge = document.createElement('div');
+  badge.className = 'anti-slop-media-badge';
+  const score = data.score || 0;
+  const reasons = Array.isArray(data.reasons) ? data.reasons.join(', ') : '';
+  badge.textContent = `AI-likely media ${score}%`;
+  badge.title = reasons ? `Signals: ${reasons}` : 'AI-like media signals detected';
+  badge.style.cssText = `
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 9999;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.88);
+    color: #f9fafb;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+  `;
+
+  const computed = window.getComputedStyle(element);
+  if (computed.position === 'static') {
+    element.style.position = 'relative';
+  }
+
+  element.appendChild(badge);
+}
+
 // Global site indicator - floating widget on all websites
 // Shows AI detection status and quick actions
 function createGlobalSiteIndicator(platform, stats) {
@@ -434,6 +471,7 @@ if (typeof window !== 'undefined') {
     incrementBlockCounter,
     isPlatformEnabled,
     injectCSS,
+    createMediaWarningBadge,
     showBlockedNotification,
     createBlockNotification,
     createGlobalSiteIndicator
