@@ -196,7 +196,8 @@ const DEFAULT_SETTINGS = {
     focusMode: false,
     focusModePrevious: null,
     detectAIMedia: true,
-    mediaSensitivity: 'medium'
+    mediaSensitivity: 'medium',
+    mediaOcr: false
   }
 };
 
@@ -217,6 +218,7 @@ const DEFAULT_STATS = {
     threads: 0,
     aiArticles: 0
   },
+  aiMediaWarnings: 0,
   lastReset: new Date().toISOString()
 };
 
@@ -278,6 +280,9 @@ class StorageManager {
         }
         if (!settings.ui.mediaSensitivity) {
           settings.ui.mediaSensitivity = 'medium';
+        }
+        if (typeof settings.ui.mediaOcr !== 'boolean') {
+          settings.ui.mediaOcr = false;
         }
         if (typeof settings.customRules.enabled !== 'boolean') {
           settings.customRules.enabled = true;
@@ -506,6 +511,13 @@ class StorageManager {
     // Update badge
     this.updateBadge(stats.totalBlocked);
 
+    return stats;
+  }
+
+  async incrementAIMediaWarnings(count = 1) {
+    const stats = await this.getStats();
+    stats.aiMediaWarnings = (stats.aiMediaWarnings || 0) + count;
+    await this.saveStats(stats);
     return stats;
   }
 

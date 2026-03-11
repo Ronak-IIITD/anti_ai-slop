@@ -12,6 +12,10 @@
   let sensitivity = 'medium';
   let blockBrainrot = true;
   let blockClickbait = true;
+  let detectAIMedia = true;
+  let mediaSensitivity = 'medium';
+  let mediaOcr = false;
+  let mediaDetector = null;
   let initDone = false;
 
   // Initialize when ready
@@ -41,7 +45,8 @@
     
     if (!utils.log) return;
     
-    const { log, logError, hideElement, fadeElement, unfadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, createGlobalSiteIndicator } = utils;
+    const { log, logError, hideElement, fadeElement, unfadeElement, isProcessed, markProcessed, getTextContent, createDebouncedObserver, incrementBlockCounter, createGlobalSiteIndicator, createMediaWarningBadge, incrementMediaWarningCounter } = utils;
+    mediaDetector = window.aiMediaDetector;
     
     // Check if enabled
     try {
@@ -50,6 +55,9 @@
       sensitivity = settings.twitter?.sensitivity || 'medium';
       blockBrainrot = settings.twitter?.blockBrainrot ?? true;
       blockClickbait = settings.twitter?.blockClickbait ?? true;
+      detectAIMedia = settings.ui?.detectAIMedia !== false;
+      mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
+      mediaOcr = settings.ui?.mediaOcr === true;
     } catch (e) {
       isEnabled = true;
       sensitivity = 'medium';
@@ -63,13 +71,13 @@
     log(PLATFORM, `Starting with sensitivity: ${sensitivity}`);
     
     // Run immediately and multiple times
-    runFilter(log, detector);
-    setTimeout(() => runFilter(log, detector), 1000);
-    setTimeout(() => runFilter(log, detector), 2000);
-    setTimeout(() => runFilter(log, detector), 4000);
+    runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter);
+    setTimeout(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 1000);
+    setTimeout(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 2000);
+    setTimeout(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 4000);
     
     // Keep observing
-    const observer = createDebouncedObserver(() => runFilter(log, detector), 500);
+    const observer = createDebouncedObserver(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 500);
     const target = document.querySelector('[role="main"]') || document.body;
     observer.observe(target, { childList: true, subtree: true });
     
@@ -78,7 +86,7 @@
     new MutationObserver(() => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
-        setTimeout(() => runFilter(log, detector), 1500);
+        setTimeout(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 1500);
       }
     }).observe(document.body, { childList: true, subtree: true });
     
@@ -86,7 +94,7 @@
   }
 
   // Main filter function
-  function runFilter(log, detector) {
+  function runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter) {
     if (!detector) return;
     
     const tweets = getAllTweets();
@@ -140,6 +148,20 @@
         reasons.push('generic');
       }
       
+      if (mediaDetector && detectAIMedia && tweet.querySelector('img, video')) {
+        const mediaTask = async () => {
+          const mediaResult = mediaOcr
+            ? await mediaDetector.analyzeElementAsync(tweet, { description: text, channelName: getAuthor(tweet) }, { enableOcr: true })
+            : mediaDetector.analyzeElement(tweet, { description: text, channelName: getAuthor(tweet) });
+          if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
+            if (createMediaWarningBadge(tweet, mediaResult)) {
+              incrementMediaWarningCounter(1);
+            }
+          }
+        };
+        mediaTask();
+      }
+
       // Action
       const useThreshold = isReply ? replyThreshold : threshold;
       

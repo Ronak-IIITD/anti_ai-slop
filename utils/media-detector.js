@@ -110,6 +110,32 @@ class AIMediaDetector {
     };
   }
 
+  async analyzeElementAsync(element, context = {}, options = {}) {
+    const base = this.analyzeElement(element, context);
+    const enableOcr = options.enableOcr === true;
+
+    if (!enableOcr || typeof TextDetector === 'undefined') {
+      return base;
+    }
+
+    try {
+      const detectedText = await this.extractTextFromImages(element);
+      if (detectedText) {
+        const lowered = detectedText.toLowerCase();
+        const keywordMatches = AI_MEDIA_KEYWORDS.strong.filter(keyword => lowered.includes(keyword));
+        if (keywordMatches.length > 0) {
+          base.score = Math.min(base.score + 25, 100);
+          base.reasons.push('ocr-watermark');
+          base.matchedKeywords.push(...keywordMatches);
+        }
+      }
+    } catch (error) {
+      // OCR is best-effort only
+    }
+
+    return base;
+  }
+
   collectTextSignals(element, context = {}) {
     const chunks = [];
     const push = value => {
@@ -184,6 +210,35 @@ class AIMediaDetector {
     }
 
     return info;
+  }
+
+  async extractTextFromImages(element) {
+    if (!element) return '';
+
+    const images = Array.from(element.querySelectorAll('img'))
+      .filter(img => img.naturalWidth >= 120 && img.naturalHeight >= 120)
+      .slice(0, 2);
+
+    if (images.length === 0) return '';
+
+    const detector = new TextDetector();
+    const chunks = [];
+
+    for (const img of images) {
+      try {
+        if (img.decode) {
+          await img.decode();
+        }
+        const results = await detector.detect(img);
+        results.forEach(result => {
+          if (result.rawValue) chunks.push(result.rawValue);
+        });
+      } catch (error) {
+        // Ignore OCR errors (often CORS or unsupported)
+      }
+    }
+
+    return chunks.join(' ').trim();
   }
 
   shouldWarn(score, sensitivity = 'medium') {

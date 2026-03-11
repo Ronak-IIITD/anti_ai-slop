@@ -165,6 +165,11 @@ async function loadSettings() {
     if (mediaSensitivitySelect) {
       mediaSensitivitySelect.value = settings.ui?.mediaSensitivity || 'medium';
     }
+
+    const mediaOcrToggle = document.getElementById('mediaOcr');
+    if (mediaOcrToggle) {
+      mediaOcrToggle.checked = settings.ui?.mediaOcr ?? false;
+    }
     
     console.log('[Anti-Slop Popup] Settings loaded');
   } catch (error) {
@@ -187,6 +192,7 @@ async function loadStatistics() {
     const hours = Math.floor((stats.estimatedTimeSaved || 0) / 60);
     const minutes = Math.round((stats.estimatedTimeSaved || 0) % 60);
     document.getElementById('timeSaved').textContent = `${hours}h ${minutes}m`;
+    document.getElementById('aiMediaWarnings').textContent = formatNumber(stats.aiMediaWarnings || 0);
     
     const platforms = stats.blockedByPlatform || {};
     document.getElementById('youtubeCount').textContent = formatNumber(platforms.youtube || 0);
@@ -708,6 +714,13 @@ function setupEventListeners() {
       updateSetting('ui', 'mediaSensitivity', e.target.value);
     });
   }
+
+  const mediaOcrToggle = document.getElementById('mediaOcr');
+  if (mediaOcrToggle) {
+    mediaOcrToggle.addEventListener('change', (e) => {
+      updateSetting('ui', 'mediaOcr', e.target.checked);
+    });
+  }
   
   // Twitter settings
   const twitterSensitivitySelect = document.getElementById('twitterSensitivity');
@@ -1002,7 +1015,7 @@ function getDefaultSettings() {
     threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
-    ui: { showPlaceholders: true, focusMode: false, detectAIMedia: true, mediaSensitivity: 'medium' }
+    ui: { showPlaceholders: true, focusMode: false, detectAIMedia: true, mediaSensitivity: 'medium', mediaOcr: false }
   };
 }
 

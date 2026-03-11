@@ -5,7 +5,7 @@
 (async function () {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge, incrementMediaWarningCounter } = window.AntiSlopUtils;
   const mediaDetector = window.aiMediaDetector;
 
   const PLATFORM = 'Bluesky';
@@ -14,6 +14,7 @@
   let hasFiltered = false;
   let detectAIMedia = true;
   let mediaSensitivity = 'medium';
+  let mediaOcr = false;
 
   // Bluesky selectors
   const SELECTORS = {
@@ -67,6 +68,10 @@
     sensitivity = bskySettings.sensitivity || 'medium';
     detectAIMedia = settings.ui?.detectAIMedia !== false;
     mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
+    mediaOcr = settings.ui?.mediaOcr === true;
+    detectAIMedia = settings.ui?.detectAIMedia !== false;
+    mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
+    mediaOcr = settings.ui?.mediaOcr === true;
 
     log(PLATFORM, `Initializing (sensitivity: ${sensitivity})`);
 
@@ -83,13 +88,14 @@
   // MAIN FILTER
   // ============================================================
 
-  function filterContent() {
+  async function filterContent() {
     if (hasFiltered && !document.hidden) return;
 
     let totalBlocked = 0;
 
     // Filter brainrot posts
-    totalBlocked += filterBrainrotPosts();
+    const brainrotBlocked = await filterBrainrotPosts();
+    totalBlocked += brainrotBlocked;
 
     // Filter suggested content
     totalBlocked += filterSuggestedContent();
@@ -107,12 +113,12 @@
     hasFiltered = true;
   }
 
-  function filterBrainrotPosts() {
+  async function filterBrainrotPosts() {
     const threshold = THRESHOLDS[sensitivity];
     let blocked = 0;
 
     for (const selector of SELECTORS.posts) {
-      document.querySelectorAll(selector).forEach(post => {
+      for (const post of document.querySelectorAll(selector)) {
         if (isProcessed(post)) return;
 
         // Skip own posts or verified accounts
@@ -127,12 +133,13 @@
         const score = analyzeBrainrotScore(text);
 
         if (mediaDetector && detectAIMedia) {
-          const mediaResult = mediaDetector.analyzeElement(post, {
-            title: text.slice(0, 80),
-            description: text
-          });
+          const mediaResult = mediaOcr
+            ? await mediaDetector.analyzeElementAsync(post, { title: text.slice(0, 80), description: text }, { enableOcr: true })
+            : mediaDetector.analyzeElement(post, { title: text.slice(0, 80), description: text });
           if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
-            createMediaWarningBadge(post, mediaResult);
+            if (createMediaWarningBadge(post, mediaResult)) {
+              incrementMediaWarningCounter(1);
+            }
           }
         }
 
@@ -141,7 +148,7 @@
           markProcessed(post);
           blocked++;
         }
-      });
+      }
     }
 
     if (blocked > 0) {

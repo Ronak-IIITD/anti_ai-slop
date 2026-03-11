@@ -31,7 +31,7 @@ async function initializeDefaults() {
     bluesky: { enabled: true, sensitivity: 'medium' },
     threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
-    ui: { showPlaceholders: true, focusMode: false }
+    ui: { showPlaceholders: true, focusMode: false, detectAIMedia: true, mediaSensitivity: 'medium' }
   };
 
   const DEFAULT_STATS = {
@@ -50,6 +50,7 @@ async function initializeDefaults() {
       threads: 0,
       aiArticles: 0
     },
+    aiMediaWarnings: 0,
     lastReset: new Date().toISOString()
   };
 
@@ -94,6 +95,16 @@ async function migrateSettings() {
 
     if (typeof settings.ui.focusMode !== 'boolean') {
       settings.ui.focusMode = false;
+      changed = true;
+    }
+
+    if (typeof settings.ui.detectAIMedia !== 'boolean') {
+      settings.ui.detectAIMedia = true;
+      changed = true;
+    }
+
+    if (!settings.ui.mediaSensitivity) {
+      settings.ui.mediaSensitivity = 'medium';
       changed = true;
     }
 
@@ -272,7 +283,8 @@ async function handleStatsUpdate(data) {
         bluesky: 0,
         threads: 0,
         aiArticles: 0
-      }
+      },
+      aiMediaWarnings: 0
     };
     
     stats.totalBlocked = (stats.totalBlocked || 0) + (data.count || 1);

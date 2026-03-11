@@ -5,7 +5,7 @@
 (async function() {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge, incrementMediaWarningCounter } = window.AntiSlopUtils;
   const detector = window.brainrotDetector;
   const mediaDetector = window.aiMediaDetector;
   
@@ -15,6 +15,7 @@
   let sensitivity = 'medium';
   let detectAIMedia = true;
   let mediaSensitivity = 'medium';
+  let mediaOcr = false;
 
   // Instagram content selectors
   // Updated selectors as of 2026-02-11
@@ -46,6 +47,7 @@
     sensitivity = settings.instagram?.sensitivity || 'medium';
     detectAIMedia = settings.ui?.detectAIMedia !== false;
     mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
+    mediaOcr = settings.ui?.mediaOcr === true;
 
     log(PLATFORM, `Initializing content filter (sensitivity: ${sensitivity})...`);
     
@@ -94,7 +96,7 @@
   }
 
   // Analyze individual post/reel and filter if it's slop
-  function analyzeAndFilterPost(postElement) {
+  async function analyzeAndFilterPost(postElement) {
     try {
       // Extract metadata from post element
       const metadata = extractPostMetadata(postElement);
@@ -121,9 +123,13 @@
       }
       
       if (mediaDetector && detectAIMedia) {
-        const mediaResult = mediaDetector.analyzeElement(postElement, metadata);
+        const mediaResult = mediaOcr
+          ? await mediaDetector.analyzeElementAsync(postElement, metadata, { enableOcr: true })
+          : mediaDetector.analyzeElement(postElement, metadata);
         if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
-          createMediaWarningBadge(postElement, mediaResult);
+          if (createMediaWarningBadge(postElement, mediaResult)) {
+            incrementMediaWarningCounter(1);
+          }
         }
       }
 
@@ -249,6 +255,7 @@
       sensitivity = newSettings?.instagram?.sensitivity || 'medium';
       detectAIMedia = newSettings?.ui?.detectAIMedia !== false;
       mediaSensitivity = newSettings?.ui?.mediaSensitivity || 'medium';
+      mediaOcr = newSettings?.ui?.mediaOcr === true;
       
       if (wasEnabled !== isEnabled) {
         log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);

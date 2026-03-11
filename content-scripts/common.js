@@ -234,11 +234,13 @@ function injectCSS(css) {
 }
 
 function createMediaWarningBadge(element, data = {}) {
-  if (!element || element.querySelector('.anti-slop-media-badge')) {
-    return;
+  if (!element) {
+    return false;
   }
 
-  const badge = document.createElement('div');
+  const existing = element.querySelector('.anti-slop-media-badge');
+
+  const badge = existing || document.createElement('div');
   badge.className = 'anti-slop-media-badge';
   const score = data.score || 0;
   const reasons = Array.isArray(data.reasons) ? data.reasons.join(', ') : '';
@@ -267,7 +269,29 @@ function createMediaWarningBadge(element, data = {}) {
     element.style.position = 'relative';
   }
 
-  element.appendChild(badge);
+  const computed = window.getComputedStyle(element);
+  if (computed.position === 'static') {
+    element.style.position = 'relative';
+  }
+
+  if (!existing) {
+    element.appendChild(badge);
+  }
+
+  element.setAttribute('data-anti-slop-media-warned', 'true');
+  element.setAttribute('data-anti-slop-media-score', String(score));
+
+  return !existing;
+}
+
+async function incrementMediaWarningCounter(count = 1) {
+  try {
+    if (storageManager?.incrementAIMediaWarnings) {
+      await storageManager.incrementAIMediaWarnings(count);
+    }
+  } catch (error) {
+    logError('Common', 'Failed to increment AI media warnings', error);
+  }
 }
 
 // Global site indicator - floating widget on all websites
@@ -472,6 +496,7 @@ if (typeof window !== 'undefined') {
     isPlatformEnabled,
     injectCSS,
     createMediaWarningBadge,
+    incrementMediaWarningCounter,
     showBlockedNotification,
     createBlockNotification,
     createGlobalSiteIndicator

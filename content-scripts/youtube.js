@@ -5,7 +5,7 @@
 (async function() {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge, incrementMediaWarningCounter } = window.AntiSlopUtils;
   const detector = window.brainrotDetector;
   const mediaDetector = window.aiMediaDetector;
   
@@ -15,6 +15,7 @@
   let sensitivity = 'medium';
   let detectAIMedia = true;
   let mediaSensitivity = 'medium';
+  let mediaOcr = false;
 
   // YouTube video/shorts selectors
   // Updated selectors as of 2026-02-11
@@ -50,6 +51,7 @@
     sensitivity = settings.youtube?.sensitivity || 'medium';
     detectAIMedia = settings.ui?.detectAIMedia !== false;
     mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
+    mediaOcr = settings.ui?.mediaOcr === true;
 
     log(PLATFORM, `Initializing content filter (sensitivity: ${sensitivity})...`);
     
@@ -98,7 +100,7 @@
   }
 
   // Analyze individual video and filter if it's slop
-  function analyzeAndFilterVideo(videoElement) {
+  async function analyzeAndFilterVideo(videoElement) {
     try {
       // Extract metadata from video element
       const metadata = extractVideoMetadata(videoElement);
@@ -124,9 +126,13 @@
       }
       
       if (mediaDetector && detectAIMedia) {
-        const mediaResult = mediaDetector.analyzeElement(videoElement, metadata);
+        const mediaResult = mediaOcr
+          ? await mediaDetector.analyzeElementAsync(videoElement, metadata, { enableOcr: true })
+          : mediaDetector.analyzeElement(videoElement, metadata);
         if (mediaDetector.shouldWarn(mediaResult.score, mediaSensitivity)) {
-          createMediaWarningBadge(videoElement, mediaResult);
+          if (createMediaWarningBadge(videoElement, mediaResult)) {
+            incrementMediaWarningCounter(1);
+          }
         }
       }
 
@@ -232,6 +238,7 @@
       sensitivity = newSettings?.youtube?.sensitivity || 'medium';
       detectAIMedia = newSettings?.ui?.detectAIMedia !== false;
       mediaSensitivity = newSettings?.ui?.mediaSensitivity || 'medium';
+      mediaOcr = newSettings?.ui?.mediaOcr === true;
       
       if (wasEnabled !== isEnabled) {
         log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);

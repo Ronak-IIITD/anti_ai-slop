@@ -38,12 +38,17 @@
   - Detects AI-likely images/videos from local metadata and surrounding text only
   - Uses watermark hints, AI tool keywords, render language, alt text, and media-card heuristics
   - No cloud calls, no external models, no data leaves the browser
-- **feat**: Add inline AI media warning badges for YouTube and Instagram
-  - Media-heavy cards can now show `AI-likely media XX%` badges
+- **feat**: Add inline AI media warning badges across platforms
+  - YouTube, Instagram, Facebook, Bluesky, Threads, and Twitter/X
+  - Media-heavy cards now show `AI-likely media XX%` badges
   - Warning UX only; does not hard-block media in v1
 - **feat**: Add popup controls for AI media detection
   - Global toggle: `Detect AI Media`
   - Global sensitivity: Low / Medium / High
+- **feat**: Add optional OCR watermark scan (experimental)
+  - Uses browser `TextDetector` when available
+  - No external services or model downloads
+- **update**: Track AI media warnings in stats dashboard
 - **update**: Load shared media detector in platform bundles for future expansion
 
 ### 2026-03-01 - Polish Pass for New Features
