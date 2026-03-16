@@ -18,7 +18,7 @@
   let mediaOcr = false;
 
   // YouTube video/shorts selectors
-  // Updated selectors as of 2026-02-11
+  // Updated selectors as of 2026-03-16
   const SELECTORS = {
     // All video types (regular videos, shorts, feed items)
     allVideos: [
@@ -33,7 +33,28 @@
       '[is-short]',
       'ytd-video-renderer[is-short]',
       'ytm-compact-video-renderer',
-      'ytm-rich-item-renderer'
+      'ytm-rich-item-renderer',
+      // 2026 additions
+      'ytd-rich-grid-slim-media',
+      'ytd-video-preview-renderer',
+      'ytls-video-item-renderer'
+    ],
+    // Shorts shelf (homepage)
+    shortsShelf: [
+      'ytd-reel-shelf-renderer',
+      'ytd-short-shelf-renderer',
+      'ytd-rich-section-renderer[is-shorts]',
+      // 2026 additions
+      'yts-reel-shelf-renderer'
+    ],
+    // Individual short video
+    shortsVideo: [
+      'ytd-reel-item-renderer',
+      'ytd-shorts-video-renderer',
+      'ytd-shorts-container',
+      // 2026 additions
+      'ytm-shorts-video-in-feed-renderer',
+      'yts-shorts-video-renderer'
     ]
   };
 
@@ -195,15 +216,12 @@
       return;
     }
 
-    const observer = createDebouncedObserver(() => {
+    const { observer, start } = createDebouncedObserver(() => {
       blockedCount = 0; // Reset for this batch
       filterContent();
     }, 300);
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    start(document.body);
 
     log(PLATFORM, 'Observer started');
   }

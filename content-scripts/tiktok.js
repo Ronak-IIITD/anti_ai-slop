@@ -139,15 +139,12 @@
 
   // Start mutation observer
   function startObserver() {
-    const observer = createDebouncedObserver(() => {
+    const { observer, start } = createDebouncedObserver(() => {
       blockedCount = 0;
       blockVideos();
     }, 300);
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    start(document.body);
 
     log(PLATFORM, 'Observer started');
   }

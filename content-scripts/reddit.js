@@ -316,7 +316,7 @@
 
   // Start mutation observer
   function startObserver() {
-    const observer = createDebouncedObserver(() => {
+    const { observer, start } = createDebouncedObserver(() => {
       blockedCount = 0;
       fadedCount = 0;
       filterPosts();
@@ -324,10 +324,7 @@
 
     const target = document.querySelector('[role="main"]') || document.body;
     
-    observer.observe(target, {
-      childList: true,
-      subtree: true
-    });
+    start(target);
 
     log(PLATFORM, 'Observer started');
   }

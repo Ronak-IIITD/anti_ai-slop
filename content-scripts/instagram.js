@@ -212,15 +212,12 @@
       return;
     }
 
-    const observer = createDebouncedObserver(() => {
+    const { observer, start } = createDebouncedObserver(() => {
       blockedCount = 0;
       filterContent();
     }, 300);
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    start(document.body);
 
     log(PLATFORM, 'Observer started');
   }

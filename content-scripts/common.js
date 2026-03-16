@@ -29,6 +29,15 @@ function throttle(func, limit) {
   };
 }
 
+// Run expensive operations when browser is idle
+function runWhenIdle(callback, timeout = 2000) {
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(callback, { timeout });
+  } else {
+    setTimeout(callback, 100);
+  }
+}
+
 // Hide element with anti-slop styling
 function hideElement(element, reason = 'slop') {
   if (!element || element.classList.contains('anti-slop-hidden')) return;
@@ -120,6 +129,41 @@ function safeQuerySelectorAll(selector, context = document) {
   }
 }
 
+// Safe storage wrapper with fallback
+const safeStorage = {
+  _fallbackSettings: null,
+  
+  async getSettings() {
+    try {
+      return await storageManager.getSettings();
+    } catch (error) {
+      logError('Common', 'Storage get failed, using fallback', error);
+      if (!this._fallbackSettings) {
+        this._fallbackSettings = {
+          youtube: { enabled: true, sensitivity: 'medium' },
+          instagram: { enabled: true, sensitivity: 'medium' },
+          twitter: { enabled: true, sensitivity: 'medium' },
+          reddit: { enabled: true, sensitivity: 'medium' },
+          google: { enabled: true, sensitivity: 'medium' },
+          linkedin: { enabled: true, sensitivity: 'medium' },
+          aiDetector: { enabled: true, mode: 'warn', threshold: 65 },
+          ui: { showPlaceholders: true }
+        };
+      }
+      return this._fallbackSettings;
+    }
+  },
+  
+  async getStats() {
+    try {
+      return await storageManager.getStats();
+    } catch (error) {
+      logError('Common', 'Storage stats get failed', error);
+      return { totalBlocked: 0, blockedByPlatform: {} };
+    }
+  }
+};
+
 // Wait for element to appear in DOM
 function waitForElement(selector, timeout = 5000) {
   return new Promise((resolve) => {
@@ -137,7 +181,7 @@ function waitForElement(selector, timeout = 5000) {
       }
     });
 
-    observer.observe(document.body, {
+    observer.observe(document.body || document.documentElement, {
       childList: true,
       subtree: true
     });
@@ -157,7 +201,18 @@ function createDebouncedObserver(callback, delay = 300) {
     debouncedCallback(mutations);
   });
 
-  return observer;
+  return {
+    observer,
+    start: (target = document.body) => {
+      observer.observe(target, {
+        childList: true,
+        subtree: true
+      });
+    },
+    stop: () => {
+      observer.disconnect();
+    }
+  };
 }
 
 // Get readable text content from element
@@ -263,11 +318,6 @@ function createMediaWarningBadge(element, data = {}) {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     pointer-events: none;
   `;
-
-  const computed = window.getComputedStyle(element);
-  if (computed.position === 'static') {
-    element.style.position = 'relative';
-  }
 
   const computed = window.getComputedStyle(element);
   if (computed.position === 'static') {
@@ -477,6 +527,7 @@ if (typeof window !== 'undefined') {
   window.AntiSlopUtils = {
     debounce,
     throttle,
+    runWhenIdle,
     hideElement,
     showElement,
     fadeElement,
@@ -499,6 +550,7 @@ if (typeof window !== 'undefined') {
     incrementMediaWarningCounter,
     showBlockedNotification,
     createBlockNotification,
-    createGlobalSiteIndicator
+    createGlobalSiteIndicator,
+    safeStorage
   };
 }

@@ -158,14 +158,11 @@ async function initGoogleFilter() {
     await scanGoogleResults();
 
     // Watch for dynamic content loading (Google loads results dynamically)
-    const observer = createDebouncedObserver(async () => {
+    const { observer, start } = createDebouncedObserver(async () => {
       await scanGoogleResults();
     }, 500);
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    start(document.body);
 
     log('Google', 'MutationObserver active');
   } catch (error) {

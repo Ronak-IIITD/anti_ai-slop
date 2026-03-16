@@ -77,9 +77,9 @@
     setTimeout(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 4000);
     
     // Keep observing
-    const observer = createDebouncedObserver(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 500);
+    const { observer, start } = createDebouncedObserver(() => runFilter(log, detector, createMediaWarningBadge, incrementMediaWarningCounter), 500);
     const target = document.querySelector('[role="main"]') || document.body;
-    observer.observe(target, { childList: true, subtree: true });
+    start(target);
     
     // Handle navigation
     let lastUrl = location.href;
