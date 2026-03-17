@@ -108,11 +108,6 @@ async function loadSettings() {
       googleSensitivitySelect.value = googleSensitivity;
     }
 
-    const hideAIOverview = document.getElementById('hideAIOverview');
-    if (hideAIOverview) {
-      hideAIOverview.checked = settings.google?.hideAIOverview ?? true;
-    }
-
     const filterContentFarms = document.getElementById('filterContentFarms');
     if (filterContentFarms) {
       filterContentFarms.checked = settings.google?.filterContentFarms ?? true;
@@ -599,13 +594,6 @@ function setupEventListeners() {
     });
   }
 
-  const hideAIOverviewToggle = document.getElementById('hideAIOverview');
-  if (hideAIOverviewToggle) {
-    hideAIOverviewToggle.addEventListener('change', (e) => {
-      updateSetting('google', 'hideAIOverview', e.target.checked);
-    });
-  }
-
   const filterContentFarmsToggle = document.getElementById('filterContentFarms');
   if (filterContentFarmsToggle) {
     filterContentFarmsToggle.addEventListener('change', (e) => {
@@ -1007,7 +995,7 @@ function getDefaultSettings() {
     instagram: { enabled: true, sensitivity: 'medium' },
     twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
     reddit: { enabled: true, sensitivity: 'medium' },
-    google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
+    google: { enabled: true, sensitivity: 'medium', filterContentFarms: true },
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
     facebook: { enabled: true, sensitivity: 'medium' },

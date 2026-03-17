@@ -157,7 +157,6 @@ const DEFAULT_SETTINGS = {
   google: {
     enabled: true,
     sensitivity: 'medium',
-    hideAIOverview: true,
     filterContentFarms: true
   },
   linkedin: {

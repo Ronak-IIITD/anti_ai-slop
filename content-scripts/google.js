@@ -7,18 +7,6 @@
 // ============================================================
 
 const GOOGLE_SELECTORS = {
-  // AI Overview / SGE container
-  aiOverview: [
-    '#m-x-content',                    // AI Overview main container
-    'div[data-attrid="SGEAnswer"]',    // SGE answer block
-    'div[jsname="N760b"]',             // AI Overview wrapper
-    'div.kp-wholepage[data-hveid]',    // Knowledge panel with AI content
-    '.M8OgIe',                         // AI Overview card class
-    'div[data-sgrd]',                  // SGE result data attribute
-    'block-component[class*="ai"]',    // AI block component
-    'div[class*="aiOverview"]',        // Generic AI overview class
-    'div[data-ai-overview]'            // Data attribute for AI overview
-  ],
   // Search result items
   searchResult: 'div.g, div[data-sokoban-container]',
   // Result link
@@ -175,74 +163,10 @@ async function initGoogleFilter() {
  */
 async function scanGoogleResults() {
   try {
-    // Handle AI Overview (user can choose to show/hide)
-    await handleAIOverview();
+    // Scan search results for SEO spam, content farms, etc.
+    // AI Overview is intentionally NOT blocked (it's a useful Chrome feature)
   } catch (error) {
     logError('Google', 'Error scanning results', error);
-  }
-}
-
-/**
- * Handle AI Overview sections - hide or collapse them
- */
-async function handleAIOverview() {
-  const hideAIOverview = googleSettings?.google?.hideAIOverview !== false;
-  if (!hideAIOverview) return;
-
-  for (const selector of GOOGLE_SELECTORS.aiOverview) {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach(el => {
-      if (isProcessed(el)) return;
-      markProcessed(el);
-
-      // Check if it actually looks like an AI Overview (not just a knowledge panel)
-      const text = (el.textContent || '').toLowerCase();
-      const isAIContent = text.includes('ai overview') ||
-                          text.includes('generative') ||
-                          el.querySelector('[data-sgrd]') ||
-                          el.querySelector('[data-attrid*="SGE"]');
-
-      if (isAIContent || GOOGLE_SELECTORS.aiOverview.indexOf(selector) <= 3) {
-        _collapseAIOverview(el);
-        googleBlockedCount++;
-        log('Google', 'AI Overview collapsed');
-      }
-    });
-  }
-}
-
-/**
- * Collapse AI Overview with a toggle to expand
- */
-function _collapseAIOverview(element) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'anti-slop-ai-overview-collapsed';
-  wrapper.innerHTML = `
-    <div class="anti-slop-ai-overview-header">
-      <span class="anti-slop-ai-overview-icon">&#x1F916;</span>
-      <span class="anti-slop-ai-overview-label">AI Overview hidden by Anti-Slop</span>
-      <button class="anti-slop-ai-overview-toggle" type="button">Show</button>
-    </div>
-  `;
-
-  const parent = element.parentNode;
-  if (parent) {
-    parent.insertBefore(wrapper, element);
-    element.style.display = 'none';
-    element.classList.add('anti-slop-hidden');
-
-    const toggleBtn = wrapper.querySelector('.anti-slop-ai-overview-toggle');
-    toggleBtn.addEventListener('click', () => {
-      if (element.style.display === 'none') {
-        element.style.display = '';
-        element.classList.remove('anti-slop-hidden');
-        toggleBtn.textContent = 'Hide';
-      } else {
-        element.style.display = 'none';
-        element.classList.add('anti-slop-hidden');
-        toggleBtn.textContent = 'Show';
-      }
-    });
   }
 }
 

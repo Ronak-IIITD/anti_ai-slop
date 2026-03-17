@@ -17,7 +17,7 @@
 | Instagram | Active | Reels, low-quality posts |
 | Twitter/X | Active | Brainrot tweets, short posts, clickbait |
 | Reddit | Active | Brainrot posts, upvote bait, low-effort content |
-| Google Search | Active | AI Overviews, SEO spam, content farms |
+| Google Search | Active | SEO spam, content farms, brainrot results |
 | LinkedIn | Active | Motivational spam, AI posts, engagement bait |
 | TikTok | Untested | Full feed blocking (India ban) |
 | News Sites | Active | AI-generated article detection |
@@ -32,6 +32,16 @@
 ---
 
 ## Changelog
+
+### 2026-03-17 - Remove AI Overview Blocking on Google Search
+- **fix**: Stop blocking Google's AI Overview (Gemini) on search results pages
+  - Removed AI Overview selectors and collapse/hide logic from `content-scripts/google.js`
+  - Removed `handleAIOverview()` and `_collapseAIOverview()` functions
+  - Removed "Hide AI Overviews" checkbox from popup UI (`popup/popup.html`, `popup/popup.js`)
+  - Removed `hideAIOverview` setting from default settings (`utils/storage.js`, `popup/popup.js`)
+  - Cleaned up AI Overview CSS styles from `content-scripts/google.css`
+  - Google Search content script still filters SEO spam, content farms, and brainrot results
+  - AI Overview is a useful Chrome/Gemini feature and should not be blocked by default
 
 ### 2026-03-01 - AI Media Detection v1
 - **feat**: Add privacy-first AI media detection utility (`utils/media-detector.js`)
