@@ -25,6 +25,9 @@ Thumbs.db
 .classpath
 .settings/
 
+# Environment files
+.env
+
 # Temporary files
 *.log
 *.tmp
