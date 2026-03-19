@@ -336,4 +336,22 @@
     init();
   }
 
+  // Listen for settings changes
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'sync' && changes.antiSlop_settings) {
+      const newSettings = changes.antiSlop_settings.newValue;
+      const wasEnabled = isEnabled;
+
+      isEnabled = newSettings?.linkedin?.enabled ?? false;
+      sensitivity = newSettings?.linkedin?.sensitivity || 'medium';
+
+      if (wasEnabled !== isEnabled) {
+        log(PLATFORM, `Settings changed: ${isEnabled ? 'enabled' : 'disabled'}`);
+        location.reload();
+      } else if (isEnabled) {
+        runFilter(log, detector, sensitivity);
+      }
+    }
+  });
+
 })();

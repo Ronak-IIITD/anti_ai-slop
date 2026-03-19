@@ -3,6 +3,7 @@
 
 let _lastBlockedNotificationAt = 0;
 const BLOCK_NOTIFICATION_COOLDOWN_MS = 1800;
+let _showPlaceholders = true;
 
 // Debounce function for performance optimization
 function debounce(func, wait) {
@@ -44,7 +45,27 @@ function hideElement(element, reason = 'slop') {
 
   element.classList.add('anti-slop-hidden');
   element.setAttribute('data-anti-slop', reason);
-  element.style.display = 'none';
+
+  if (_showPlaceholders) {
+    element.style.display = 'none';
+    const placeholder = document.createElement('div');
+    placeholder.className = 'anti-slop-blocked-placeholder';
+    placeholder.setAttribute('data-anti-slop-placeholder', 'true');
+    placeholder.innerHTML = `
+      <span class="anti-slop-reason">Blocked: ${reason.replace(/-/g, ' ')}</span>
+      <button class="anti-slop-show-btn">Show Content</button>
+    `;
+    placeholder.querySelector('.anti-slop-show-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      element.classList.remove('anti-slop-hidden');
+      element.removeAttribute('data-anti-slop');
+      element.style.display = '';
+      placeholder.remove();
+    });
+    element.parentNode?.insertBefore(placeholder, element);
+  } else {
+    element.style.display = 'none';
+  }
 
   showBlockedNotification();
 }
@@ -61,12 +82,24 @@ function showElement(element) {
 // Fade element (reduce visibility instead of hiding)
 // Used for replies/comments where 90% is AI but 15% is useful
 function fadeElement(element, reason = 'ai-faded') {
-  hideElement(element, reason);
+  if (!element || element.classList.contains('anti-slop-faded')) return;
+
+  element.classList.add('anti-slop-faded');
+  element.setAttribute('data-anti-slop', reason);
+  element.style.opacity = '0.3';
+  element.style.filter = 'grayscale(80%)';
+  element.style.transition = 'opacity 0.3s ease, filter 0.3s ease';
 }
 
 // Unfade element (restore visibility)
 function unfadeElement(element) {
-  showElement(element);
+  if (!element) return;
+
+  element.classList.remove('anti-slop-faded');
+  element.removeAttribute('data-anti-slop');
+  element.style.opacity = '';
+  element.style.filter = '';
+  element.style.transition = '';
 }
 
 function showBlockedNotification(message = 'Spam/AI-generated content has been blocked') {
@@ -146,8 +179,12 @@ const safeStorage = {
           reddit: { enabled: true, sensitivity: 'medium' },
           google: { enabled: true, sensitivity: 'medium' },
           linkedin: { enabled: true, sensitivity: 'medium' },
+          tiktok: { enabled: true, sensitivity: 'medium' },
+          facebook: { enabled: true, sensitivity: 'medium' },
+          bluesky: { enabled: true, sensitivity: 'medium' },
+          threads: { enabled: true, sensitivity: 'medium' },
           aiDetector: { enabled: true, mode: 'warn', threshold: 65 },
-          ui: { showPlaceholders: true }
+          ui: { showPlaceholders: true, detectAIMedia: true, mediaSensitivity: 'medium' }
         };
       }
       return this._fallbackSettings;
@@ -278,6 +315,21 @@ async function isPlatformEnabled(platform) {
   } catch (error) {
     logError(platform, 'Failed to check if enabled', error);
     return false;
+  }
+}
+
+// Set placeholder mode (called by platform scripts during init)
+function setPlaceholderMode(enabled) {
+  _showPlaceholders = !!enabled;
+}
+
+// Load placeholder setting from storage (call once during init)
+async function loadPlaceholderSetting() {
+  try {
+    const settings = await storageManager.getSettings();
+    _showPlaceholders = settings.ui?.showPlaceholders !== false;
+  } catch (error) {
+    _showPlaceholders = true;
   }
 }
 
@@ -551,6 +603,11 @@ if (typeof window !== 'undefined') {
     showBlockedNotification,
     createBlockNotification,
     createGlobalSiteIndicator,
-    safeStorage
+    safeStorage,
+    setPlaceholderMode,
+    loadPlaceholderSetting
   };
+
+  // Auto-load placeholder setting so hideElement can use it immediately
+  loadPlaceholderSetting();
 }

@@ -484,7 +484,7 @@ async function exportSettings() {
     const whitelist = await chrome.storage.sync.get(['antiSlop_whitelist']);
     
     const exportData = {
-      version: '1.5.0',
+      version: chrome.runtime.getManifest().version,
       exportedAt: new Date().toISOString(),
       settings: settings.antiSlop_settings,
       stats: stats.antiSlop_stats,

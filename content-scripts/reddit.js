@@ -10,6 +10,7 @@
   
   const PLATFORM = 'Reddit';
   let blockedCount = 0;
+  let fadedCount = 0;
   let isEnabled = false;
   let sensitivity = 'medium';
   const hasDetector = !!detector;

@@ -5,7 +5,7 @@
 (async function () {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge, incrementMediaWarningCounter } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge, incrementMediaWarningCounter, createDebouncedObserver } = window.AntiSlopUtils;
   const mediaDetector = window.aiMediaDetector;
 
   const PLATFORM = 'Facebook';
@@ -192,10 +192,10 @@
 
     for (const selector of SELECTORS.feedPosts) {
       for (const post of document.querySelectorAll(selector)) {
-        if (isProcessed(post)) return;
+        if (isProcessed(post)) continue;
 
         const text = getPostText(post);
-        if (!text || text.length < threshold.minChars) return;
+        if (!text || text.length < threshold.minChars) continue;
 
         const score = analyzeBrainrotScore(text);
 
@@ -330,11 +330,8 @@
   }
 
   function setupObserver() {
-    const observer = new MutationObserver(debounce(filterContent, 1000));
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    const { start } = createDebouncedObserver(filterContent, 300);
+    start(document.body);
   }
 
   function notifyBackground(status, count = 0) {
@@ -344,15 +341,6 @@
         data: { platform: 'facebook', status, count }
       });
     } catch (err) {}
-  }
-
-  // Debounce helper
-  function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
   }
 
   // ============================================================

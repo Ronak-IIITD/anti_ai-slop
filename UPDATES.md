@@ -33,6 +33,44 @@
 
 ## Changelog
 
+### 2026-03-20 - Codebase Quality Audit & Bug Fixes
+- **fix**: Fix `return` vs `continue` bug in inner loops of `bluesky.js`, `threads.js`, `facebook.js`
+  - Inner `for` loops used `return` instead of `continue`, causing entire filter function to exit on first already-processed post
+  - Most content was going unfiltered due to this bug
+- **fix**: Fix undefined `fadedCount` variable in `reddit.js`
+  - Variable was referenced in observer callbacks but never declared, causing `ReferenceError`
+- **fix**: Implement `scanGoogleResults()` in `google.js`
+  - Function body was empty - Google Search filtering was completely non-functional
+  - Now properly scans results using `analyzeSearchResult()` and hides filtered items
+- **fix**: Implement actual `fadeElement` behavior in `common.js`
+  - Was identical to `hideElement` (just hiding with `display: none`)
+  - Now reduces opacity to 0.3 and applies grayscale filter for reduced visibility
+- **fix**: Fix duplicate variable assignments in `bluesky.js`
+  - `detectAIMedia`, `mediaSensitivity`, `mediaOcr` were each assigned twice (copy-paste error)
+- **fix**: Wrap `google.js` in IIFE to prevent global variable leakage
+- **fix**: Remove YouTube-specific selectors (`ytd-rich-item-renderer`, `ytd-video-renderer`) from `twitter.js`
+- **fix**: Use `chrome.runtime.getManifest().version` instead of hardcoded `'1.5.0'` in popup export
+- **fix**: Fix `setBadgeBackgroundColor` with `tabId` parameter in `background.js` (not supported in MV3)
+- **fix**: Add settings change listener to `linkedin.js` (was the only platform without one)
+- **fix**: Remove overly broad brainrot keywords causing false positives
+  - Removed: colors (`purple`, `pink`, `blue`), common words (`culture`, `core`, `aesthetic`, `influencer`, `era`, `bare`, `op`, `set`, `crib`, `whip`, `drops`, `bands`, `rack`, `guap`, `mula`, `scrub`, `bruh`, `simp`, `thirsty`, `cancel`, `wake up`, `agenda`, `depopulation`)
+  - Removed: artist names (`Kendrick`, `drake`), common phrases (`no way`, `winning`, `cap`, `yap`, `baka`, `Stan`, `underground`)
+  - Removed: legitimate finance terms (`crypto`, `bitcoin`, `ethereum`, `solana`, `jpeg`)
+  - Removed from weak tier: `real`, `bro`, `fr` (too common as English words)
+  - Removed duplicate: `core` appeared twice, `cancelled` appeared twice, `red pill` appeared twice
+- **feat**: Implement placeholder mode for blocked content
+  - `hideElement` now creates a `.anti-slop-blocked-placeholder` with "Show Content" button when `showPlaceholders` is enabled
+  - Added `setPlaceholderMode()` and `loadPlaceholderSetting()` to `common.js`
+- **refactor**: Replace local `debounce` implementations in `bluesky.js`, `threads.js`, `facebook.js` with shared `createDebouncedObserver` from `common.js`
+  - Also reduced debounce delay from 1000ms to 300ms (recommended value)
+- **refactor**: Persist `activeSessions` in `chrome.storage.local` in `background.js`
+  - Service worker can terminate at any time; in-memory session data was being lost
+  - Now restores sessions on startup
+- **refactor**: Convert all callback-wrapped Promises in `storage.js` to native `chrome.storage` Promise API
+  - `getSettings()`, `getStats()`, `getWhitelist()`, `addToWhitelist()`, `removeFromWhitelist()`, `addRecentBlock()`, `getRecentBlocks()`, `saveSettings()`, `saveStats()` all modernized
+- **refactor**: Update common.js fallback settings to include all platforms (was missing `facebook`, `bluesky`, `threads`, `tiktok`)
+- **chore**: Update `install-check.sh` with all missing files (`google.js/css`, `linkedin.js/css`, `facebook.js/css`, `bluesky.js/css`, `threads.js/css`, `media-detector.js`, `utility-scorer.js`)
+
 ### 2026-03-17 - Remove AI Overview Blocking on Google Search
 - **fix**: Stop blocking Google's AI Overview (Gemini) on search results pages
   - Removed AI Overview selectors and collapse/hide logic from `content-scripts/google.js`

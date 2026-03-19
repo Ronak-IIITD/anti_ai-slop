@@ -1,6 +1,11 @@
 // Google Search Content Script for Anti-Slop Extension
 // Filters AI Overviews, SEO spam results, and content farm domains
-// Updated as of 2026-02-17
+// Updated as of 2026-03-19
+
+(async function() {
+'use strict';
+
+const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, isPlatformEnabled } = window.AntiSlopUtils;
 
 // ============================================================
 // SELECTORS (Updated as of 2026-02-17)
@@ -163,8 +168,28 @@ async function initGoogleFilter() {
  */
 async function scanGoogleResults() {
   try {
-    // Scan search results for SEO spam, content farms, etc.
-    // AI Overview is intentionally NOT blocked (it's a useful Chrome feature)
+    const results = document.querySelectorAll(GOOGLE_SELECTORS.searchResult);
+    let filtered = 0;
+
+    for (const result of results) {
+      if (isProcessed(result)) continue;
+
+      const analysis = analyzeSearchResult(result);
+
+      if (analysis.shouldFilter) {
+        hideElement(result, `google-${analysis.reason}-${analysis.score}`);
+        filtered++;
+      }
+
+      markProcessed(result);
+    }
+
+    if (filtered > 0) {
+      log('Google', `Filtered ${filtered} results`);
+      try {
+        await storageManager.incrementBlocked('google', filtered);
+      } catch (err) {}
+    }
   } catch (error) {
     logError('Google', 'Error scanning results', error);
   }
@@ -228,8 +253,8 @@ function analyzeSearchResult(result) {
   }
 
   // 4. Brainrot in search results
-  if (typeof brainrotDetector !== 'undefined') {
-    const brainrotScore = brainrotDetector.analyzeSlopScore({
+  if (typeof window.brainrotDetector !== 'undefined') {
+    const brainrotScore = window.brainrotDetector.analyzeSlopScore({
       title: title,
       description: snippet
     });
@@ -238,7 +263,7 @@ function analyzeSearchResult(result) {
       reasons.push('brainrot-content');
     }
 
-    const customSignal = brainrotDetector.evaluateCustomRules(combined);
+    const customSignal = window.brainrotDetector.evaluateCustomRules(combined);
     if (customSignal.scoreDelta !== 0) {
       score += customSignal.scoreDelta;
       if (customSignal.blockMatches.length > 0) {
@@ -309,3 +334,5 @@ if (document.readyState === 'loading') {
 } else {
   initGoogleFilter();
 }
+
+})();

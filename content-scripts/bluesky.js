@@ -5,7 +5,7 @@
 (async function () {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge, incrementMediaWarningCounter } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, showBlockedNotification, createMediaWarningBadge, incrementMediaWarningCounter, createDebouncedObserver } = window.AntiSlopUtils;
   const mediaDetector = window.aiMediaDetector;
 
   const PLATFORM = 'Bluesky';
@@ -69,9 +69,6 @@
     detectAIMedia = settings.ui?.detectAIMedia !== false;
     mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
     mediaOcr = settings.ui?.mediaOcr === true;
-    detectAIMedia = settings.ui?.detectAIMedia !== false;
-    mediaSensitivity = settings.ui?.mediaSensitivity || 'medium';
-    mediaOcr = settings.ui?.mediaOcr === true;
 
     log(PLATFORM, `Initializing (sensitivity: ${sensitivity})`);
 
@@ -119,16 +116,16 @@
 
     for (const selector of SELECTORS.posts) {
       for (const post of document.querySelectorAll(selector)) {
-        if (isProcessed(post)) return;
+        if (isProcessed(post)) continue;
 
         // Skip own posts or verified accounts
         if (post.querySelector('[data-testid="followButton"]') ||
             post.querySelector('[aria-label="Verified"]')) {
-          return;
+          continue;
         }
 
         const text = getPostText(post);
-        if (!text || text.length < threshold.minChars) return;
+        if (!text || text.length < threshold.minChars) continue;
 
         const score = analyzeBrainrotScore(text);
 
@@ -267,11 +264,8 @@
   }
 
   function setupObserver() {
-    const observer = new MutationObserver(debounce(filterContent, 1000));
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    const { start } = createDebouncedObserver(filterContent, 300);
+    start(document.body);
   }
 
   function notifyBackground(status, count = 0) {
@@ -281,14 +275,6 @@
         data: { platform: 'bluesky', status, count }
       });
     } catch (err) {}
-  }
-
-  function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
   }
 
   // ============================================================

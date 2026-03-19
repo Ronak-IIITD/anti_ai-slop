@@ -196,9 +196,7 @@
       'article[role="article"]',
       'div[data-testid="tweet"]',
       '[data-testid="tweet"]',
-      'div[role="article"]',
-      'ytd-rich-item-renderer',
-      'ytd-video-renderer'
+      'div[role="article"]'
     ];
     
     selectors.forEach(sel => {

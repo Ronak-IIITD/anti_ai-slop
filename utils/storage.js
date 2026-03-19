@@ -236,93 +236,88 @@ class StorageManager {
       return this.cache.settings;
     }
 
-    return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.SETTINGS], (result) => {
-        const settings = result[STORAGE_KEYS.SETTINGS] || DEFAULT_SETTINGS;
-        // Ensure new fields exist (migration for existing users)
-        if (!settings.aiDetector?.mode) {
-          settings.aiDetector = settings.aiDetector || {};
-          settings.aiDetector.mode = 'warn';
-        }
-        // Migrate old 'block' default to 'warn' for better UX (v4 upgrade)
-        if (settings.aiDetector.mode === 'block' && !settings.aiDetector._v4Migrated) {
-          settings.aiDetector.mode = 'warn';
-          settings.aiDetector._v4Migrated = true;
-        }
-        if (!settings.customRules) {
-          settings.customRules = {
-            enabled: true,
-            blockKeywords: [],
-            allowKeywords: []
-          };
-        }
-        if (!settings.facebook) {
-          settings.facebook = { enabled: true, sensitivity: 'medium' };
-        }
-        if (!settings.bluesky) {
-          settings.bluesky = { enabled: true, sensitivity: 'medium' };
-        }
-        if (!settings.threads) {
-          settings.threads = { enabled: true, sensitivity: 'medium' };
-        }
-        if (!settings.ui) {
-          settings.ui = { showPlaceholders: true, focusMode: false, focusModePrevious: null };
-        }
-        if (typeof settings.ui.focusMode !== 'boolean') {
-          settings.ui.focusMode = false;
-        }
-        if (typeof settings.ui.focusModePrevious === 'undefined') {
-          settings.ui.focusModePrevious = null;
-        }
-        if (typeof settings.ui.detectAIMedia !== 'boolean') {
-          settings.ui.detectAIMedia = true;
-        }
-        if (!settings.ui.mediaSensitivity) {
-          settings.ui.mediaSensitivity = 'medium';
-        }
-        if (typeof settings.ui.mediaOcr !== 'boolean') {
-          settings.ui.mediaOcr = false;
-        }
-        if (typeof settings.customRules.enabled !== 'boolean') {
-          settings.customRules.enabled = true;
-        }
-        if (!Array.isArray(settings.customRules.blockKeywords)) {
-          settings.customRules.blockKeywords = [];
-        }
-        if (!Array.isArray(settings.customRules.allowKeywords)) {
-          settings.customRules.allowKeywords = [];
-        }
-        settings.customRules.blockKeywords = settings.customRules.blockKeywords
-          .map(k => String(k).trim().toLowerCase())
-          .filter(k => k.length >= 3)
-          .slice(0, 100);
-        settings.customRules.allowKeywords = settings.customRules.allowKeywords
-          .map(k => String(k).trim().toLowerCase())
-          .filter(k => k.length >= 3)
-          .slice(0, 100);
-        if (!settings.ui) {
-          settings.ui = { showPlaceholders: true };
-        } else if (typeof settings.ui.showPlaceholders !== 'boolean') {
-          settings.ui.showPlaceholders = true;
-        }
-        if (settings.twitter) {
-          if (!settings.twitter.sensitivity) {
-            settings.twitter.sensitivity = 'medium';
-          }
-          if (typeof settings.twitter.blockBrainrot !== 'boolean') {
-            settings.twitter.blockBrainrot = true;
-          }
-          if (typeof settings.twitter.blockClickbait !== 'boolean') {
-            settings.twitter.blockClickbait = true;
-          }
-          if (typeof settings.twitter.minChars !== 'undefined') {
-            delete settings.twitter.minChars;
-          }
-        }
-        this.cache.settings = settings;
-        resolve(settings);
-      });
-    });
+    const result = await chrome.storage.sync.get([STORAGE_KEYS.SETTINGS]);
+    const settings = result[STORAGE_KEYS.SETTINGS] || DEFAULT_SETTINGS;
+    // Ensure new fields exist (migration for existing users)
+    if (!settings.aiDetector?.mode) {
+      settings.aiDetector = settings.aiDetector || {};
+      settings.aiDetector.mode = 'warn';
+    }
+    // Migrate old 'block' default to 'warn' for better UX (v4 upgrade)
+    if (settings.aiDetector.mode === 'block' && !settings.aiDetector._v4Migrated) {
+      settings.aiDetector.mode = 'warn';
+      settings.aiDetector._v4Migrated = true;
+    }
+    if (!settings.customRules) {
+      settings.customRules = {
+        enabled: true,
+        blockKeywords: [],
+        allowKeywords: []
+      };
+    }
+    if (!settings.facebook) {
+      settings.facebook = { enabled: true, sensitivity: 'medium' };
+    }
+    if (!settings.bluesky) {
+      settings.bluesky = { enabled: true, sensitivity: 'medium' };
+    }
+    if (!settings.threads) {
+      settings.threads = { enabled: true, sensitivity: 'medium' };
+    }
+    if (!settings.ui) {
+      settings.ui = { showPlaceholders: true, focusMode: false, focusModePrevious: null };
+    }
+    if (typeof settings.ui.focusMode !== 'boolean') {
+      settings.ui.focusMode = false;
+    }
+    if (typeof settings.ui.focusModePrevious === 'undefined') {
+      settings.ui.focusModePrevious = null;
+    }
+    if (typeof settings.ui.detectAIMedia !== 'boolean') {
+      settings.ui.detectAIMedia = true;
+    }
+    if (!settings.ui.mediaSensitivity) {
+      settings.ui.mediaSensitivity = 'medium';
+    }
+    if (typeof settings.ui.mediaOcr !== 'boolean') {
+      settings.ui.mediaOcr = false;
+    }
+    if (typeof settings.customRules.enabled !== 'boolean') {
+      settings.customRules.enabled = true;
+    }
+    if (!Array.isArray(settings.customRules.blockKeywords)) {
+      settings.customRules.blockKeywords = [];
+    }
+    if (!Array.isArray(settings.customRules.allowKeywords)) {
+      settings.customRules.allowKeywords = [];
+    }
+    settings.customRules.blockKeywords = settings.customRules.blockKeywords
+      .map(k => String(k).trim().toLowerCase())
+      .filter(k => k.length >= 3)
+      .slice(0, 100);
+    settings.customRules.allowKeywords = settings.customRules.allowKeywords
+      .map(k => String(k).trim().toLowerCase())
+      .filter(k => k.length >= 3)
+      .slice(0, 100);
+    if (typeof settings.ui.showPlaceholders !== 'boolean') {
+      settings.ui.showPlaceholders = true;
+    }
+    if (settings.twitter) {
+      if (!settings.twitter.sensitivity) {
+        settings.twitter.sensitivity = 'medium';
+      }
+      if (typeof settings.twitter.blockBrainrot !== 'boolean') {
+        settings.twitter.blockBrainrot = true;
+      }
+      if (typeof settings.twitter.blockClickbait !== 'boolean') {
+        settings.twitter.blockClickbait = true;
+      }
+      if (typeof settings.twitter.minChars !== 'undefined') {
+        delete settings.twitter.minChars;
+      }
+    }
+    this.cache.settings = settings;
+    return settings;
   }
 
   // Get statistics (with caching)
@@ -331,13 +326,10 @@ class StorageManager {
       return this.cache.stats;
     }
 
-    return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.STATS], (result) => {
-        const stats = result[STORAGE_KEYS.STATS] || DEFAULT_STATS;
-        this.cache.stats = stats;
-        resolve(stats);
-      });
-    });
+    const result = await chrome.storage.sync.get([STORAGE_KEYS.STATS]);
+    const stats = result[STORAGE_KEYS.STATS] || DEFAULT_STATS;
+    this.cache.stats = stats;
+    return stats;
   }
 
   // Get whitelist (default + user-added)
@@ -346,34 +338,26 @@ class StorageManager {
       return this.cache.whitelist;
     }
 
-    return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.WHITELIST], (result) => {
-        const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
-        // Merge default + user whitelist, deduplicate
-        const combined = [...new Set([...DEFAULT_WHITELIST, ...userWhitelist])];
-        this.cache.whitelist = combined;
-        resolve(combined);
-      });
-    });
+    const result = await chrome.storage.sync.get([STORAGE_KEYS.WHITELIST]);
+    const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
+    // Merge default + user whitelist, deduplicate
+    const combined = [...new Set([...DEFAULT_WHITELIST, ...userWhitelist])];
+    this.cache.whitelist = combined;
+    return combined;
   }
 
   // Add domain to user whitelist
   async addToWhitelist(domain) {
     const cleaned = domain.replace(/^www\./, '').toLowerCase();
-    return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.WHITELIST], (result) => {
-        const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
-        if (!userWhitelist.includes(cleaned)) {
-          userWhitelist.push(cleaned);
-          chrome.storage.sync.set({ [STORAGE_KEYS.WHITELIST]: userWhitelist }, () => {
-            this.cache.whitelist = null; // Invalidate cache
-            resolve(true);
-          });
-        } else {
-          resolve(false); // Already exists
-        }
-      });
-    });
+    const result = await chrome.storage.sync.get([STORAGE_KEYS.WHITELIST]);
+    const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
+    if (!userWhitelist.includes(cleaned)) {
+      userWhitelist.push(cleaned);
+      await chrome.storage.sync.set({ [STORAGE_KEYS.WHITELIST]: userWhitelist });
+      this.cache.whitelist = null; // Invalidate cache
+      return true;
+    }
+    return false; // Already exists
   }
 
   // Remove domain from user whitelist
@@ -383,16 +367,12 @@ class StorageManager {
     if (DEFAULT_WHITELIST.includes(cleaned)) {
       return false;
     }
-    return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.WHITELIST], (result) => {
-        const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
-        const filtered = userWhitelist.filter(d => d !== cleaned);
-        chrome.storage.sync.set({ [STORAGE_KEYS.WHITELIST]: filtered }, () => {
-          this.cache.whitelist = null;
-          resolve(true);
-        });
-      });
-    });
+    const result = await chrome.storage.sync.get([STORAGE_KEYS.WHITELIST]);
+    const userWhitelist = result[STORAGE_KEYS.WHITELIST] || [];
+    const filtered = userWhitelist.filter(d => d !== cleaned);
+    await chrome.storage.sync.set({ [STORAGE_KEYS.WHITELIST]: filtered });
+    this.cache.whitelist = null;
+    return true;
   }
 
   // Check if domain is whitelisted
@@ -407,51 +387,38 @@ class StorageManager {
 
   // Save recent block for history
   async addRecentBlock(entry) {
-    return new Promise((resolve) => {
-      chrome.storage.local.get([STORAGE_KEYS.RECENT_BLOCKS], (result) => {
-        const blocks = result[STORAGE_KEYS.RECENT_BLOCKS] || [];
-        blocks.unshift({
-          url: entry.url,
-          title: entry.title,
-          score: entry.score,
-          timestamp: new Date().toISOString()
-        });
-        // Keep only last 20 blocks
-        const trimmed = blocks.slice(0, 20);
-        chrome.storage.local.set({ [STORAGE_KEYS.RECENT_BLOCKS]: trimmed }, () => {
-          resolve(trimmed);
-        });
-      });
+    const result = await chrome.storage.local.get([STORAGE_KEYS.RECENT_BLOCKS]);
+    const blocks = result[STORAGE_KEYS.RECENT_BLOCKS] || [];
+    blocks.unshift({
+      url: entry.url,
+      title: entry.title,
+      score: entry.score,
+      timestamp: new Date().toISOString()
     });
+    // Keep only last 20 blocks
+    const trimmed = blocks.slice(0, 20);
+    await chrome.storage.local.set({ [STORAGE_KEYS.RECENT_BLOCKS]: trimmed });
+    return trimmed;
   }
 
   // Get recent blocks
   async getRecentBlocks() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get([STORAGE_KEYS.RECENT_BLOCKS], (result) => {
-        resolve(result[STORAGE_KEYS.RECENT_BLOCKS] || []);
-      });
-    });
+    const result = await chrome.storage.local.get([STORAGE_KEYS.RECENT_BLOCKS]);
+    return result[STORAGE_KEYS.RECENT_BLOCKS] || [];
   }
 
   // Save settings
   async saveSettings(settings) {
     this.cache.settings = settings;
-    return new Promise((resolve) => {
-      chrome.storage.sync.set({ [STORAGE_KEYS.SETTINGS]: settings }, () => {
-        resolve(settings);
-      });
-    });
+    await chrome.storage.sync.set({ [STORAGE_KEYS.SETTINGS]: settings });
+    return settings;
   }
 
   // Save statistics
   async saveStats(stats) {
     this.cache.stats = stats;
-    return new Promise((resolve) => {
-      chrome.storage.sync.set({ [STORAGE_KEYS.STATS]: stats }, () => {
-        resolve(stats);
-      });
-    });
+    await chrome.storage.sync.set({ [STORAGE_KEYS.STATS]: stats });
+    return stats;
   }
 
   // Increment blocked counter for a platform

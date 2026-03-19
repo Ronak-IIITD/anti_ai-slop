@@ -5,7 +5,7 @@
 (async function () {
   'use strict';
 
-  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge, incrementMediaWarningCounter } = window.AntiSlopUtils;
+  const { log, logError, hideElement, isProcessed, markProcessed, incrementBlockCounter, isPlatformEnabled, createMediaWarningBadge, incrementMediaWarningCounter, createDebouncedObserver } = window.AntiSlopUtils;
   const mediaDetector = window.aiMediaDetector;
 
   const PLATFORM = 'Threads';
@@ -94,10 +94,10 @@
 
     for (const selector of SELECTORS.posts) {
       for (const post of document.querySelectorAll(selector)) {
-        if (isProcessed(post)) return;
+        if (isProcessed(post)) continue;
 
         const text = getPostText(post);
-        if (!text || text.length < threshold.minChars) return;
+        if (!text || text.length < threshold.minChars) continue;
 
         const score = analyzeBrainrotScore(text);
 
@@ -184,8 +184,8 @@
   }
 
   function setupObserver() {
-    const observer = new MutationObserver(debounce(filterContent, 1000));
-    observer.observe(document.body, { childList: true, subtree: true });
+    const { start } = createDebouncedObserver(filterContent, 300);
+    start(document.body);
   }
 
   function notifyBackground(status, count = 0) {
@@ -195,14 +195,6 @@
         data: { platform: 'threads', status, count }
       });
     } catch (err) {}
-  }
-
-  function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
   }
 
   init();

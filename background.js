@@ -196,7 +196,7 @@ function updateTabIconStatus(tabId, status) {
   const text = badges[status] || '';
   
   try {
-    chrome.action.setBadgeBackgroundColor({ color, tabId });
+    chrome.action.setBadgeBackgroundColor({ color });
     if (text) {
       chrome.action.setBadgeText({ text, tabId });
     }
@@ -337,6 +337,27 @@ const SESSION_TRACKED_DOMAINS = [
 
 let activeSessions = {}; // { tabId: { domain, startTime, blocked } }
 
+// Persist active sessions to survive service worker restarts
+async function saveActiveSessions() {
+  try {
+    await chrome.storage.local.set({ antiSlop_activeSessions: activeSessions });
+  } catch (err) {}
+}
+
+async function restoreActiveSessions() {
+  try {
+    const result = await chrome.storage.local.get(['antiSlop_activeSessions']);
+    if (result.antiSlop_activeSessions) {
+      activeSessions = result.antiSlop_activeSessions;
+    }
+  } catch (err) {
+    activeSessions = {};
+  }
+}
+
+// Restore sessions on startup
+restoreActiveSessions();
+
 function getDomainFromUrl(url) {
   try {
     const hostname = new URL(url).hostname;
@@ -365,6 +386,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         startTime: Date.now(),
         blocked: 0
       };
+      saveActiveSessions();
       console.log('[Anti-Slop Session] Started tracking:', domain);
     }
   }
@@ -389,6 +411,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
         startTime: Date.now(),
         blocked: activeSessions[activeInfo.tabId]?.blocked || 0
       };
+      saveActiveSessions();
     }
   });
 });
