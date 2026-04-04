@@ -126,7 +126,7 @@ async function loadSettings() {
     document.getElementById('sensitivityValue').textContent =
       sensitivity.charAt(0).toUpperCase() + sensitivity.slice(1);
     
-    const aiMode = settings.aiDetector?.mode || 'block';
+    const aiMode = settings.aiDetector?.mode || 'warn';
     document.getElementById('aiDetectorMode').value = aiMode;
 
     const customRules = settings.customRules || {};
@@ -319,7 +319,20 @@ async function loadCurrentSiteStatus() {
     );
     
     // Check if it's a social media platform handled by dedicated scripts
-    const socialPlatforms = ['youtube.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com', 'reddit.com', 'linkedin.com', 'google.com'];
+    const socialPlatforms = [
+      'youtube.com',
+      'instagram.com',
+      'twitter.com',
+      'x.com',
+      'tiktok.com',
+      'reddit.com',
+      'linkedin.com',
+      'google.com',
+      'facebook.com',
+      'messenger.com',
+      'bsky.app',
+      'threads.net'
+    ];
     const isSocial = socialPlatforms.some(p => domain.includes(p));
 
     const dot = document.getElementById('siteStatusDot');
@@ -378,23 +391,31 @@ async function loadWhitelist() {
       container.innerHTML = '<p class="whitelist-empty">No custom sites added. Default whitelist is always active.</p>';
       return;
     }
-    
-    container.innerHTML = userWhitelist.map(domain => `
-      <div class="whitelist-item">
-        <span class="whitelist-domain">${domain}</span>
-        <button class="whitelist-remove" data-domain="${domain}" title="Remove">&times;</button>
-      </div>
-    `).join('');
-    
-    // Add remove handlers
-    container.querySelectorAll('.whitelist-remove').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const domain = btn.getAttribute('data-domain');
+
+    container.replaceChildren();
+
+    userWhitelist.forEach(domain => {
+      const item = document.createElement('div');
+      item.className = 'whitelist-item';
+
+      const domainLabel = document.createElement('span');
+      domainLabel.className = 'whitelist-domain';
+      domainLabel.textContent = domain;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'whitelist-remove';
+      removeBtn.title = 'Remove';
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', async () => {
         await _removeFromWhitelist(domain);
         await loadWhitelist();
         await loadCurrentSiteStatus();
         showToast(`Removed ${domain}`);
       });
+
+      item.appendChild(domainLabel);
+      item.appendChild(removeBtn);
+      container.appendChild(item);
     });
     
     console.log('[Anti-Slop Popup] Whitelist loaded');
@@ -1011,6 +1032,7 @@ function getDefaultStats() {
   return {
     totalBlocked: 0,
     estimatedTimeSaved: 0,
+    aiMediaWarnings: 0,
     blockedByPlatform: {
       youtube: 0,
       twitter: 0,

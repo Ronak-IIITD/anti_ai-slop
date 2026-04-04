@@ -90,6 +90,8 @@
     
     const threshold = getThreshold(sensitivity);
     const posts = getAllPosts();
+    let batchBlockedCount = 0;
+    let batchFadedCount = 0;
     
     posts.forEach(post => {
       if (isProcessed(post)) return;
@@ -150,9 +152,11 @@
         if (isComment) {
           fadeElement(post, reasons.join(', '));
           fadedCount++;
+          batchFadedCount++;
         } else {
           hideElement(post, reasons.join(', '));
           blockedCount++;
+          batchBlockedCount++;
         }
         
         log(PLATFORM, `${isComment ? 'Faded' : 'Blocked'} score:${score} - "${text.substring(0, 30)}..."`);
@@ -161,8 +165,8 @@
       }
     });
     
-    if (blockedCount + fadedCount > 0) {
-      incrementBlockCounter('linkedin', blockedCount + fadedCount);
+    if (batchBlockedCount + batchFadedCount > 0) {
+      incrementBlockCounter('linkedin', batchBlockedCount + batchFadedCount);
     }
   }
 

@@ -24,14 +24,22 @@ async function initializeDefaults() {
     instagram: { enabled: true, sensitivity: 'medium' },
     twitter: { enabled: true, sensitivity: 'medium', blockBrainrot: true, blockClickbait: true },
     reddit: { enabled: true, sensitivity: 'medium' },
-    google: { enabled: true, sensitivity: 'medium', hideAIOverview: true, filterContentFarms: true },
+    google: { enabled: true, sensitivity: 'medium', filterContentFarms: true },
     linkedin: { enabled: true, sensitivity: 'medium' },
     tiktok: { enabled: true, blockFeed: true },
     facebook: { enabled: true, sensitivity: 'medium' },
     bluesky: { enabled: true, sensitivity: 'medium' },
     threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
-    ui: { showPlaceholders: true, focusMode: false, detectAIMedia: true, mediaSensitivity: 'medium' }
+    customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
+    ui: {
+      showPlaceholders: true,
+      focusMode: false,
+      focusModePrevious: null,
+      detectAIMedia: true,
+      mediaSensitivity: 'medium',
+      mediaOcr: false
+    }
   };
 
   const DEFAULT_STATS = {
@@ -197,9 +205,7 @@ function updateTabIconStatus(tabId, status) {
   
   try {
     chrome.action.setBadgeBackgroundColor({ color });
-    if (text) {
-      chrome.action.setBadgeText({ text, tabId });
-    }
+    chrome.action.setBadgeText({ text, tabId });
   } catch (err) {
     // Tab may have closed
   }
@@ -251,7 +257,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     case 'recordBlocked':
       if (tabId) {
-        recordBlockedContent(tabId);
+        recordBlockedContent(tabId, request.data?.count || 1);
       }
       sendResponse({ received: true });
       return false;
@@ -464,9 +470,9 @@ async function saveSessionTime(domain, durationSeconds, blockedCount) {
 }
 
 // Record when content is blocked during session
-function recordBlockedContent(tabId) {
+function recordBlockedContent(tabId, count = 1) {
   if (activeSessions[tabId]) {
-    activeSessions[tabId].blocked += 1;
+    activeSessions[tabId].blocked += count;
   }
 }
 

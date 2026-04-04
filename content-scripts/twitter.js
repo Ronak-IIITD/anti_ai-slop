@@ -100,6 +100,8 @@
     const tweets = getAllTweets();
     const threshold = detector.getSensitivityThreshold(sensitivity);
     const replyThreshold = Math.max(15, threshold - 15);
+    let batchBlockedCount = 0;
+    let batchFadedCount = 0;
     
     tweets.forEach(tweet => {
       if (isProcessed(tweet)) return;
@@ -171,10 +173,12 @@
         if (isReply) {
           fadeElement(tweet, reasons.join(', '));
           fadedCount++;
+          batchFadedCount++;
           addQuickBadge(tweet, score);
         } else {
           hideElement(tweet, reasons.join(', '));
           blockedCount++;
+          batchBlockedCount++;
         }
         
         log(PLATFORM, `${isReply ? 'Faded' : 'Blocked'} score:${score} - "${text.substring(0, 25)}..."`);
@@ -183,8 +187,8 @@
       }
     });
     
-    if (blockedCount + fadedCount > 0) {
-      incrementBlockCounter('twitter', blockedCount + fadedCount);
+    if (batchBlockedCount + batchFadedCount > 0) {
+      incrementBlockCounter('twitter', batchBlockedCount + batchFadedCount);
     }
   }
 

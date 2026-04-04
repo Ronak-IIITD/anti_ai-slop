@@ -33,6 +33,29 @@
 
 ## Changelog
 
+### 2026-04-04 - Stats & State Consistency Fixes
+- **fix**: Stop stats overcounting on long-lived X and LinkedIn feeds
+  - `twitter.js` and `linkedin.js` now increment stats using per-scan deltas instead of cumulative module-level totals
+  - Prevents inflated block counters and time-saved estimates after repeated observer passes
+- **fix**: Clear stale per-tab badge text in `background.js`
+  - AI detector badge state now clears correctly when moving from warned/blocked pages back to clean or disabled pages
+- **fix**: Restore working site-level whitelist toggle in `common.js`
+  - Global site indicator now removes domains from the whitelist when re-enabling protection instead of always adding them
+- **fix**: Wire blocked-session counts through shared counter flow
+  - `common.js` now records blocked counts with the background worker
+  - `background.js` now accepts batch block counts instead of always incrementing session counters by 1
+- **fix**: Respect Google Search "Filter content farm results" setting
+  - `google.js` now checks the user setting before applying content-farm penalties
+  - Google Search stats also flow through the shared counter path for consistent session tracking
+- **fix**: Remove unsafe popup whitelist rendering
+  - `popup.js` now builds whitelist rows with DOM APIs instead of raw `innerHTML` for user-provided domains
+- **fix**: Align popup and background defaults with current settings model
+  - Popup AI detector mode now defaults to `warn`
+  - Popup fallback stats now include `aiMediaWarnings`
+  - Background install defaults now match current Google/UI/custom-rule settings and no longer include removed `hideAIOverview`
+- **fix**: Correct current-site platform classification in popup
+  - Added Facebook, Messenger, Bluesky, and Threads to the dedicated-platform list so the popup does not mislabel them as generic AI-detector pages
+
 ### 2026-03-20 - Codebase Quality Audit & Bug Fixes
 - **fix**: Fix `return` vs `continue` bug in inner loops of `bluesky.js`, `threads.js`, `facebook.js`
   - Inner `for` loops used `return` instead of `continue`, causing entire filter function to exit on first already-processed post

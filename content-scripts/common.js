@@ -304,6 +304,13 @@ async function incrementBlockCounter(platform, count = 1) {
     await storageManager.incrementBlocked(platform, count);
   } catch (error) {
     logError(platform, 'Failed to increment counter', error);
+    return;
+  }
+
+  try {
+    await sendToBackground('recordBlocked', { platform, count });
+  } catch (error) {
+    logError(platform, 'Failed to record session block count', error);
   }
 }
 
@@ -526,11 +533,17 @@ function createGlobalSiteIndicator(platform, stats) {
   document.getElementById('anti-slop-toggle-site').addEventListener('click', async () => {
     const domain = window.location.hostname.replace(/^www\./, '');
     try {
-      await storageManager.addToWhitelist(domain);
       const btn = document.getElementById('anti-slop-toggle-site');
       const status = document.querySelector('.anti-slop-indicator-status');
-      
-      if (btn.textContent.includes('Disable')) {
+      const isDisabling = btn.textContent.includes('Disable');
+
+      if (isDisabling) {
+        await storageManager.addToWhitelist(domain);
+      } else {
+        await storageManager.removeFromWhitelist(domain);
+      }
+
+      if (isDisabling) {
         btn.textContent = 'Enable for this site';
         status.textContent = 'Protection Off';
         status.className = 'anti-slop-indicator-status inactive';

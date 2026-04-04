@@ -5,7 +5,7 @@
 (async function() {
 'use strict';
 
-const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, isPlatformEnabled } = window.AntiSlopUtils;
+const { log, logError, hideElement, isProcessed, markProcessed, createDebouncedObserver, incrementBlockCounter, isPlatformEnabled } = window.AntiSlopUtils;
 
 // ============================================================
 // SELECTORS (Updated as of 2026-02-17)
@@ -186,9 +186,7 @@ async function scanGoogleResults() {
 
     if (filtered > 0) {
       log('Google', `Filtered ${filtered} results`);
-      try {
-        await storageManager.incrementBlocked('google', filtered);
-      } catch (err) {}
+      await incrementBlockCounter('google', filtered);
     }
   } catch (error) {
     logError('Google', 'Error scanning results', error);
@@ -219,7 +217,8 @@ function analyzeSearchResult(result) {
 
   // 1. Content farm domain check (strong signal)
   const domain = _extractDomain(url);
-  if (_isContentFarmDomain(domain)) {
+  const filterContentFarms = googleSettings?.google?.filterContentFarms !== false;
+  if (filterContentFarms && _isContentFarmDomain(domain)) {
     score += 40;  // Increased from 30
     reasons.push('content-farm');
   }
