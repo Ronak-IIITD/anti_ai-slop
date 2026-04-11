@@ -194,6 +194,13 @@ const DEFAULT_SETTINGS = {
     showPlaceholders: true,
     focusMode: false,
     focusModePrevious: null,
+    focusSprint: {
+      active: false,
+      durationMinutes: 25,
+      startedAt: null,
+      endsAt: null,
+      keepFocusMode: false
+    },
     detectAIMedia: true,
     mediaSensitivity: 'medium',
     mediaOcr: false
@@ -272,6 +279,26 @@ class StorageManager {
     }
     if (typeof settings.ui.focusModePrevious === 'undefined') {
       settings.ui.focusModePrevious = null;
+    }
+    if (!settings.ui.focusSprint || typeof settings.ui.focusSprint !== 'object') {
+      settings.ui.focusSprint = {
+        active: false,
+        durationMinutes: 25,
+        startedAt: null,
+        endsAt: null,
+        keepFocusMode: false
+      };
+    }
+    if (typeof settings.ui.focusSprint.durationMinutes !== 'number' || settings.ui.focusSprint.durationMinutes < 5) {
+      settings.ui.focusSprint.durationMinutes = 25;
+    }
+    if (typeof settings.ui.focusSprint.active !== 'boolean') {
+      settings.ui.focusSprint.active = false;
+    }
+    if (!settings.ui.focusSprint.active) {
+      settings.ui.focusSprint.startedAt = null;
+      settings.ui.focusSprint.endsAt = null;
+      settings.ui.focusSprint.keepFocusMode = false;
     }
     if (typeof settings.ui.detectAIMedia !== 'boolean') {
       settings.ui.detectAIMedia = true;

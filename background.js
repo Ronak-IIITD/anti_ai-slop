@@ -5,6 +5,12 @@
 // INSTALLATION & STARTUP
 // ============================================================
 
+const FOCUS_MODE_PLATFORMS = [
+  'youtube', 'instagram', 'twitter', 'reddit', 'google',
+  'linkedin', 'tiktok', 'facebook', 'bluesky', 'threads'
+];
+const FOCUS_SPRINT_ALARM = 'antiSlop_focusSprintEnd';
+
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('[Anti-Slop] Extension installed/updated');
   
@@ -15,6 +21,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // Migrate settings for existing users
     await migrateSettings();
   }
+
+  await ensureFocusSprintAlarmState();
 });
 
 // Initialize default settings
@@ -36,6 +44,13 @@ async function initializeDefaults() {
       showPlaceholders: true,
       focusMode: false,
       focusModePrevious: null,
+      focusSprint: {
+        active: false,
+        durationMinutes: 25,
+        startedAt: null,
+        endsAt: null,
+        keepFocusMode: false
+      },
       detectAIMedia: true,
       mediaSensitivity: 'medium',
       mediaOcr: false
@@ -105,6 +120,42 @@ async function migrateSettings() {
       settings.ui.focusMode = false;
       changed = true;
     }
+    if (typeof settings.ui.focusModePrevious === 'undefined') {
+      settings.ui.focusModePrevious = null;
+      changed = true;
+    }
+    if (!settings.ui.focusSprint || typeof settings.ui.focusSprint !== 'object') {
+      settings.ui.focusSprint = {
+        active: false,
+        durationMinutes: 25,
+        startedAt: null,
+        endsAt: null,
+        keepFocusMode: false
+      };
+      changed = true;
+    }
+    if (typeof settings.ui.focusSprint.durationMinutes !== 'number' || settings.ui.focusSprint.durationMinutes < 5) {
+      settings.ui.focusSprint.durationMinutes = 25;
+      changed = true;
+    }
+    if (typeof settings.ui.focusSprint.active !== 'boolean') {
+      settings.ui.focusSprint.active = false;
+      changed = true;
+    }
+    if (!settings.ui.focusSprint.active) {
+      if (settings.ui.focusSprint.startedAt !== null) {
+        settings.ui.focusSprint.startedAt = null;
+        changed = true;
+      }
+      if (settings.ui.focusSprint.endsAt !== null) {
+        settings.ui.focusSprint.endsAt = null;
+        changed = true;
+      }
+      if (settings.ui.focusSprint.keepFocusMode !== false) {
+        settings.ui.focusSprint.keepFocusMode = false;
+        changed = true;
+      }
+    }
 
     if (typeof settings.ui.detectAIMedia !== 'boolean') {
       settings.ui.detectAIMedia = true;
@@ -163,6 +214,235 @@ async function migrateSettings() {
     }
   } catch (error) {
     console.error('[Anti-Slop] Migration error:', error);
+  }
+}
+
+function _normalizeFocusSprintDuration(durationMinutes) {
+  const parsed = Number(durationMinutes);
+  if (!Number.isFinite(parsed)) return 25;
+  return Math.max(5, Math.min(180, Math.round(parsed)));
+}
+
+function _ensureSettingsShape(settings = {}) {
+  const nextSettings = settings;
+  nextSettings.ui = nextSettings.ui || {};
+  nextSettings.aiDetector = nextSettings.aiDetector || {};
+
+  if (typeof nextSettings.ui.focusMode !== 'boolean') {
+    nextSettings.ui.focusMode = false;
+  }
+  if (typeof nextSettings.ui.focusModePrevious === 'undefined') {
+    nextSettings.ui.focusModePrevious = null;
+  }
+  if (!nextSettings.ui.focusSprint || typeof nextSettings.ui.focusSprint !== 'object') {
+    nextSettings.ui.focusSprint = {
+      active: false,
+      durationMinutes: 25,
+      startedAt: null,
+      endsAt: null,
+      keepFocusMode: false
+    };
+  }
+  nextSettings.ui.focusSprint.durationMinutes = _normalizeFocusSprintDuration(
+    nextSettings.ui.focusSprint.durationMinutes
+  );
+  if (typeof nextSettings.ui.focusSprint.active !== 'boolean') {
+    nextSettings.ui.focusSprint.active = false;
+  }
+  if (!nextSettings.ui.focusSprint.active) {
+    nextSettings.ui.focusSprint.startedAt = null;
+    nextSettings.ui.focusSprint.endsAt = null;
+    nextSettings.ui.focusSprint.keepFocusMode = false;
+  }
+  return nextSettings;
+}
+
+function _applyFocusMode(settings, enabled) {
+  const normalized = _ensureSettingsShape(settings);
+
+  if (enabled) {
+    if (!normalized.ui.focusMode) {
+      normalized.ui.focusModePrevious = {};
+      FOCUS_MODE_PLATFORMS.forEach((platform) => {
+        normalized[platform] = normalized[platform] || {};
+        normalized.ui.focusModePrevious[platform] = normalized[platform].enabled !== false;
+        normalized[platform].enabled = true;
+      });
+      normalized.ui.focusModePrevious.aiDetector = normalized.aiDetector.enabled !== false;
+      normalized.aiDetector.enabled = true;
+    }
+    normalized.ui.focusMode = true;
+    return normalized;
+  }
+
+  if (normalized.ui.focusModePrevious) {
+    FOCUS_MODE_PLATFORMS.forEach((platform) => {
+      normalized[platform] = normalized[platform] || {};
+      normalized[platform].enabled = normalized.ui.focusModePrevious[platform] !== false;
+    });
+    normalized.aiDetector.enabled = normalized.ui.focusModePrevious.aiDetector !== false;
+    normalized.ui.focusModePrevious = null;
+  }
+  normalized.ui.focusMode = false;
+  return normalized;
+}
+
+async function _getSettingsForUpdate() {
+  const result = await chrome.storage.sync.get(['antiSlop_settings']);
+  return _ensureSettingsShape(result.antiSlop_settings || {});
+}
+
+async function _saveSettings(settings) {
+  await chrome.storage.sync.set({ antiSlop_settings: settings });
+}
+
+async function _stopFocusSprintInternal(settings, options = {}) {
+  const normalized = _ensureSettingsShape(settings);
+  const sprint = normalized.ui.focusSprint || {};
+  const disableFocusMode = options.disableFocusMode !== false;
+  const reason = options.reason || 'manual';
+
+  await chrome.alarms.clear(FOCUS_SPRINT_ALARM);
+
+  if (!sprint.active) {
+    normalized.ui.focusSprint = {
+      ...sprint,
+      active: false,
+      startedAt: null,
+      endsAt: null,
+      keepFocusMode: false
+    };
+    return normalized;
+  }
+
+  if (disableFocusMode && !sprint.keepFocusMode) {
+    _applyFocusMode(normalized, false);
+  }
+
+  normalized.ui.focusSprint = {
+    active: false,
+    durationMinutes: _normalizeFocusSprintDuration(sprint.durationMinutes),
+    startedAt: null,
+    endsAt: null,
+    keepFocusMode: false,
+    lastReason: reason,
+    lastCompletedAt: new Date().toISOString()
+  };
+
+  return normalized;
+}
+
+async function handleSetFocusMode(enabled) {
+  try {
+    const settings = await _getSettingsForUpdate();
+    _applyFocusMode(settings, Boolean(enabled));
+    await _saveSettings(settings);
+    return { success: true, focusMode: settings.ui.focusMode };
+  } catch (error) {
+    console.error('[Anti-Slop] Error setting focus mode:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function handleStartFocusSprint(data = {}) {
+  try {
+    const durationMinutes = _normalizeFocusSprintDuration(data.durationMinutes);
+    const settings = await _getSettingsForUpdate();
+    const wasFocusModeActive = settings.ui.focusMode === true;
+
+    if (!wasFocusModeActive) {
+      _applyFocusMode(settings, true);
+    }
+
+    const now = Date.now();
+    settings.ui.focusSprint = {
+      active: true,
+      durationMinutes,
+      startedAt: now,
+      endsAt: now + (durationMinutes * 60000),
+      keepFocusMode: wasFocusModeActive
+    };
+
+    await chrome.alarms.clear(FOCUS_SPRINT_ALARM);
+    chrome.alarms.create(FOCUS_SPRINT_ALARM, { when: settings.ui.focusSprint.endsAt });
+    await _saveSettings(settings);
+
+    return {
+      success: true,
+      focusMode: settings.ui.focusMode,
+      focusSprint: settings.ui.focusSprint
+    };
+  } catch (error) {
+    console.error('[Anti-Slop] Error starting focus sprint:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function handleStopFocusSprint(data = {}) {
+  try {
+    const settings = await _getSettingsForUpdate();
+    const nextSettings = await _stopFocusSprintInternal(settings, {
+      disableFocusMode: data.disableFocusMode !== false,
+      reason: data.reason || 'manual'
+    });
+    await _saveSettings(nextSettings);
+    return {
+      success: true,
+      focusMode: nextSettings.ui.focusMode,
+      focusSprint: nextSettings.ui.focusSprint
+    };
+  } catch (error) {
+    console.error('[Anti-Slop] Error stopping focus sprint:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function handleGetFocusSprintStatus() {
+  try {
+    const settings = await _getSettingsForUpdate();
+    const sprint = settings.ui.focusSprint || {};
+    if (sprint.active && sprint.endsAt && sprint.endsAt <= Date.now()) {
+      const nextSettings = await _stopFocusSprintInternal(settings, { reason: 'expired' });
+      await _saveSettings(nextSettings);
+      return {
+        success: true,
+        focusMode: nextSettings.ui.focusMode,
+        focusSprint: nextSettings.ui.focusSprint
+      };
+    }
+    return {
+      success: true,
+      focusMode: settings.ui.focusMode,
+      focusSprint: sprint
+    };
+  } catch (error) {
+    console.error('[Anti-Slop] Error reading focus sprint status:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function ensureFocusSprintAlarmState() {
+  try {
+    const settings = await _getSettingsForUpdate();
+    const sprint = settings.ui.focusSprint || {};
+
+    if (!sprint.active || !sprint.endsAt) {
+      await chrome.alarms.clear(FOCUS_SPRINT_ALARM);
+      return;
+    }
+
+    if (sprint.endsAt <= Date.now()) {
+      const nextSettings = await _stopFocusSprintInternal(settings, { reason: 'expired' });
+      await _saveSettings(nextSettings);
+      return;
+    }
+
+    const existingAlarm = await chrome.alarms.get(FOCUS_SPRINT_ALARM);
+    if (!existingAlarm) {
+      chrome.alarms.create(FOCUS_SPRINT_ALARM, { when: sprint.endsAt });
+    }
+  } catch (error) {
+    console.error('[Anti-Slop] Error ensuring focus sprint alarm:', error);
   }
 }
 
@@ -253,6 +533,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     case 'getSessionStats':
       getSessionStats().then(sendResponse);
+      return true;
+
+    case 'setFocusMode':
+      handleSetFocusMode(request.data?.enabled).then(sendResponse);
+      return true;
+
+    case 'startFocusSprint':
+      handleStartFocusSprint(request.data || {}).then(sendResponse);
+      return true;
+
+    case 'stopFocusSprint':
+      handleStopFocusSprint(request.data || {}).then(sendResponse);
+      return true;
+
+    case 'getFocusSprintStatus':
+      handleGetFocusSprintStatus().then(sendResponse);
       return true;
 
     case 'recordBlocked':
@@ -363,6 +659,7 @@ async function restoreActiveSessions() {
 
 // Restore sessions on startup
 restoreActiveSessions();
+ensureFocusSprintAlarmState();
 
 function getDomainFromUrl(url) {
   try {
@@ -486,6 +783,13 @@ async function getSessionStats() {
   }
 }
 
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== FOCUS_SPRINT_ALARM) {
+    return;
+  }
+  await handleStopFocusSprint({ reason: 'expired' });
+});
+
 // ============================================================
 // WHITELIST HANDLERS
 // ============================================================
@@ -559,11 +863,9 @@ chrome.commands.onCommand.addListener(async (command) => {
       const result = await chrome.storage.sync.get(['antiSlop_settings']);
       const settings = result.antiSlop_settings || {};
       
-      // Toggle all major platforms
-      const platforms = ['youtube', 'instagram', 'twitter', 'reddit', 'google', 'linkedin', 'tiktok', 'facebook', 'bluesky', 'threads'];
       let anyEnabled = false;
       
-      for (const p of platforms) {
+      for (const p of FOCUS_MODE_PLATFORMS) {
         if (settings[p]?.enabled) {
           anyEnabled = true;
           break;
@@ -573,7 +875,7 @@ chrome.commands.onCommand.addListener(async (command) => {
       // If any are enabled, disable all. If all disabled, enable all.
       const newState = !anyEnabled;
       
-      for (const p of platforms) {
+      for (const p of FOCUS_MODE_PLATFORMS) {
         settings[p] = settings[p] || {};
         settings[p].enabled = newState;
       }
@@ -609,6 +911,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 
 chrome.runtime.onStartup.addListener(() => {
   console.log('[Anti-Slop] Browser started, service worker active');
+  ensureFocusSprintAlarmState();
 });
 
 self.addEventListener('suspend', () => {

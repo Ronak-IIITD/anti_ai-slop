@@ -346,6 +346,21 @@
         </div>
         <div class="control-details">
           <p class="help-text">When enabled, blocks ALL social media & brainrot content. Use for deep work sessions.</p>
+          <div class="focus-sprint-controls">
+            <label class="input-label">
+              Focus Sprint Duration:
+              <select id="focusSprintDuration">
+                <option value="25" selected>25 minutes (Pomodoro)</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="90">90 minutes</option>
+              </select>
+            </label>
+            <div class="focus-sprint-actions">
+              <button class="btn btn-primary btn-sm" id="focusSprintAction">Start Sprint</button>
+              <span class="focus-sprint-status" id="focusSprintStatus">No sprint running</span>
+            </div>
+          </div>
         </div>
       </div>
       

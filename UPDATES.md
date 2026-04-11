@@ -1,7 +1,7 @@
 # UPDATES.md - Anti-Slop Project Changelog
 
 > Project: Anti-Slop - AI & Brainrot Content Blocker
-> Version: 1.6.0
+> Version: 1.6.1
 > Repository: https://github.com/Ronak-IIITD/anti_ai-slop
 
 ---
@@ -32,6 +32,19 @@
 ---
 
 ## Changelog
+
+### 2026-04-11 (v1.6.1) - Focus Sprint Timer
+- **feat**: Add timed Focus Sprint mode with automatic shutdown
+  - New sprint controls in popup Focus Mode card (25/45/60/90-minute options)
+  - Start/stop sprint from popup with live countdown
+  - Sprint state persists in synced settings so it survives popup close/reopen
+- **feat**: Add background alarm-driven sprint lifecycle
+  - Added `chrome.alarms` integration to end active sprint at exact end time
+  - On expiry, focus mode auto-disables and restores pre-sprint platform states
+  - If focus mode was already on before sprint start, sprint end keeps it enabled
+- **update**: Add migration/default support for `ui.focusSprint` settings
+  - Safe defaults added in `background.js`, `utils/storage.js`, and `popup.js`
+  - Existing users are auto-migrated without breaking current settings
 
 ### 2026-04-04 - Stats & State Consistency Fixes
 - **fix**: Stop stats overcounting on long-lived X and LinkedIn feeds

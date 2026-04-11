@@ -426,6 +426,35 @@ body {
   gap: 12px;
 }
 
+.focus-sprint-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.focus-sprint-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.focus-sprint-status {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: right;
+  min-height: 16px;
+}
+
+.focus-sprint-status.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Toggles */
 .toggle {
   position: relative;

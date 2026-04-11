@@ -1,10 +1,20 @@
 // Popup UI Logic v2
 // Handles settings, statistics, whitelist management, and recent blocks
 
+const FOCUS_SPRINT_POLL_MS = 1000;
+let focusSprintState = {
+  active: false,
+  durationMinutes: 25,
+  startedAt: null,
+  endsAt: null
+};
+let focusSprintInterval = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('[Anti-Slop Popup] Initializing...');
   
   await loadSettings();
+  await loadFocusSprintStatus();
   await loadStatistics();
   await loadSessionStats();
   await loadCurrentSiteStatus();
@@ -92,6 +102,13 @@ async function loadSettings() {
     const focusModeToggle = document.getElementById('focusModeToggle');
     if (focusModeToggle) {
       focusModeToggle.checked = settings.ui?.focusMode ?? false;
+    }
+    const focusSprintDuration = document.getElementById('focusSprintDuration');
+    if (focusSprintDuration) {
+      const preferredDuration = settings.ui?.focusSprint?.durationMinutes || 25;
+      const hasOption = Array.from(focusSprintDuration.options)
+        .some(option => Number(option.value) === Number(preferredDuration));
+      focusSprintDuration.value = hasOption ? String(preferredDuration) : '25';
     }
 
     // Reddit settings
@@ -277,6 +294,150 @@ async function loadSessionStats() {
   } catch (error) {
     console.error('[Anti-Slop Popup] Error loading session stats:', error);
     document.getElementById('timeBreakdown').innerHTML = '<p class="time-breakdown-empty">Enable extension to track time</p>';
+  }
+}
+
+// ============================================================
+// FOCUS SPRINT
+// ============================================================
+
+async function loadFocusSprintStatus() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'getFocusSprintStatus' });
+    if (!response?.success) {
+      throw new Error(response?.error || 'Failed to load focus sprint status');
+    }
+
+    const nextState = response.focusSprint || {
+      active: false,
+      durationMinutes: 25,
+      startedAt: null,
+      endsAt: null
+    };
+    focusSprintState = nextState;
+    _renderFocusSprintState(nextState);
+
+    const focusModeToggle = document.getElementById('focusModeToggle');
+    if (focusModeToggle) {
+      focusModeToggle.checked = response.focusMode === true;
+    }
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Error loading focus sprint status:', error);
+    _renderFocusSprintState({ active: false, durationMinutes: 25, startedAt: null, endsAt: null });
+  }
+}
+
+function _renderFocusSprintState(state) {
+  const actionBtn = document.getElementById('focusSprintAction');
+  const status = document.getElementById('focusSprintStatus');
+  const durationSelect = document.getElementById('focusSprintDuration');
+  if (!actionBtn || !status || !durationSelect) {
+    return;
+  }
+
+  const isActive = state?.active === true && Number(state?.endsAt) > Date.now();
+  if (isActive) {
+    actionBtn.textContent = 'Stop Sprint';
+    actionBtn.classList.remove('btn-primary');
+    actionBtn.classList.add('btn-secondary');
+    durationSelect.disabled = true;
+    status.classList.add('active');
+    _updateFocusSprintCountdown();
+    _startFocusSprintTicker();
+  } else {
+    actionBtn.textContent = 'Start Sprint';
+    actionBtn.classList.remove('btn-secondary');
+    actionBtn.classList.add('btn-primary');
+    durationSelect.disabled = false;
+    status.classList.remove('active');
+    status.textContent = 'No sprint running';
+    _stopFocusSprintTicker();
+  }
+}
+
+function _startFocusSprintTicker() {
+  if (focusSprintInterval) {
+    return;
+  }
+  focusSprintInterval = setInterval(_updateFocusSprintCountdown, FOCUS_SPRINT_POLL_MS);
+}
+
+function _stopFocusSprintTicker() {
+  if (!focusSprintInterval) {
+    return;
+  }
+  clearInterval(focusSprintInterval);
+  focusSprintInterval = null;
+}
+
+function _updateFocusSprintCountdown() {
+  const status = document.getElementById('focusSprintStatus');
+  if (!status) {
+    return;
+  }
+
+  if (!focusSprintState?.active || !focusSprintState?.endsAt) {
+    status.textContent = 'No sprint running';
+    return;
+  }
+
+  const remainingMs = Number(focusSprintState.endsAt) - Date.now();
+  if (remainingMs <= 0) {
+    status.textContent = 'Sprint finished';
+    _stopFocusSprintTicker();
+    loadFocusSprintStatus();
+    loadSettings();
+    return;
+  }
+
+  status.textContent = `Active · ${_formatDuration(remainingMs)} left`;
+}
+
+function _formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+async function handleFocusSprintAction() {
+  const durationSelect = document.getElementById('focusSprintDuration');
+  if (!durationSelect) {
+    return;
+  }
+
+  try {
+    if (focusSprintState?.active) {
+      const response = await chrome.runtime.sendMessage({
+        action: 'stopFocusSprint',
+        data: { disableFocusMode: true, reason: 'manual' }
+      });
+      if (!response?.success) {
+        throw new Error(response?.error || 'Unable to stop focus sprint');
+      }
+      showToast('Focus sprint ended');
+    } else {
+      const durationMinutes = Number(durationSelect.value) || 25;
+      const response = await chrome.runtime.sendMessage({
+        action: 'startFocusSprint',
+        data: { durationMinutes }
+      });
+      if (!response?.success) {
+        throw new Error(response?.error || 'Unable to start focus sprint');
+      }
+      showToast(`Focus sprint started (${durationMinutes} min)`);
+    }
+
+    await loadSettings();
+    await loadFocusSprintStatus();
+  } catch (error) {
+    console.error('[Anti-Slop Popup] Focus sprint action failed:', error);
+    showToast('Error updating focus sprint', 'error');
   }
 }
 
@@ -683,8 +844,20 @@ function setupEventListeners() {
   const focusModeToggle = document.getElementById('focusModeToggle');
   if (focusModeToggle) {
     focusModeToggle.addEventListener('change', async (e) => {
+      if (!e.target.checked && focusSprintState?.active) {
+        await chrome.runtime.sendMessage({
+          action: 'stopFocusSprint',
+          data: { disableFocusMode: false, reason: 'focus-disabled' }
+        });
+        await loadFocusSprintStatus();
+      }
       await toggleFocusMode(e.target.checked);
     });
+  }
+
+  const focusSprintAction = document.getElementById('focusSprintAction');
+  if (focusSprintAction) {
+    focusSprintAction.addEventListener('click', handleFocusSprintAction);
   }
   
   document.getElementById('aiDetectorToggle').addEventListener('change', (e) => {
@@ -826,36 +999,16 @@ async function updateSetting(platform, key, value) {
 
 async function toggleFocusMode(enabled) {
   try {
-    const result = await chrome.storage.sync.get(['antiSlop_settings']);
-    const settings = result.antiSlop_settings || getDefaultSettings();
-    const platforms = ['youtube', 'instagram', 'twitter', 'reddit', 'google', 'linkedin', 'tiktok', 'facebook', 'bluesky', 'threads'];
-
-    settings.ui = settings.ui || {};
-
-    if (enabled) {
-      settings.ui.focusModePrevious = {};
-      platforms.forEach(platform => {
-        settings[platform] = settings[platform] || {};
-        settings.ui.focusModePrevious[platform] = settings[platform].enabled !== false;
-        settings[platform].enabled = true;
-      });
-      settings.aiDetector = settings.aiDetector || {};
-      settings.ui.focusModePrevious.aiDetector = settings.aiDetector.enabled !== false;
-      settings.aiDetector.enabled = true;
-    } else if (settings.ui.focusModePrevious) {
-      platforms.forEach(platform => {
-        settings[platform] = settings[platform] || {};
-        settings[platform].enabled = settings.ui.focusModePrevious[platform] !== false;
-      });
-      settings.aiDetector = settings.aiDetector || {};
-      settings.aiDetector.enabled = settings.ui.focusModePrevious.aiDetector !== false;
-      settings.ui.focusModePrevious = null;
+    const response = await chrome.runtime.sendMessage({
+      action: 'setFocusMode',
+      data: { enabled }
+    });
+    if (!response?.success) {
+      throw new Error(response?.error || 'Failed to update focus mode');
     }
-
-    settings.ui.focusMode = enabled;
-    await chrome.storage.sync.set({ antiSlop_settings: settings });
     showToast(enabled ? 'Focus Mode enabled' : 'Focus Mode disabled');
     await loadSettings();
+    await loadFocusSprintStatus();
   } catch (error) {
     console.error('[Anti-Slop Popup] Error toggling Focus Mode:', error);
     showToast('Error updating Focus Mode', 'error');
@@ -1024,7 +1177,15 @@ function getDefaultSettings() {
     threads: { enabled: true, sensitivity: 'medium' },
     aiDetector: { enabled: true, threshold: 65, sensitivity: 'medium', mode: 'warn' },
     customRules: { enabled: true, blockKeywords: [], allowKeywords: [] },
-    ui: { showPlaceholders: true, focusMode: false, detectAIMedia: true, mediaSensitivity: 'medium', mediaOcr: false }
+    ui: {
+      showPlaceholders: true,
+      focusMode: false,
+      focusModePrevious: null,
+      focusSprint: { active: false, durationMinutes: 25, startedAt: null, endsAt: null, keepFocusMode: false },
+      detectAIMedia: true,
+      mediaSensitivity: 'medium',
+      mediaOcr: false
+    }
   };
 }
 
@@ -1058,6 +1219,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync') {
     if (changes.antiSlop_stats) {
       loadStatistics();
+    }
+    if (changes.antiSlop_settings) {
+      loadSettings();
+      loadFocusSprintStatus();
     }
     if (changes.antiSlop_whitelist) {
       loadWhitelist();
