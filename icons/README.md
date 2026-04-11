@@ -1,29 +1,34 @@
 # Anti-Slop Icons
 
-This directory contains the extension icons in various sizes.
+This directory contains the source vector icon and generated PNG files used by the Chrome extension.
 
-## Required Sizes:
-- icon16.png (16x16) - Browser toolbar
-- icon48.png (48x48) - Extensions management page
-- icon128.png (128x128) - Chrome Web Store
+## Files
 
-## Creating Icons:
+- `icon.svg` - Master icon source (edit this first)
+- `icon16.png` - Browser toolbar icon
+- `icon48.png` - Chrome extensions page icon
+- `icon128.png` - Chrome Web Store icon
 
-You can create icons using any design tool. For a quick start, you can:
+## Generate PNG icons from SVG
 
-1. Use an online tool like https://favicon.io/
-2. Use Figma, Canva, or Adobe Illustrator
-3. Use GIMP or Photoshop
+Use the helper script from this directory:
 
-## Icon Design Suggestions:
+```bash
+./create-icons.sh
+```
 
-- Use the shield emoji (🛡️) as inspiration
-- Color scheme: Purple gradient (#667eea to #764ba2)
-- Keep it simple and recognizable at small sizes
-- Ensure good contrast for visibility
+It renders `icon.svg` into all required PNG sizes using ImageMagick.
 
-## Placeholder Icons:
+If needed, make it executable once:
 
-The current icons are placeholders. Replace them with proper PNG files.
+```bash
+chmod +x create-icons.sh
+```
 
-Temporary solution: Use online converters to generate PNGs from SVG or emoji.
+## Manual command (alternative)
+
+```bash
+convert -background none icon.svg -resize 16x16 icon16.png
+convert -background none icon.svg -resize 48x48 icon48.png
+convert -background none icon.svg -resize 128x128 icon128.png
+```

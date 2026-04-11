@@ -182,6 +182,14 @@ async function loadSettings() {
     if (mediaOcrToggle) {
       mediaOcrToggle.checked = settings.ui?.mediaOcr ?? false;
     }
+
+    const popupDensity = _normalizePopupDensity(settings.ui?.popupDensity);
+    const popupDensitySelect = document.getElementById('popupDensity');
+    if (popupDensitySelect) {
+      popupDensitySelect.value = popupDensity;
+    }
+    _applyPopupDensity(popupDensity);
+    _applyFocusModeVisualState(settings.ui?.focusMode === true, focusSprintState?.active === true);
     
     console.log('[Anti-Slop Popup] Settings loaded');
   } catch (error) {
@@ -321,9 +329,11 @@ async function loadFocusSprintStatus() {
     if (focusModeToggle) {
       focusModeToggle.checked = response.focusMode === true;
     }
+    _applyFocusModeVisualState(response.focusMode === true, nextState?.active === true);
   } catch (error) {
     console.error('[Anti-Slop Popup] Error loading focus sprint status:', error);
     _renderFocusSprintState({ active: false, durationMinutes: 25, startedAt: null, endsAt: null });
+    _applyFocusModeVisualState(document.getElementById('focusModeToggle')?.checked === true, false);
   }
 }
 
@@ -353,6 +363,8 @@ function _renderFocusSprintState(state) {
     status.textContent = 'No sprint running';
     _stopFocusSprintTicker();
   }
+
+  _applyFocusModeVisualState(document.getElementById('focusModeToggle')?.checked === true, isActive);
 }
 
 function _startFocusSprintTicker() {
@@ -903,6 +915,15 @@ function setupEventListeners() {
       updateSetting('ui', 'mediaOcr', e.target.checked);
     });
   }
+
+  const popupDensitySelect = document.getElementById('popupDensity');
+  if (popupDensitySelect) {
+    popupDensitySelect.addEventListener('change', (e) => {
+      const nextDensity = _normalizePopupDensity(e.target.value);
+      _applyPopupDensity(nextDensity);
+      updateSetting('ui', 'popupDensity', nextDensity);
+    });
+  }
   
   // Twitter settings
   const twitterSensitivitySelect = document.getElementById('twitterSensitivity');
@@ -1163,6 +1184,32 @@ function _parseCustomKeywords(raw) {
   );
 }
 
+function _normalizePopupDensity(value) {
+  return value === 'spacious' ? 'spacious' : 'compact';
+}
+
+function _applyPopupDensity(density) {
+  document.body.setAttribute('data-density', _normalizePopupDensity(density));
+}
+
+function _applyFocusModeVisualState(isFocusModeEnabled, isSprintActive = false) {
+  const focusVisualActive = isFocusModeEnabled === true || isSprintActive === true;
+  document.body.setAttribute('data-focus-mode', focusVisualActive ? 'on' : 'off');
+
+  const statusChip = document.getElementById('globalStatusChip');
+  if (!statusChip) {
+    return;
+  }
+
+  if (isSprintActive) {
+    statusChip.textContent = 'Focus Sprint';
+  } else if (focusVisualActive) {
+    statusChip.textContent = 'Focus Mode';
+  } else {
+    statusChip.textContent = 'Shield Active';
+  }
+}
+
 function getDefaultSettings() {
   return {
     youtube: { enabled: true, sensitivity: 'medium' },
@@ -1182,6 +1229,7 @@ function getDefaultSettings() {
       focusMode: false,
       focusModePrevious: null,
       focusSprint: { active: false, durationMinutes: 25, startedAt: null, endsAt: null, keepFocusMode: false },
+      popupDensity: 'compact',
       detectAIMedia: true,
       mediaSensitivity: 'medium',
       mediaOcr: false

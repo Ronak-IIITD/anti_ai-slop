@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="16" y1="8" x2="112" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1C2646"/>
+      <stop offset="0.55" stop-color="#121B34"/>
+      <stop offset="1" stop-color="#0A1121"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(35 26) rotate(42) scale(66 64)">
+      <stop stop-color="#8F6BFF" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#8F6BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(101 104) rotate(-126) scale(64 62)">
+      <stop stop-color="#20D4BE" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="#20D4BE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shieldGradient" x1="36" y1="32" x2="93" y2="98" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9A7FFF"/>
+      <stop offset="0.45" stop-color="#7B93FF"/>
+      <stop offset="1" stop-color="#31DAC3"/>
+    </linearGradient>
+    <linearGradient id="slashGradient" x1="42" y1="87" x2="88" y2="41" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF7A9D"/>
+      <stop offset="1" stop-color="#FFB07A"/>
+    </linearGradient>
+    <filter id="softShadow" x="7" y="7" width="114" height="114" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#03060F" flood-opacity="0.58"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <rect x="10" y="10" width="108" height="108" rx="28" fill="url(#bgGradient)"/>
+    <rect x="10.75" y="10.75" width="106.5" height="106.5" rx="27.25" stroke="#33416A" stroke-opacity="0.95" stroke-width="1.5"/>
+    <rect x="10" y="10" width="108" height="108" rx="28" fill="url(#glowA)"/>
+    <rect x="10" y="10" width="108" height="108" rx="28" fill="url(#glowB)"/>
+  </g>
+
+  <path d="M64 26L90 36.5V58.5C90 76.2 79.3 91.7 64 98.9C48.7 91.7 38 76.2 38 58.5V36.5L64 26Z" stroke="url(#shieldGradient)" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M48.5 78L79.5 47" stroke="url(#slashGradient)" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="88.5" cy="41.5" r="3" fill="#F6FCFF" fill-opacity="0.88"/>
+</svg>

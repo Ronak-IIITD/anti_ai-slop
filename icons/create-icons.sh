@@ -1,14 +1,21 @@
 #!/bin/bash
-# Placeholder script to create simple colored square icons
-# Replace with proper icons later
+# Generate Anti-Slop PNG icons from icons/icon.svg
 
-# Create 16x16 icon (red square for now)
-convert -size 16x16 xc:'#667eea' icon16.png 2>/dev/null || echo "ImageMagick not installed - create icons manually"
+set -e
 
-# Create 48x48 icon
-convert -size 48x48 xc:'#667eea' icon48.png 2>/dev/null || echo "ImageMagick not installed - create icons manually"
+if ! command -v convert >/dev/null 2>&1; then
+  echo "Error: ImageMagick 'convert' is not installed."
+  echo "Install ImageMagick, then re-run this script."
+  exit 1
+fi
 
-# Create 128x128 icon
-convert -size 128x128 xc:'#667eea' icon128.png 2>/dev/null || echo "ImageMagick not installed - create icons manually"
+if [ ! -f "icon.svg" ]; then
+  echo "Error: icon.svg not found in icons directory."
+  exit 1
+fi
 
-echo "Icons created (or need manual creation)"
+convert -background none "icon.svg" -resize 16x16 "icon16.png"
+convert -background none "icon.svg" -resize 48x48 "icon48.png"
+convert -background none "icon.svg" -resize 128x128 "icon128.png"
+
+echo "Generated: icon16.png, icon48.png, icon128.png"

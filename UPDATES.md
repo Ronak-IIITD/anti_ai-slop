@@ -33,6 +33,27 @@
 
 ## Changelog
 
+### 2026-04-12 - Popup Design System + Icon Overhaul
+- **update**: Fully redesigned popup UI with a cohesive dark-glass visual system
+  - Added layered ambient gradients, refreshed cards, refined spacing, and stronger hierarchy
+  - Reworked header branding with an inline SVG mark and status chip
+  - Updated controls, toggles, buttons, inputs, stats cards, and list styling for a modern polished look
+  - Added orchestrated section reveal animations and improved hover/focus states while preserving all popup functionality
+- **feat**: Introduced a production-quality vector icon source
+  - Added `icons/icon.svg` as the master extension icon (shield + slash motif)
+  - Replaced placeholder icon generation flow with deterministic SVG-to-PNG rendering
+  - Updated `icons/create-icons.sh` and `icons/README.md` with clear generation instructions for 16/48/128 PNG outputs
+
+### 2026-04-12 - Popup UX Pass 2 (Density + Focus State)
+- **feat**: Added popup density variants with persisted user preference
+  - New `Popup Appearance` control in popup settings with `Compact` and `Spacious` options
+  - Density preference saved to `ui.popupDensity` and applied via `body[data-density]`
+  - Spacious mode increases spacing, padding, and readable sizing; compact remains default
+- **update**: Added dynamic focus-mode visual state across the popup theme
+  - Introduced `body[data-focus-mode]` state with accent palette shift when Focus Mode or Focus Sprint is active
+  - Header status chip now updates contextually: `Shield Active` / `Focus Mode` / `Focus Sprint`
+  - Focus card and key accent surfaces now visually intensify during active focus sessions
+
 ### 2026-04-11 (v1.6.1) - Focus Sprint Timer
 - **feat**: Add timed Focus Sprint mode with automatic shutdown
   - New sprint controls in popup Focus Mode card (25/45/60/90-minute options)

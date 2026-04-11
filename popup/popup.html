@@ -6,15 +6,33 @@
   <title>Anti-Slop Settings</title>
   <link rel="stylesheet" href="popup.css">
 </head>
-<body>
-  <div class="container">
+<body data-density="compact">
+  <div class="popup-shell">
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <div class="container">
     <!-- Header -->
     <header class="header">
       <div class="logo">
-        <span class="logo-icon">&#x1F6E1;</span>
-        <h1>Anti-Slop</h1>
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="presentation">
+            <defs>
+              <linearGradient id="popupBrandGradient" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#8f6bff"></stop>
+                <stop offset="1" stop-color="#20d4be"></stop>
+              </linearGradient>
+            </defs>
+            <rect x="4" y="4" width="56" height="56" rx="16" fill="#0f1425" stroke="#2a3353"></rect>
+            <path d="M32 12 47 18v12c0 9.5-5.9 17.8-15 22-9.1-4.2-15-12.5-15-22V18L32 12Z" fill="none" stroke="url(#popupBrandGradient)" stroke-width="4" stroke-linejoin="round"></path>
+            <path d="M24 40 40 24" stroke="#ff8f7a" stroke-width="5" stroke-linecap="round"></path>
+          </svg>
+        </span>
+        <div class="brand-copy">
+          <h1>Anti-Slop</h1>
+          <p class="tagline">Reclaim your focus</p>
+        </div>
       </div>
-      <p class="tagline">Reclaim your focus</p>
+      <span class="status-chip" id="globalStatusChip">Shield Active</span>
     </header>
 
     <!-- Current Site Status -->
@@ -439,6 +457,24 @@
         </div>
       </div>
 
+      <!-- Popup Appearance -->
+      <div class="control-item">
+        <div class="control-header">
+          <span class="control-icon">&#x1F3A8;</span>
+          <span class="control-name">Popup Appearance</span>
+        </div>
+        <div class="control-details">
+          <label class="input-label">
+            Density:
+            <select id="popupDensity">
+              <option value="compact">Compact (more content at once)</option>
+              <option value="spacious">Spacious (more breathing room)</option>
+            </select>
+          </label>
+          <p class="help-text">Tip: Compact is ideal on smaller screens; Spacious improves readability during long configuration sessions.</p>
+        </div>
+      </div>
+
       <!-- Global Custom Keyword Rules -->
       <div class="control-item">
         <div class="control-header">
@@ -512,6 +548,7 @@
         <a href="#" id="reportIssue">Report Issue</a>
       </div>
     </footer>
+    </div>
   </div>
 
   <script src="popup.js"></script>
