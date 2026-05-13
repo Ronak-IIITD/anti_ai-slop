@@ -10,7 +10,9 @@
     "storage",
     "tabs",
     "activeTab",
-    "alarms"
+    "alarms",
+    "scripting",
+    "webNavigation"
   ],
   "host_permissions": [
     "*://*.youtube.com/*",
@@ -35,69 +37,29 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/youtube.js"],
-      "css": ["content-scripts/youtube.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/twitter.js"],
-      "css": ["content-scripts/twitter.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://*.reddit.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/reddit.js"],
-      "css": ["content-scripts/reddit.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://*.google.com/*", "*://*.google.co.in/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "utils/utility-scorer.js", "content-scripts/common.js", "content-scripts/google.js"],
-      "css": ["content-scripts/google.css"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["*://*.linkedin.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "utils/utility-scorer.js", "content-scripts/common.js", "content-scripts/linkedin.js"],
-      "css": ["content-scripts/linkedin.css"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["*://*.instagram.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/instagram.js"],
-      "css": ["content-scripts/instagram.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://*.tiktok.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/tiktok.js"],
-      "css": ["content-scripts/tiktok.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://*.facebook.com/*", "*://*.messenger.com/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/facebook.js"],
-      "css": ["content-scripts/facebook.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://bsky.app/*", "*://*.bsky.app/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/bluesky.js"],
-      "css": ["content-scripts/bluesky.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["*://threads.net/*", "*://*.threads.net/*"],
-      "js": ["utils/storage.js", "utils/brainrot-patterns.js", "utils/media-detector.js", "content-scripts/common.js", "content-scripts/threads.js"],
-      "css": ["content-scripts/threads.css"],
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://*.instagram.com/*",
+        "*://*.twitter.com/*",
+        "*://*.x.com/*",
+        "*://*.reddit.com/*",
+        "*://*.google.com/*",
+        "*://*.google.co.in/*",
+        "*://*.linkedin.com/*",
+        "*://*.facebook.com/*",
+        "*://*.messenger.com/*",
+        "*://bsky.app/*",
+        "*://*.bsky.app/*",
+        "*://threads.net/*",
+        "*://*.threads.net/*",
+        "*://*.tiktok.com/*"
+      ],
+      "js": ["content-scripts/bootstrap.js"],
       "run_at": "document_start"
     },
     {
       "matches": ["*://*/*"],
-      "js": ["utils/storage.js", "utils/ai-patterns.js", "content-scripts/common.js", "content-scripts/ai-detector.js"],
-      "css": ["content-scripts/ai-detector.css"],
+      "js": ["content-scripts/bootstrap.js"],
       "run_at": "document_idle",
       "exclude_matches": [
         "*://*.youtube.com/*",

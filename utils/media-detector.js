@@ -246,15 +246,16 @@ class AIMediaDetector {
     return score >= threshold;
   }
 
+  // LOWERED thresholds for super strong detection
   getThreshold(sensitivity) {
     switch (sensitivity) {
       case 'low':
-        return 72;
+        return 50;  // Was 72 - now catches more AI media
       case 'high':
-        return 42;
+        return 25;  // Was 42 - extremely aggressive
       case 'medium':
       default:
-        return 56;
+        return 35;  // Was 56 - significantly more aggressive
     }
   }
 }

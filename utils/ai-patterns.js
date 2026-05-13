@@ -8,8 +8,9 @@
 // Only flag when these appear in HIGH concentration together
 // ============================================================
 
-// Tier 1: Strong AI indicators (very unlikely in human writing)
+// Tier 1: Strong AI indicators (very unlikely in human writing) - EXPANDED v4
 const AI_PHRASES_STRONG = [
+  // Classic AI phrases
   'delve into',
   'it\'s important to note that',
   'it is important to note that',
@@ -30,7 +31,7 @@ const AI_PHRASES_STRONG = [
   'tapestry of',
   'multifaceted',
   'in the realm of',
-  // Added 2026-03-01: modern LLM output patterns
+  // Modern LLM output patterns
   'let\'s dive in',
   'let\'s break it down',
   'let\'s unpack',
@@ -64,7 +65,116 @@ const AI_PHRASES_STRONG = [
   'without further ado',
   'in an era where',
   'in a world where',
-  'in this comprehensive'
+  'in this comprehensive',
+  // NEW 2025-2026 LLM patterns (super strong indicators)
+  'in this article we will',
+  'in this guide we will',
+  'in this post we will',
+  'throughout this article',
+  'throughout this guide',
+  'as we\'ve explored',
+  'as we\'ve discussed',
+  'as we\'ve seen',
+  'in the following',
+  'in the subsequent',
+  'moving forward we',
+  'going forward we',
+  'let me break this down',
+  'here\'s the thing',
+  'here is the thing',
+  'the reality is',
+  'the truth is',
+  'when it comes to',
+  'as we move forward',
+  'going forward',
+  'moving forward',
+  'at the forefront',
+  'on the flip side',
+  'that said',
+  'with that said',
+  'to put it simply',
+  'in a nutshell',
+  'actionable insights',
+  'actionable tips',
+  'key considerations',
+  'pro tip',
+  'bonus tip',
+  'wrapping up',
+  'final thoughts',
+  'the takeaway',
+  // More aggressive AI patterns
+  'it goes without saying',
+  'it\'s safe to say',
+  'it\'s safe to assume',
+  'one could argue',
+  'it could be argued',
+  'many experts agree',
+  'experts agree that',
+  'research shows that',
+  'studies have shown',
+  'according to experts',
+  'industry experts say',
+  'leading experts suggest',
+  'as the saying goes',
+  'it\'s often said that',
+  'a popular belief',
+  'commonly believed',
+  'widely accepted',
+  'universally recognized',
+  'it\'s widely known',
+  'it\'s commonly known',
+  'as we all know',
+  'as we know',
+  'needless to say',
+  'it goes without saying',
+  'of course',
+  'certainly',
+  'undoubtedly',
+  'indisputably',
+  'unquestionably',
+  'without a doubt',
+  'there\'s no denying',
+  'make no mistake',
+  'let\'s be clear',
+  'to be clear',
+  'to be honest',
+  'frankly speaking',
+  'truth be told',
+  'if we\'re being honest',
+  'if we\'re being realistic',
+  'be that as it may',
+  'with that in mind',
+  'that being said',
+  'having said that',
+  'all things considered',
+  'all things considered',
+  'taking everything into account',
+  'on the whole',
+  'by and large',
+  'in the grand scheme',
+  'when all is said and done',
+  'at the end of the day',
+  // Listicle/AI structure patterns
+  'here are the top',
+  'here are the best',
+  'here are some',
+  'here are a few',
+  'here\'s a list of',
+  'here\'s our list of',
+  'top reasons why',
+  'top ways to',
+  'top tips for',
+  'reasons why you',
+  'ways to improve',
+  'tips for getting',
+  'secrets to',
+  'mistakes you\'re making',
+  'things you need to know',
+  'things you didn\'t know',
+  'facts about',
+  'truth about',
+  'lies about',
+  'myths about'
 ];
 
 // Tier 2: Moderate indicators (common in AI, but also in formal writing)
@@ -127,26 +237,38 @@ const AI_PHRASES_MODERATE = [
 // ============================================================
 
 const AI_STRUCTURAL_PATTERNS = {
-  // AI overuses transition words at paragraph starts
-  paragraphTransitions: /(?:^|\n)\s*(Moreover|Furthermore|However|Additionally|In conclusion|To summarize|Firstly|Secondly|Thirdly|In addition|On the other hand|That being said|With that in mind|It'?s worth noting|It'?s important to note|Let'?s explore|Let'?s dive|Let'?s take a look|Let'?s break|Moving on|Next up|Now let'?s)/gm,
+  // AI overuses transition words at paragraph starts (EXPANDED)
+  paragraphTransitions: /(?:^|\n)\s*(Moreover|Furthermore|However|Additionally|In conclusion|To summarize|Firstly|Secondly|Thirdly|In addition|On the other hand|That being said|With that in mind|It'?s worth noting|It'?s important to note|Let'?s explore|Let'?s dive|Let'?s take a look|Let'?s break|Moving on|Next up|Now let'?s|It should be noted|It is worth mentioning|It is also worth|Note that|It is also important|Additionally|Subsequently|Consequently|Therefore|Thus|Hence)/gm,
 
-  // Generic opening patterns
-  genericOpenings: /^(In today'?s|In this (article|post|guide|blog)|When it comes to|In the (world|realm|landscape) of|Are you looking for|Have you ever wondered|If you'?re like most|Picture this|Imagine a world)/im,
+  // Generic opening patterns (EXPANDED)
+  genericOpenings: /^(In today'?s|In this (article|post|guide|blog)|When it comes to|In the (world|realm|landscape) of|Are you looking for|Have you ever wondered|If you'?re like most|Picture this|Imagine a world|In this comprehensive|In this detailed|In this ultimate|In this exhaustive|If you want to|If you need to|If you\'re looking to)/im,
 
-  // Unnecessary hedging/filler
+  // Unnecessary hedging/filler (EXPANDED)
   hedgingLanguage: /\b(it'?s (important|worth|crucial|essential) to (note|mention|understand|remember|highlight|emphasize))\b/gi,
 
-  // Excessive use of power words
-  buzzwords: /\b(enhance|elevate|unlock|leverage|optimize|streamline|empower|revolutionize|transform|supercharge|skyrocket|turbocharge|game-chang|cutting-edge|state-of-the-art|next-level|world-class|top-notch|best-in-class)/gi,
+  // Passive voice patterns (NEW - strong AI indicator)
+  passiveVoice: /\b(is|are|was|were|be|been|being)\s+(written|created|generated|made|produced|developed|designed|built|written|said|stated|mentioned|noted|explained|described|discussed|considered|viewed|seen|thought|believed|known|found|shown|proven|demonstrated|established|determined)\b/gi,
 
-  // AI list patterns: "Here are X things/ways/tips/reasons..."
-  listIntros: /\b(here are|here'?s|below are|the following|these \d+|top \d+|\d+ (ways|things|tips|reasons|steps|strategies|methods|tricks|hacks|secrets|mistakes|benefits|advantages|examples))\b/gi,
+  // Filler/empty words (NEW)
+  fillerWords: /\b(very|really|extremely|incredibly|absolutely|totally|completely|highly|deeply|truly|quite|rather|somewhat|fairly|pretty|quite|slightly|moderately)\b/gi,
 
-  // AI paragraph templates: numbered/bulleted structure
-  numberedParagraphs: /(?:^|\n)\s*(\d+[\.\)]\s|[-*]\s|Step \d+)/gm,
+  // Excessive use of power words (EXPANDED)
+  buzzwords: /\b(enhance|elevate|unlock|leverage|optimize|streamline|empower|revolutionize|transform|supercharge|skyrocket|turbocharge|game-chang|cutting-edge|state-of-the-art|next-level|world-class|top-notch|best-in-class|seamless|seamlessly|pioneering|innovative|disruptive|breakthrough|groundbreaking|visionary|forward-thinking|future-proof|scalable|robust|resilient|agile|strategic|holistic|integrated|comprehensive|impactful|meaningful|tangible|actionable|results-driven|data-driven|user-centric|customer-centric|outcome-focused|value-added|best-in-breed|industry-leading|award-winning|proven|trusted|reliable|effective|efficient|sustainable|eco-friendly|green|carbon-neutral)/gi,
 
-  // AI conclusion patterns
-  conclusionPatterns: /\b(in (conclusion|summary|closing)|to (summarize|sum up|conclude|wrap up)|all in all|the bottom line|key takeaways?|final thoughts?)\b/gi
+  // AI list patterns: "Here are X things/ways/tips/reasons..." (EXPANDED)
+  listIntros: /\b(here are|here['\u2019]s|below are|the following|these \d+|top \d+|\d+ (?:ways|things|tips|reasons|steps|strategies|methods|tricks|hacks|secrets|mistakes|benefits|advantages|examples|signs|signs of|ways to|reasons to|reasons for|tips for|secrets to|ways to improve|things you|things to|things that))\b/gi,
+
+  // AI paragraph templates: numbered/bulleted structure (EXPANDED)
+  numberedParagraphs: /(?:^|\n)\s*(\d+[\.\)]\s|[-*]\s|Step \d+|Point \d+|Phase \d+|Stage \d+|Level \d+)/gm,
+
+  // AI conclusion patterns (EXPANDED)
+  conclusionPatterns: /\b(in (conclusion|summary|closing)|to (summarize|sum up|conclude|wrap up)|all in all|the bottom line|key takeaways?|final thoughts?|in final analysis|to (conclude|end|close)|ultimately|finally|lastly|overall|in the end)/gi,
+
+  // Unnatural sentence starters (NEW)
+  unnaturalStarters: /^(It|This|That|These|Those|Such|The|One|Such a|What|Which|Who|Where|When|Why|How)\s+(is|are|was|were|has|have|had|can|could|will|would|should|may|might|must)/im,
+
+  // Over-use of "will" for predictions (NEW)
+  futurePredictions: /\b(will (be|have|has|can|could))\b/gi
 };
 
 // ============================================================
@@ -434,29 +556,47 @@ class AIPatternDetector {
   }
 
   /**
-   * Analyze writing structure for AI patterns
+   * Analyze writing structure for AI patterns - EXPANDED v4
    */
   analyzeStructure(article, wordCount) {
     let score = 0;
     const reasons = [];
+    const textLower = article.toLowerCase();
 
-    // Check paragraph transition overuse
+    // Check paragraph transition overuse (EXPANDED scoring)
     const transitions = article.match(this.structuralPatterns.paragraphTransitions) || [];
     const sentences = article.split(/[.!?]+/).filter(s => s.trim().length > 0);
     const sentenceCount = sentences.length || 1;
 
-    // More than 20% of sentences starting with transitions is suspicious
+    // More than 15% of sentences starting with transitions is suspicious (lowered from 20%)
     if (sentenceCount > 5) {
       const transitionRatio = transitions.length / sentenceCount;
-      if (transitionRatio > 0.3) { score += 15; reasons.push('excessive-transitions'); }
-      else if (transitionRatio > 0.2) { score += 8; reasons.push('many-transitions'); }
+      if (transitionRatio > 0.25) { score += 18; reasons.push('excessive-transitions'); }
+      else if (transitionRatio > 0.15) { score += 10; reasons.push('many-transitions'); }
     }
 
-    // Check for generic openings
+    // Check for generic openings (EXPANDED)
     if (this.structuralPatterns.genericOpenings.test(article)) {
-      score += 5;
+      score += 7;
       reasons.push('generic-opening');
     }
+
+    // NEW: Check for passive voice overuse (strong AI indicator)
+    const passiveMatches = textLower.match(this.structuralPatterns.passiveVoice) || [];
+    const passiveDensity = passiveMatches.length / (wordCount / 500);
+    if (passiveDensity > 3) { score += 12; reasons.push('excessive-passive-voice'); }
+    else if (passiveDensity > 1.5) { score += 6; reasons.push('passive-voice-detected'); }
+
+    // NEW: Check for filler words overuse
+    const fillerMatches = textLower.match(this.structuralPatterns.fillerWords) || [];
+    const fillerDensity = fillerMatches.length / (wordCount / 500);
+    if (fillerDensity > 4) { score += 8; reasons.push('excessive-filler-words'); }
+    else if (fillerDensity > 2) { score += 4; reasons.push('filler-words-detected'); }
+
+    // NEW: Check for unnatural sentence starters
+    const unnaturalStarts = article.match(this.structuralPatterns.unnaturalStarters) || [];
+    const unnaturalDensity = unnaturalStarts.length / (wordCount / 500);
+    if (unnaturalDensity > 2) { score += 8; reasons.push('unnatural-sentence-starts'); }
 
     // Check sentence uniformity (AI generates very consistent length sentences)
     if (sentenceCount >= 8) {
@@ -467,33 +607,42 @@ class AIPatternDetector {
       const coeffOfVariation = avgLen > 0 ? stdDev / avgLen : 0;
 
       // Very uniform sentence lengths (low variation) = AI-like
-      if (coeffOfVariation < 0.25 && avgLen > 10) {
-        score += 5;
+      if (coeffOfVariation < 0.22 && avgLen > 10) {  // Lowered from 0.25
+        score += 7;
         reasons.push('uniform-sentence-length');
       }
     }
 
-    return { score: Math.min(score, 25), reasons };
+    return { score: Math.min(score, 35), reasons };  // Increased from 25 to 35
   }
 
   /**
-   * Analyze content quality
+   * Analyze content quality - EXPANDED v4
    */
   analyzeQuality(article, wordCount) {
     let score = 0;
     const reasons = [];
+    const textLower = article.toLowerCase();
 
-    // Check for hedging/filler language density
-    const hedgingMatches = article.match(this.structuralPatterns.hedgingLanguage) || [];
+    // Check for hedging/filler language density (LOWERED thresholds)
+    const hedgingMatches = textLower.match(this.structuralPatterns.hedgingLanguage) || [];
     const hedgingDensity = hedgingMatches.length / (wordCount / 1000);
-    if (hedgingDensity >= 5) { score += 8; reasons.push('excessive-hedging'); }
+    if (hedgingDensity >= 3) { score += 10; reasons.push('excessive-hedging'); }  // Was 5
+    else if (hedgingDensity >= 1.5) { score += 5; reasons.push('some-hedging'); }
 
-    // Check buzzword density
-    const buzzwordMatches = article.match(this.structuralPatterns.buzzwords) || [];
+    // Check buzzword density (LOWERED thresholds)
+    const buzzwordMatches = textLower.match(this.structuralPatterns.buzzwords) || [];
     const buzzDensity = buzzwordMatches.length / (wordCount / 1000);
-    if (buzzDensity >= 10) { score += 7; reasons.push('buzzword-heavy'); }
+    if (buzzDensity >= 6) { score += 10; reasons.push('buzzword-heavy'); }  // Was 10
+    else if (buzzDensity >= 3) { score += 5; reasons.push('some-buzzwords'); }
 
-    return { score: Math.min(score, 15), reasons };
+    // NEW: Check for "will" predictions overuse
+    const willPredictions = textLower.match(this.structuralPatterns.futurePredictions) || [];
+    const willDensity = willPredictions.length / (wordCount / 500);
+    if (willDensity > 2) { score += 6; reasons.push('excessive-predictions'); }
+    else if (willDensity > 1) { score += 3; reasons.push('many-predictions'); }
+
+    return { score: Math.min(score, 25), reasons };  // Increased from 15 to 25
   }
 
   /**
@@ -687,18 +836,18 @@ class AIPatternDetector {
   }
 
   /**
-   * Get sensitivity threshold
+   * Get sensitivity threshold - LOWERED for super strong detection
    */
   getSensitivityThreshold(sensitivity) {
     switch (sensitivity) {
       case 'low':
-        return 80; // Only block very obvious AI content
+        return 55; // Was 80 - now catches more AI content
       case 'medium':
-        return 65; // Balanced (raised from 60)
+        return 40; // Was 65 - significantly more aggressive
       case 'high':
-        return 45; // Aggressive blocking
+        return 25; // Was 45 - extremely aggressive blocking
       default:
-        return 65;
+        return 40;
     }
   }
 

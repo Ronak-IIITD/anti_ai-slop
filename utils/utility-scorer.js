@@ -1,14 +1,14 @@
-// Utility Scoring Algorithm for Anti-Slop Extension
+// Utility Scoring Algorithm for Anti-Slop Extension v4
 // Distinguishes useful AI content from junk by analyzing content quality signals
 // If content has code snippets, actionable steps, data, citations - don't block
-// Updated as of 2026-02-17
+// Updated as of 2026-05-13
 
 // ============================================================
-// UTILITY SIGNALS (Positive - reduce blocking score)
+// UTILITY SIGNALS (Positive - reduce blocking score) - EXPANDED
 // ============================================================
 
 const UTILITY_POSITIVE_SIGNALS = {
-  // Code content (strong positive)
+  // Code content (strong positive) - EXPANDED
   codeIndicators: {
     patterns: [
       /```[\s\S]*?```/g,                    // Markdown code blocks
@@ -18,12 +18,23 @@ const UTILITY_POSITIVE_SIGNALS = {
       /\b(def|class|import|from|return|if|elif|else|for|while|with|try|except)\s/g, // Python keywords
       /\b(public|private|static|void|int|string|bool|class|namespace)\s/g,          // C#/Java keywords
       /\b(SELECT|FROM|WHERE|JOIN|INSERT|UPDATE|DELETE|CREATE)\s/gi,                  // SQL
-      /\$\(|document\.|window\.|console\./g                                          // DOM/JS APIs
+      /\$\(|document\.|window\.|console\./g,                                          // DOM/JS APIs
+      /\b(import\s+{|require\(|module\.exports|export\s+default)\b/g,              // Node/CommonJS
+      /\b(interface|type|enum|readonly)\s+\w+\s*[{:]/g,                             // TypeScript
+      /\b(func|fn|pub|impl|struct|enum|let mut)\b/g,                                  // Rust
+      /\b(def|fn|pub|mod|crate|use)\s+/g,                                           // Rust keywords
+      /\b(import|from|export|class|def|self|elif|lambda|yield|async|await)\s/g,      // Python/JS
+      /\b(printf|scanf|malloc|free|sizeof|struct|union|enum)\b/g,                  // C
+      /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|INDEX)\s/gi,               // SQL DDL/DML
+      /\b(git|git add|git commit|git push|git clone|git pull|git merge)\b/gi,      // Git commands
+      /\b(docker|dockerfile|docker-compose|kubectl|helm|terraform)\b/gi,           // DevOps
+      /\b(api|rest|graphql|endpoint|request|response|status|header)\b/gi,          // API terms
+      /\b(localhost|127\.0\.0\.1|0\.0\.0\.0|:\d{4,5})\b/g                           // Local dev
     ],
-    weight: 20
+    weight: 25  // Increased from 20
   },
 
-  // Actionable steps (moderate positive)
+  // Actionable steps (moderate positive) - EXPANDED
   actionableSteps: {
     patterns: [
       /\b(step \d|step one|step two|step three)\b/gi,
@@ -31,12 +42,19 @@ const UTILITY_POSITIVE_SIGNALS = {
       /\b(how to|tutorial|walkthrough|instructions)\b/gi,
       /\b(install|configure|set up|setup|deploy|build|compile|run)\s+(the|your|this|a)\b/gi,
       /\b(npm install|pip install|apt-get|brew install|yarn add|cargo add)\b/gi,
-      /^\s*\d+\.\s+[A-Z]/gm                 // Numbered list items
+      /^\s*\d+\.\s+[A-Z]/gm,                 // Numbered list items
+      // NEW patterns
+      /\b(click on|click the|select the|choose the|enable the|disable the)\b/gi,
+      /\b(open (your|the)|close (your|the)|start (your|the)|stop (your|the))\b/gi,
+      /\b(make sure|ensure|verify|check that|confirm)\b/gi,
+      /\b(follow these|perform these|complete these|execute these)\b/gi,
+      /\b(you will need|you\'ll need|you\'ll want|you should have)\b/gi,
+      /\b(prerequisites|requirements|dependencies|what you need)\b/gi
     ],
-    weight: 15
+    weight: 18  // Increased from 15
   },
 
-  // Data and statistics (moderate positive)
+  // Data and statistics (moderate positive) - EXPANDED
   dataStatistics: {
     patterns: [
       /\b\d+(\.\d+)?%\b/g,                  // Percentages
@@ -44,12 +62,19 @@ const UTILITY_POSITIVE_SIGNALS = {
       /\b\d{1,3}(,\d{3})+\b/g,              // Large numbers with commas
       /\b(study|research|survey|report|data) (shows?|suggests?|indicates?|found|reveals?)\b/gi,
       /\b(according to|based on|per|as reported by)\b/gi,
-      /\b(increase|decrease|growth|decline|rise|fell) (of |by )?\d/gi
+      /\b(increase|decrease|growth|decline|rise|fell) (of |by )?\d/gi,
+      // NEW patterns
+      /\b(p-value|t-test|chi-square|regression|correlation|statistically)\b/gi,
+      /\b(sample size|n=|participants|subjects|cohort)\b/gi,
+      /\b(benchmark|performance|metrics|latency|throughput|response time)\b/gi,
+      /\b(kb|mb|gb|tb|ms|ns|seconds?|minutes?|hours?)\b/gi,
+      /\b(\$\d+|\d+\s*USD|\d+\s*dollars)\b/gi,
+      /\b(average|mean|median|mode|standard deviation|variance)\b/gi
     ],
-    weight: 15
+    weight: 18  // Increased from 15
   },
 
-  // Citations and sources (moderate positive)
+  // Citations and sources (moderate positive) - EXPANDED
   citations: {
     patterns: [
       /\b(source|citation|reference|bibliography)\b/gi,
@@ -57,29 +82,73 @@ const UTILITY_POSITIVE_SIGNALS = {
       /\[\d+\]/g,                            // Citation numbers [1], [2]
       /\([\w\s]+,?\s*\d{4}\)/g,             // Academic citations (Author, 2024)
       /\b(published (in|by|on)|peer-reviewed|journal|paper)\b/gi,
-      /\b(University|Institute|Foundation|Organization)\b/g
+      /\b(University|Institute|Foundation|Organization)\b/g,
+      // NEW patterns
+      /\b(doi:|arxiv:|PMID:|ISBN:)\b/gi,
+      /\b(github\.com|gitlab\.com|bitbucket\.org)\b/gi,
+      /\b(documentation|docs\.|\.readme|wiki)\b/gi,
+      /\b(specification|rfc|standard|protocol)\b/gi,
+      /\b(mdn|mozilla developer|w3c|whatwg)\b/gi
     ],
-    weight: 15
+    weight: 18  // Increased from 15
   },
 
-  // Personal experience / authenticity markers (weak positive)
+  // Personal experience / authenticity markers (weak positive) - EXPANDED
   authenticityMarkers: {
     patterns: [
       /\b(in my experience|i personally|i've (found|noticed|learned|seen)|from my)\b/gi,
       /\b(my team|our company|we (implemented|built|created|discovered))\b/gi,
       /\b(years? (ago|of experience)|worked (at|for|on))\b/gi,
-      /\b(disclaimer|full disclosure|affiliate|sponsored)\b/gi  // Transparency
+      /\b(disclaimer|full disclosure|affiliate|sponsored)\b/gi,
+      // NEW patterns
+      /\b(i recommend|i suggest|i advise|i use|i prefer)\b/gi,
+      /\b(in practice|in reality|in the real world|in production)\b/gi,
+      /\b(after \d+ years|over \d+ years|for \d+ years)\b/gi,
+      /\b(we've learned|we've found|we've discovered|i've learned)\b/gi,
+      /\b(real-world|practical|hands-on|production)\b/gi
     ],
-    weight: 10
+    weight: 15  // Increased from 10
+  },
+
+  // NEW: Technical content markers (strong positive)
+  technicalContent: {
+    patterns: [
+      /\b(algorithm|data structure|complexity|O\(n\)|O\(n\^2\)|time complexity|space complexity)\b/gi,
+      /\b(api|endpoint|request|response|json|xml|rest|graphql|soap)\b/gi,
+      /\b(database|sql|nosql|mongodb|postgresql|mysql|redis|cache)\b/gi,
+      /\b(server|client|frontend|backend|fullstack|microservice|container)\b/gi,
+      /\b(test|unit test|integration test|e2e|jest|pytest|mocha)\b/gi,
+      /\b(ci\/cd|pipeline|jenkins|github actions|gitlab ci)\b/gi,
+      /\b(security|authentication|authorization|encryption|oauth|jwt)\b/gi,
+      /\b(performance|optimization|scalability|load balancing|caching)\b/gi,
+      /\b(debug|debugging|breakpoint|stack trace|error|exception)\b/gi,
+      /\b(version control|branch|merge|commit|pull request|code review)\b/gi
+    ],
+    weight: 20
+  },
+
+  // NEW: Mathematical/Scientific content
+  mathScientific: {
+    patterns: [
+      /\b(x\^|y\^|sqrt|log|ln|exp|sin|cos|tan)\b/gi,
+      /\b(equation|formula|variable|constant|coefficient|parameter)\b/gi,
+      /\b(matrix|vector|tensor|array|dimension)\b/gi,
+      /\b(derivative|integral|limit|function|domain|range)\b/gi,
+      /\b(probability|likelihood|posterior|prior|distribution)\b/gi,
+      /\b(hypothesis|null hypothesis|p-value|significance|confidence)\b/gi,
+      /\b(algorithm|model|training|testing|validation|accuracy)\b/gi,
+      /\b(neural network|deep learning|machine learning|ai|ml)\b/gi
+    ],
+    weight: 18
   }
 };
 
 // ============================================================
-// JUNK SIGNALS (Negative - increase blocking score)
+// JUNK SIGNALS (Negative - increase blocking score) - EXPANDED
 // ============================================================
 
 const UTILITY_NEGATIVE_SIGNALS = {
-  // Generic advice with no substance
+  // Generic advice with no substance - EXPANDED
   genericAdvice: {
     patterns: [
       /\b(just (believe|try|do it|start|keep going))\b/gi,
@@ -87,12 +156,20 @@ const UTILITY_NEGATIVE_SIGNALS = {
       /\b(the (key|secret|trick) (is|to))\b/gi,
       /\b(at the end of the day)\b/gi,
       /\b(it (all|really) (comes|boils) down to)\b/gi,
-      /\b(the truth is|the reality is|the fact is)\b/gi
+      /\b(the truth is|the reality is|the fact is)\b/gi,
+      // NEW patterns
+      /\b(just think positive|just believe in yourself|just work hard)\b/gi,
+      /\b(the universe|the law of attraction|manifest your|visualize your)\b/gi,
+      /\b(you deserve|you\'re worth|you matter)\b/gi,
+      /\b(believe in yourself|trust the process|have faith)\b/gi,
+      /\b(don\'t give up|never give up|keep pushing)\b/gi,
+      /\b(be yourself|stay true|remain authentic)\b/gi,
+      /\b(it\'s okay to|it\'s fine to|there\'s nothing wrong with)\b/gi
     ],
-    weight: -10
+    weight: -15  // Increased from -10
   },
 
-  // Engagement bait only
+  // Engagement bait only - EXPANDED
   engagementBait: {
     patterns: [
       /\b(like (and|&) (share|subscribe|follow))\b/gi,
@@ -100,12 +177,20 @@ const UTILITY_NEGATIVE_SIGNALS = {
       /\b(double tap|smash that|hit the|drop a)\b/gi,
       /\b(comment (below|down|your|if you))\b/gi,
       /\b(follow (me|us|for more))\b/gi,
-      /\b(repost|reshare) (this|if)\b/gi
+      /\b(repost|reshare) (this|if)\b/gi,
+      // NEW patterns
+      /\b(save this|bookmark this|screenshot this)\b/gi,
+      /\b(send this to|share this with|tag a friend)\b/gi,
+      /\b(if you agree|if you relate|if this is you)\b/gi,
+      /\b(dm me|message me|slide into my)\b/gi,
+      /\b(link in bio|check bio|see bio)\b/gi,
+      /\b(part 2|part 3|part one|part two)\b/gi,
+      /\b(subscribe|like|comment|share|follow)\b/gi
     ],
-    weight: -20
+    weight: -25  // Increased from -20
   },
 
-  // Filler without substance
+  // Filler without substance - EXPANDED
   fillerContent: {
     patterns: [
       /\b(in today'?s (digital |modern |fast-paced )?(world|age|era|landscape))\b/gi,

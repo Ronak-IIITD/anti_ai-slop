@@ -906,6 +906,222 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 // ============================================================
+// ON-DEMAND SCRIPT INJECTION (v2)
+// Handles SPA navigation and on-demand loading
+// ============================================================
+
+// Platform mapping for on-demand injection
+const INJECTION_PLATFORM_MAP = {
+  'youtube.com': { platform: 'youtube', script: 'content-scripts/youtube.js', css: 'content-scripts/youtube.css' },
+  'instagram.com': { platform: 'instagram', script: 'content-scripts/instagram.js', css: 'content-scripts/instagram.css' },
+  'twitter.com': { platform: 'twitter', script: 'content-scripts/twitter.js', css: 'content-scripts/twitter.css' },
+  'x.com': { platform: 'twitter', script: 'content-scripts/twitter.js', css: 'content-scripts/twitter.css' },
+  'reddit.com': { platform: 'reddit', script: 'content-scripts/reddit.js', css: 'content-scripts/reddit.css' },
+  'linkedin.com': { platform: 'linkedin', script: 'content-scripts/linkedin.js', css: 'content-scripts/linkedin.css', utils: ['utils/utility-scorer.js'] },
+  'facebook.com': { platform: 'facebook', script: 'content-scripts/facebook.js', css: 'content-scripts/facebook.css' },
+  'messenger.com': { platform: 'facebook', script: 'content-scripts/facebook.js', css: 'content-scripts/facebook.css' },
+  'bsky.app': { platform: 'bluesky', script: 'content-scripts/bluesky.js', css: 'content-scripts/bluesky.css' },
+  'threads.net': { platform: 'threads', script: 'content-scripts/threads.js', css: 'content-scripts/threads.css' },
+  'tiktok.com': { platform: 'tiktok', script: 'content-scripts/tiktok.js', css: 'content-scripts/tiktok.css' }
+};
+
+// Generic page AI detector config
+const AI_DETECTOR_CONFIG = {
+  script: 'content-scripts/ai-detector.js',
+  css: 'content-scripts/ai-detector.css',
+  utils: ['utils/ai-patterns.js']
+};
+
+// Excluded domains for AI detector
+const AI_DETECTOR_EXCLUDES = [
+  'github.com', 'stackoverflow.com', 'claude.ai', 'anthropic.com',
+  'openai.com', 'chatgpt.com', 'gemini.google.com', 'copilot.microsoft.com',
+  'perplexity.ai', 'wikipedia.org', 'wikimedia.org', 'amazon.com', 'amazon.in',
+  'flipkart.com', 'notion.so', 'figma.com', 'linear.app', 'slack.com',
+  'discord.com', 'arxiv.org', 'scholar.google.com', 'netflix.com', 'spotify.com',
+  'gmail.com', 'mail.google.com', 'drive.google.com', 'docs.google.com',
+  'maps.google.com', 'calendar.google.com', 'whatsapp.com', 'web.whatsapp.com',
+  'leetcode.com', 'hackerrank.com', 'codeforces.com', 'codechef.com',
+  'coursera.org', 'udemy.com', 'khanacademy.org', 'edx.org', 'npmjs.com',
+  'pypi.org', 'developer.mozilla.org', 'w3schools.com', 'localhost'
+];
+
+// Check if platform is enabled in settings
+async function isPlatformEnabledForInjection(platform) {
+  try {
+    const result = await chrome.storage.sync.get(['antiSlop_settings']);
+    const settings = result.antiSlop_settings;
+    
+    if (!settings) return true;
+    
+    // Check platform-specific setting
+    if (settings[platform] && settings[platform].enabled === false) {
+      return false;
+    }
+    
+    // Check focus mode - if enabled, all platforms are active
+    if (settings.ui && settings.ui.focusMode) {
+      return true;
+    }
+    
+    return true;
+  } catch (e) {
+    return true;
+  }
+}
+
+// Inject content scripts for a platform
+async function injectPlatformScripts(tabId, platformConfig) {
+  const baseUtils = ['utils/storage.js', 'utils/brainrot-patterns.js', 'utils/media-detector.js'];
+  const extraUtils = platformConfig.utils || [];
+  
+  try {
+    // Inject CSS
+    if (platformConfig.css) {
+      await chrome.scripting.insertCSS({
+        files: [platformConfig.css],
+        target: { tabId }
+      });
+    }
+    
+    // Inject base utilities
+    for (const util of baseUtils) {
+      try {
+        await chrome.scripting.executeScript({
+          files: [util],
+          target: { tabId }
+        });
+      } catch (e) {}
+    }
+    
+    // Inject extra utilities (like utility-scorer)
+    for (const util of extraUtils) {
+      try {
+        await chrome.scripting.executeScript({
+          files: [util],
+          target: { tabId }
+        });
+      } catch (e) {}
+    }
+    
+    // Inject common utilities
+    try {
+      await chrome.scripting.executeScript({
+        files: ['content-scripts/common.js'],
+        target: { tabId }
+      });
+    } catch (e) {}
+    
+    // Inject platform-specific script
+    await chrome.scripting.executeScript({
+      files: [platformConfig.script],
+      target: { tabId }
+    });
+    
+    console.log('[Anti-Slop:Injection] Injected for', platformConfig.platform);
+  } catch (error) {
+    console.error('[Anti-Slop:Injection] Error:', error);
+  }
+}
+
+// Inject AI detector for generic pages
+async function injectAIDetector(tabId, hostname) {
+  // Check if domain is excluded
+  for (const exclude of AI_DETECTOR_EXCLUDES) {
+    if (hostname.includes(exclude)) {
+      return;
+    }
+  }
+  
+  try {
+    const result = await chrome.storage.sync.get(['antiSlop_settings']);
+    const settings = result.antiSlop_settings;
+    
+    if (settings?.aiDetector?.enabled === false) {
+      return;
+    }
+    
+    // Inject CSS
+    await chrome.scripting.insertCSS({
+      files: [AI_DETECTOR_CONFIG.css],
+      target: { tabId }
+    });
+    
+    // Inject utilities
+    for (const util of AI_DETECTOR_CONFIG.utils) {
+      try {
+        await chrome.scripting.executeScript({
+          files: [util],
+          target: { tabId }
+        });
+      } catch (e) {}
+    }
+    
+    // Inject common utilities
+    try {
+      await chrome.scripting.executeScript({
+        files: ['content-scripts/common.js'],
+        target: { tabId }
+      });
+    } catch (e) {}
+    
+    // Inject AI detector
+    await chrome.scripting.executeScript({
+      files: [AI_DETECTOR_CONFIG.script],
+      target: { tabId }
+    });
+    
+    console.log('[Anti-Slop:Injection] Injected AI detector for', hostname);
+  } catch (error) {
+    console.error('[Anti-Slop:Injection] AI detector error:', error);
+  }
+}
+
+// Handle web navigation events (for SPA support)
+chrome.webNavigation.onCompleted.addListener(async (details) => {
+  if (details.frameId !== 0) return; // Only main frame
+  
+  const url = new URL(details.url);
+  const hostname = url.hostname.replace('www.', '');
+  const tabId = details.tabId;
+  
+  // Check if it's a platform we support
+  const platformConfig = INJECTION_PLATFORM_MAP[hostname];
+  
+  if (platformConfig) {
+    // Check if platform is enabled
+    const enabled = await isPlatformEnabledForInjection(platformConfig.platform);
+    
+    if (enabled) {
+      await injectPlatformScripts(tabId, platformConfig);
+    }
+  } else {
+    // Check for AI detector on generic pages
+    await injectAIDetector(tabId, hostname);
+  }
+});
+
+// Also handle tab updates for initial load
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status !== 'complete') return;
+  if (!tab.url) return;
+  
+  const url = new URL(tab.url);
+  const hostname = url.hostname.replace('www.', '');
+  
+  // Check if it's a platform we support
+  const platformConfig = INJECTION_PLATFORM_MAP[hostname];
+  
+  if (platformConfig) {
+    const enabled = await isPlatformEnabledForInjection(platformConfig.platform);
+    
+    if (enabled) {
+      await injectPlatformScripts(tabId, platformConfig);
+    }
+  }
+});
+
+// ============================================================
 // LIFECYCLE
 // ============================================================
 

@@ -1,12 +1,12 @@
-// Brainrot Content Detection Patterns v4
-// Stronger detection: more patterns, lower thresholds, catches more AI slop
-// Updated as of 2026-03-01
+// Brainrot Content Detection Patterns v5
+// Strongest detection: 200+ patterns, contextual weighting, emoji analysis, lower thresholds
+// Updated as of 2026-05-13
 
 // ============================================================
 // BRAINROT KEYWORDS (Tiered)
 // ============================================================
 
-// Tier 1: Strong brainrot indicators - INSTANT FLAG
+// Tier 1: Strong brainrot indicators - INSTANT FLAG (expanded from 70 to 120+)
 const BRAINROT_STRONG = [
   // Gen Alpha/Brainrot slang (2024-2026)
   'skibidi',
@@ -47,7 +47,7 @@ const BRAINROT_STRONG = [
   'l rizz',
   'negative canthal tilt',
   'forward growth',
-  
+
   // AI/Generated content markers
   'ai generated',
   'text to speech',
@@ -55,13 +55,19 @@ const BRAINROT_STRONG = [
   'tts voice',
   'automated content',
   'synthetic voice',
-  
+  'ai voice',
+  'voice clone',
+  'deepfake',
+
   // Engagement farming patterns
   'just put the fries in the bag',
   'caught in 4k ultra hd',
   'touch grass',
   'main character syndrome',
-  
+  'chronically online',
+  'doomer',
+  'doomscrolling',
+
   // Red pill/manosphere indicators
   'red pill',
   'black pill',
@@ -71,7 +77,9 @@ const BRAINROT_STRONG = [
   'body count',
   'high value male',
   'sexual marketplace',
-  
+  'monkey branch',
+  'dual mating strategy',
+
   // Obvious clickbait markers
   'you won\'t believe',
   'this will blow your mind',
@@ -118,7 +126,6 @@ const BRAINROT_STRONG = [
   'no cap on god',
   'gang',
   'gang gang',
-  'opps',
   'bruh moment',
   'thirst trap',
   'clout chasing',
@@ -127,6 +134,26 @@ const BRAINROT_STRONG = [
   'dox',
   'doxxed',
   'cancel culture',
+  'ate and left no crumbs',
+  'understood the assignment',
+  'the assignment',
+  'is what it is',
+  'we stan',
+  'periodt',
+  'pawg',
+  'iykyk',
+  'ngl',
+  'tbh',
+  'imo',
+  'imho',
+  'smh',
+  'rn',
+  'fr',
+  'fr tho',
+  'no cap',
+  'cap',
+  'bussin no cap',
+  'sheesh fr fr',
 
   // Crypto/finance brainrot
   'to the moon',
@@ -146,10 +173,19 @@ const BRAINROT_STRONG = [
   'bull run',
   'bear market',
   'rekt',
+  'degen',
+  'wagmi',
+  'ngmi',
+  'fud',
+  'fomo',
+  'ape in',
+  'moon',
+  '100x',
+  'wen lambo',
 
   // Self-help/motivational brainrot
   'law of assumption',
-  ' Neville Goddard',
+  'neville goddard',
   'affirmations',
   'morning routine',
   '5am club',
@@ -170,6 +206,13 @@ const BRAINROT_STRONG = [
   'sleep when you die',
   'no days off',
   'weekend hustle',
+  'manifest',
+  'manifesting',
+  'law of attraction',
+  'abundance mindset',
+  'scarcity mindset',
+  'limiting beliefs',
+  'self-made',
 
   // Conspiracy brainrot
   'they don\'t want you',
@@ -190,7 +233,82 @@ const BRAINROT_STRONG = [
   'hidden truth',
   'secret they',
   'government doesn\'t',
-  'big pharma'
+  'big pharma',
+  'population control',
+  'mainstream media',
+  'msm',
+  'censorship',
+  'they\'re hiding',
+
+  // Reddit/forum brainrot
+  'upvote this',
+  'downvote',
+  'le epic',
+  'high quality post',
+  'gold award',
+  'wholesome',
+  'press X to doubt',
+  'citation needed',
+  'this subreddit',
+  'based and redpilled',
+  'cope',
+  'seethe',
+  'dilate',
+  'glowie',
+  'shill',
+  'disinfo',
+  'psyop',
+  'blackpill',
+  'whitepill',
+  'redpill',
+  'bluepill',
+
+  // Generic low-effort markers
+  'first!',
+  'second!',
+  'repost',
+  'reupload',
+  'found this',
+  'found on',
+  'credits to',
+  'not my video',
+  'not my oc',
+  'oc ',
+  'original content',
+  'i found this',
+  'saw this',
+  'saw this on',
+  'came across',
+  'random ',
+  'out of nowhere',
+  'no context',
+  'out of context',
+  'taken at',
+  'filmed at',
+  'in my ',
+  'my first ',
+  'my last ',
+  'my only ',
+  'wait for it',
+  'wait until',
+  'watch till the end',
+  'watch until the end',
+  'you need to see this',
+  'must watch',
+  'subscribe for',
+  'like and subscribe',
+  'drop a like',
+  'smash that like',
+  'smash that subscribe',
+  'hit the bell',
+  'part 2 in bio',
+  'link in bio',
+  'full video on',
+  'follow for more',
+  'like for part 2',
+  'comment if',
+  'share if you agree',
+  'this you?',
 ];
 
 // Tier 2: Moderate indicators - needs 1-2 to flag
